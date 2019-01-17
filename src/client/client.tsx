@@ -56,7 +56,7 @@ export default class InfomarkClient {
    *   });
    */
   constructor(url :string, token :string) {
-    this.url_ = url || "";
+    this.url_ = url + "/api/v1" || "";
     this.token_ = token;
 
     this.REST = axios.create({
@@ -87,7 +87,7 @@ export default class InfomarkClient {
    * NOTE: we probably want to handle this in the app itself
    */
   authenticate(email :string, password :string) {
-    this.REST.post("/api/v1/login", {
+    this.REST.post("/login", {
       email: email,
       password: password,
     })
@@ -101,36 +101,23 @@ export default class InfomarkClient {
    * Returns the health status of the api backend.
    */
   ping() {
-    return this.REST.get("/api/ping");
+    return this.REST.get("/ping");
   }
 
   /**
    * Returns the user's personal JWT token_.
    */
   login(email :string, password :string) {
-    return this.REST.post("/api/v1/login", {
+    return this.REST.post("/login", {
       email: email,
       password: password,
     });
   }
 
-  user_index(user :any){
-    return this.REST.get("/api/v1/users");
-  }
-
-  user_create(user :any){
-    return this.REST.post("/api/v1/users", user);
-  }
-
-  user_get(id :number){
-    return this.REST.post("/api/v1/users" + id);
-  }
-
-  user_update(id :number, user :any){
-    return this.REST.patch("/api/v1/users/" + id, user);
-  }
-
-  user_delete(id :number){
-    return this.REST.delete("/api/v1/users/" + id);
-  }
+  // users related REST endpoints
+  users_index(){ return this.REST.get("/users"); }
+  users_create(user :any){return this.REST.post("/users", user); }
+  users_get(id :number){return this.REST.post("/users" + id); }
+  users_update(id :number, user :any){return this.REST.patch("/users/" + id, user); }
+  users_delete(id :number){ return this.REST.delete("/users/" + id); }
 }
