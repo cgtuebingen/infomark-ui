@@ -1,3 +1,7 @@
+# Infomark-UI
+
+All ugly front-end stuff which should be compiled into the `dist` to embed it into a single Go binary.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
