@@ -1,32 +1,91 @@
+$uni-red-color: #A51E37;
+$uni-black-color: #313742;
+
+$sidebar-width: 220px;
+
+
 .App {
-  text-align: center;
+  min-height: calc(100% - 100px);
+  // padding-left: 240px;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-}
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
 
-.App-link {
-  color: #61dafb;
-}
+// .sidebar{
+//   position: fixed;
+//   width: $sidebar-width;
+//   // left: 180px;
+//   z-index: 999;
+//   height: 100%;
+//   background-color: #262B33;
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+//   .brand{
+//     position: fixed;
+//     left: 0;
+//     width: $sidebar-width;
+//     top: 0px;
+//     z-index: 9;
+//     height: 50px;
+
+//   //   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+//   //   -webkit-transition: .3s ease all;
+//   //   -o-transition: .3s ease all;
+//   //   -moz-transition: .3s ease all;
+//   //   transition: .3s ease all;
+//   //   -webkit-backface-visibility: hidden;
+//   //   -moz-backface-visibility: hidden;
+//   //   backface-visibility: hidden;
+
+//    background-color: $uni-red-color;
+//   }
+//   //
+//   color:white;
+
+//   ul{
+//     top: 64px;
+
+//     height: 100%;
+//     left: 0;
+//     position:fixed;
+
+//     padding-left: 0;
+//     list-style-type: none;
+//     width:$sidebar-width;
+
+
+//     li{
+//       line-height: 44px;
+
+//       a{
+//         padding: 0 16px !important;
+//         color:white;
+//         text-decoration: none;
+//         display: block;
+//       }
+
+//       &:hover{
+//         background-color: $uni-black-color;
+//       }
+//     }
+//   }
+// }
+
+// .main{
+//   min-height: calc(100% - 100px);
+//   padding-left: $sidebar-width;
+// }
+
+// .container{
+//   padding: 0 0.5rem;
+//   margin: 0 auto;
+//   max-width: 100% !important;
+//   width: 98%;
+// }
+
+// header{
+//   .navbar{
+//     height: 50px;
+//     background-color: $uni-red-color;
+//     margin-bottom:20px;
+//   }
+// }
