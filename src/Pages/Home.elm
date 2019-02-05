@@ -4,12 +4,13 @@
 -}
 module Pages.Home exposing (..)
 
+import Html exposing (..)
 import Routing.Helpers exposing (Route(..), reverseRoute)
+import SharedState exposing (SharedState, SharedStateUpdate(..))
 
 
 type alias Model =
-    { username : String
-    , plain_password : String
+    { logged_in : Bool
     }
 
 
@@ -20,8 +21,10 @@ type Msg
 
 init : ( Model, Cmd Msg)
 init =
-    ( { username = ""
-      , plain_password = ""
+    ( { logged_in = False
       }
     , Cmd.none
     )
+
+view : SharedState -> Model -> Html Msg
+view sharedState model = div [] []

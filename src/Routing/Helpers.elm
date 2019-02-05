@@ -20,6 +20,9 @@ reverseRoute route =
         RegistrationRoute ->
             "#/registration"
 
+        HomeRoute ->
+            "#/home"
+
         _ ->
             "#/"
 
@@ -36,7 +39,7 @@ parseUrl : Url -> Route
 parseUrl url =
     case url.fragment of
         Nothing ->
-            HomeRoute
+            LoginRoute
 
         Just fragment ->
             { url | path = fragment, fragment = Nothing }

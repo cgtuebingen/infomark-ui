@@ -1,7 +1,8 @@
 module Pages.Registration exposing (..)
 
+import Html exposing (..)
 import Routing.Helpers exposing (Route(..), reverseRoute)
-
+import SharedState exposing (SharedState, SharedStateUpdate(..))
 
 type alias Model =
     { username : String
@@ -16,3 +17,6 @@ initModel =
     { username = ""
     , plain_password = ""
     }
+
+view : SharedState -> Model -> Html Msg
+view sharedState model = div [] []

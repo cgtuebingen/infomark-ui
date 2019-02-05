@@ -149,6 +149,7 @@ updateTranslations model webData =
                             { navKey = model.navKey
                             , currentTime = time
                             , translations = translations
+                            , token = Nothing
                             }
 
                         ( initRouterModel, routerCmd ) =

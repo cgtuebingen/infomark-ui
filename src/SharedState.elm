@@ -8,7 +8,8 @@ import Types exposing (Translations)
 type alias SharedState = 
     { navKey : Browser.Navigation.Key
     , currentTime : Posix
-    , translations: Translations
+    , translations : Translations
+    , token : Maybe String
     }
 
 
@@ -16,6 +17,7 @@ type SharedStateUpdate
     = NoUpdate
     | UpdateTime Posix
     | UpdateTranslations Translations
+    | UpdateToken (Maybe String)
 
 
 update : SharedState -> SharedStateUpdate -> SharedState
@@ -26,6 +28,9 @@ update sharedState sharedStateUpdate =
 
         UpdateTranslations translations ->
             { sharedState | translations = translations }
+
+        UpdateToken token ->
+            { sharedState | token = token }
 
         NoUpdate ->
             sharedState

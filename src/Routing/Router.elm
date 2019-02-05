@@ -3,8 +3,9 @@ module Routing.Router exposing (..)
 
 import Browser
 import Browser.Navigation exposing (Key)
-import Html
-import Html.Styled exposing (..)
+import Html exposing (..)
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
 import I18n
 import Components.Footer as Footer
 import Pages.Home as Home
@@ -20,6 +21,7 @@ type alias Model =
     { homeModel : Home.Model
     , loginModel : Login.Model
     , registrationModel : Registration.Model
+    , footerModel : Footer.Model
     , route : Route
     }
 
@@ -44,10 +46,14 @@ init url =
         
         registrationModel =
             Registration.initModel
+
+        footerModel = 
+            Footer.initModel
     in
     ( { homeModel = homeModel 
       , loginModel = loginModel
       , registrationModel = registrationModel
+      , footerModel = footerModel
       , route = parseUrl url
       }
     , Cmd.map HomeMsg homeCmd
@@ -118,7 +124,6 @@ view msgMapper sharedState model =
     { title = "InfoMark - " ++ title
     , body =
         [ body
-            |> Html.Styled.toUnstyled
             |> Html.map msgMapper
         ]
     }
@@ -126,8 +131,70 @@ view msgMapper sharedState model =
 
 
 tabPage : SharedState -> Model -> Html Msg
-tabPage sharedState model = div [] [ text "Tabs" ]
+tabPage sharedState model = 
+    main_ 
+        [ classes 
+            [ TC.vh_100
+            , TC.dt
+            , TC.w_100
+            , TC.bg_near_white
+            ]
+        ] 
+        [ text "Tabs"
+        ]
 
 
 noTabPage : SharedState -> Model -> Html Msg
-noTabPage sharedState model = div [] [ text "No Tabs" ]
+noTabPage sharedState model = 
+        div 
+            [ classes
+                [ TC.h_100
+                , TC.relative
+                , TC.bg_near_white
+                ]
+            ]
+            [ pageView sharedState model 
+            , Footer.view sharedState model.footerModel
+                |> Html.map FooterMsg
+            ]
+        
+
+pageView : SharedState -> Model -> Html Msg
+pageView sharedState model =
+    case model.route of 
+        HomeRoute ->
+            Home.view sharedState model.homeModel
+                |> Html.map HomeMsg
+            
+
+        LoginRoute ->
+            Login.view sharedState model.loginModel
+                |> Html.map LoginMsg
+
+        RegistrationRoute ->
+            Registration.view sharedState model.registrationModel
+                |> Html.map RegistrationMsg
+
+        NotFoundRoute ->
+            div 
+                [ classes
+                    [ TC.dtc
+                    , TC.v_mid
+                    , TC.tc
+                    , TC.dark_red
+                    , TC.ph3
+                    , TC.ph4_l
+                    ]
+                ]
+                [
+                    h1 
+                        [ classes 
+                            [ TC.f6
+                            , TC.f2_m
+                            , TC.f_subheadline_l
+                            , TC.fw6
+                            , TC.tc
+                            ]
+                        ]
+                        [ text "404 :("]
+                ]

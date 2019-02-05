@@ -11,7 +11,7 @@ import RemoteData exposing (RemoteData(..), WebData)
 import I18n
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Types exposing (Language(..), Translations)
-import Utils.UniversityStyle as UTStyle
+import Utils.Styles as Styles
 
 
 type alias Model = 
@@ -65,16 +65,6 @@ getTranslations language =
             
         }
 
-
-linkStyle = classes 
-    [ TC.f6 
-    , TC.dib 
-    , TC.ph2 
-    , TC.link 
-    , TC.mid_gray 
-    , TC.dim 
-    ]
-
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     let
@@ -87,11 +77,13 @@ view sharedState model =
             , TC.ph3
             , TC.ph5_m
             , TC.ph6_l
-            , TC.mid_gray
+            , TC.dark_red
+            , TC.absolute
+            , TC.bottom_0
+            , TC.w_100
             ]
         ]
-        [ tachyons.css
-        , small 
+        [ small 
             [ classes 
                 [ TC.f6
                 , TC.db
@@ -109,8 +101,8 @@ view sharedState model =
                 , TC.mt3
                 ]
             ]
-            [ a [ href "#0", linkStyle ] [ text "Deutsch" ]
-            , a [ href "#0", linkStyle ] [ text "English" ]
-            , a [ href "#0", linkStyle ] [ text "Terms of Use" ]
+            [ a [ href "#0", Styles.linkRedStyle ] [ text "Deutsch" ]
+            , a [ href "#0", Styles.linkRedStyle ] [ text "English" ]
+            , a [ href "#0", Styles.linkRedStyle ] [ text "Terms of Use" ]
             ]
         ]
