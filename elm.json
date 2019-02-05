@@ -6,19 +6,51 @@
     "elm-version": "0.19.0",
     "dependencies": {
         "direct": {
+            "NoRedInk/elm-json-decode-pipeline": "1.0.0",
             "elm/browser": "1.0.1",
             "elm/core": "1.0.2",
-            "elm/html": "1.0.0"
-        },
-        "indirect": {
+            "elm/html": "1.0.0",
+            "elm/http": "2.0.0",
             "elm/json": "1.1.2",
+            "elm/regex": "1.0.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.2"
+            "gampleman/elm-visualization": "2.0.0",
+            "justgage/tachyons-elm": "4.1.1",
+            "krisajenkins/remotedata": "6.0.1",
+            "rtfeldman/elm-css": "16.0.0",
+            "rtfeldman/elm-iso8601-date-strings": "1.1.2",
+            "ryannhg/date-format": "2.3.0",
+            "simonh1000/elm-jwt": "7.0.0"
+        },
+        "indirect": {
+            "Skinney/murmur3": "2.0.8",
+            "avh4/elm-color": "1.0.0",
+            "elm/bytes": "1.0.7",
+            "elm/file": "1.0.2",
+            "elm/parser": "1.1.0",
+            "elm/svg": "1.0.1",
+            "elm/virtual-dom": "1.0.2",
+            "elm-community/list-extra": "8.1.0",
+            "folkertdev/elm-deque": "3.0.0",
+            "folkertdev/one-true-path-experiment": "4.0.2",
+            "folkertdev/svg-path-lowlevel": "3.0.0",
+            "ianmackenzie/elm-float-extra": "1.0.1",
+            "ianmackenzie/elm-geometry": "1.2.1",
+            "ianmackenzie/elm-interval": "1.0.1",
+            "ianmackenzie/elm-triangular-mesh": "1.0.2",
+            "justinmimbs/date": "3.1.2",
+            "justinmimbs/time-extra": "1.1.0",
+            "rtfeldman/elm-hex": "1.0.0",
+            "truqu/elm-base64": "2.0.4"
         }
     },
     "test-dependencies": {
-        "direct": {},
-        "indirect": {}
+        "direct": {
+            "elm-explorations/test": "1.2.1"
+        },
+        "indirect": {
+            "elm/random": "1.0.0"
+        }
     }
 }

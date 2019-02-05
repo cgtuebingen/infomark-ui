@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>InfoMark</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css"/>
+</head>
+<body>
+	<script src="elm.js"></script>
+	<div id="elm" />
+    <script type="text/javascript">
+		Elm.Main.init({ 
+			node: document.getElementById('elm'),
+			flags: {
+				currentTime: Date.now()
+			}
+		});
+	</script>
+</body>
+</html>
