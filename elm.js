@@ -6797,12 +6797,16 @@ var justgage$tachyons_elm$Tachyons$classes = function (stringList) {
 	return elm$html$Html$Attributes$class(
 		A2(elm$core$String$join, ' ', stringList));
 };
-var justgage$tachyons_elm$Tachyons$Classes$dark_red = 'dark-red';
-var author$project$Utils$Styles$linkRedStyle = justgage$tachyons_elm$Tachyons$classes(
+var justgage$tachyons_elm$Tachyons$Classes$dark_gray = 'dark-gray';
+var author$project$Utils$Styles$linkGreyStyle = justgage$tachyons_elm$Tachyons$classes(
 	_Utils_ap(
 		author$project$Utils$Styles$linkStyle,
 		_List_fromArray(
-			[justgage$tachyons_elm$Tachyons$Classes$dark_red])));
+			[justgage$tachyons_elm$Tachyons$Classes$dark_gray])));
+var justgage$tachyons_elm$Tachyons$Classes$black_80 = 'black-80';
+var author$project$Utils$Styles$textStyle = justgage$tachyons_elm$Tachyons$classes(
+	_List_fromArray(
+		[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$black_80]));
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$b = _VirtualDom_node('b');
 var elm$html$Html$div = _VirtualDom_node('div');
@@ -6818,6 +6822,7 @@ var elm$html$Html$Attributes$href = function (url) {
 };
 var justgage$tachyons_elm$Tachyons$Classes$absolute = 'absolute';
 var justgage$tachyons_elm$Tachyons$Classes$bottom_0 = 'bottom-0';
+var justgage$tachyons_elm$Tachyons$Classes$dark_red = 'dark-red';
 var justgage$tachyons_elm$Tachyons$Classes$db = 'db';
 var justgage$tachyons_elm$Tachyons$Classes$mt3 = 'mt3';
 var justgage$tachyons_elm$Tachyons$Classes$ph3 = 'ph3';
@@ -6846,7 +6851,8 @@ var author$project$Components$Footer$view = F2(
 						[
 							justgage$tachyons_elm$Tachyons$classes(
 							_List_fromArray(
-								[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$tc]))
+								[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$tc])),
+							author$project$Utils$Styles$textStyle
 						]),
 					_List_fromArray(
 						[
@@ -6880,7 +6886,7 @@ var author$project$Components$Footer$view = F2(
 							_List_fromArray(
 								[
 									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkRedStyle
+									author$project$Utils$Styles$linkGreyStyle
 								]),
 							_List_fromArray(
 								[
@@ -6891,7 +6897,7 @@ var author$project$Components$Footer$view = F2(
 							_List_fromArray(
 								[
 									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkRedStyle
+									author$project$Utils$Styles$linkGreyStyle
 								]),
 							_List_fromArray(
 								[
@@ -6902,7 +6908,7 @@ var author$project$Components$Footer$view = F2(
 							_List_fromArray(
 								[
 									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkRedStyle
+									author$project$Utils$Styles$linkGreyStyle
 								]),
 							_List_fromArray(
 								[
@@ -6918,53 +6924,67 @@ var author$project$Pages$Home$view = F2(
 	function (sharedState, model) {
 		return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 	});
+var justgage$tachyons_elm$Tachyons$Classes$b = 'b';
 var justgage$tachyons_elm$Tachyons$Classes$ba = 'ba';
 var justgage$tachyons_elm$Tachyons$Classes$bg_animate = 'bg-animate';
 var justgage$tachyons_elm$Tachyons$Classes$bg_white = 'bg-white';
 var justgage$tachyons_elm$Tachyons$Classes$border_box = 'border-box';
 var justgage$tachyons_elm$Tachyons$Classes$button_reset = 'button-reset';
 var justgage$tachyons_elm$Tachyons$Classes$f5 = 'f5';
-var justgage$tachyons_elm$Tachyons$Classes$inline_flex = 'inline-flex';
 var justgage$tachyons_elm$Tachyons$Classes$items_center = 'items-center';
 var justgage$tachyons_elm$Tachyons$Classes$no_underline = 'no-underline';
 var justgage$tachyons_elm$Tachyons$Classes$pa3 = 'pa3';
 var justgage$tachyons_elm$Tachyons$Classes$pointer = 'pointer';
 var author$project$Utils$Styles$buttonStyle = _List_fromArray(
-	[justgage$tachyons_elm$Tachyons$Classes$f5, justgage$tachyons_elm$Tachyons$Classes$no_underline, justgage$tachyons_elm$Tachyons$Classes$bg_animate, justgage$tachyons_elm$Tachyons$Classes$inline_flex, justgage$tachyons_elm$Tachyons$Classes$items_center, justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$border_box, justgage$tachyons_elm$Tachyons$Classes$bg_white, justgage$tachyons_elm$Tachyons$Classes$pointer, justgage$tachyons_elm$Tachyons$Classes$button_reset]);
-var justgage$tachyons_elm$Tachyons$Classes$b__dark_red = 'b--dark-red';
-var justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_red = 'hover-bg-dark-red';
+	[justgage$tachyons_elm$Tachyons$Classes$f5, justgage$tachyons_elm$Tachyons$Classes$no_underline, justgage$tachyons_elm$Tachyons$Classes$bg_animate, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$b, justgage$tachyons_elm$Tachyons$Classes$items_center, justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$border_box, justgage$tachyons_elm$Tachyons$Classes$bg_white, justgage$tachyons_elm$Tachyons$Classes$pointer, justgage$tachyons_elm$Tachyons$Classes$button_reset]);
+var justgage$tachyons_elm$Tachyons$Classes$b__dark_gray = 'b--dark-gray';
+var justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray = 'hover-bg-dark-gray';
 var justgage$tachyons_elm$Tachyons$Classes$hover_white = 'hover-white';
-var author$project$Utils$Styles$buttonRedStyle = justgage$tachyons_elm$Tachyons$classes(
+var author$project$Utils$Styles$buttonGreyStyle = justgage$tachyons_elm$Tachyons$classes(
 	_Utils_ap(
 		author$project$Utils$Styles$buttonStyle,
 		_List_fromArray(
-			[justgage$tachyons_elm$Tachyons$Classes$dark_red, justgage$tachyons_elm$Tachyons$Classes$b__dark_red, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_red, justgage$tachyons_elm$Tachyons$Classes$hover_white])));
+			[justgage$tachyons_elm$Tachyons$Classes$dark_gray, justgage$tachyons_elm$Tachyons$Classes$b__dark_gray, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray, justgage$tachyons_elm$Tachyons$Classes$hover_white])));
+var justgage$tachyons_elm$Tachyons$Classes$black = 'black';
+var justgage$tachyons_elm$Tachyons$Classes$f1 = 'f1';
+var justgage$tachyons_elm$Tachyons$Classes$fw8 = 'fw8';
+var author$project$Utils$Styles$headerStyle = justgage$tachyons_elm$Tachyons$classes(
+	_List_fromArray(
+		[justgage$tachyons_elm$Tachyons$Classes$f1, justgage$tachyons_elm$Tachyons$Classes$fw8, justgage$tachyons_elm$Tachyons$Classes$black, justgage$tachyons_elm$Tachyons$Classes$b]));
 var justgage$tachyons_elm$Tachyons$Classes$bg_transparent = 'bg-transparent';
-var justgage$tachyons_elm$Tachyons$Classes$black_80 = 'black-80';
 var justgage$tachyons_elm$Tachyons$Classes$input_reset = 'input-reset';
 var author$project$Utils$Styles$inputStyle = justgage$tachyons_elm$Tachyons$classes(
 	_List_fromArray(
-		[justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$input_reset, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$bg_transparent, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_red, justgage$tachyons_elm$Tachyons$Classes$hover_white, justgage$tachyons_elm$Tachyons$Classes$black_80]));
+		[justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$input_reset, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$bg_transparent, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray, justgage$tachyons_elm$Tachyons$Classes$hover_white, justgage$tachyons_elm$Tachyons$Classes$dark_gray]));
+var justgage$tachyons_elm$Tachyons$Classes$fw6 = 'fw6';
+var author$project$Utils$Styles$labelStyle = justgage$tachyons_elm$Tachyons$classes(
+	_List_fromArray(
+		[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$fw6, justgage$tachyons_elm$Tachyons$Classes$black_80]));
 var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$fieldset = _VirtualDom_node('fieldset');
 var elm$html$Html$form = _VirtualDom_node('form');
+var elm$html$Html$img = _VirtualDom_node('img');
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$label = _VirtualDom_node('label');
 var elm$html$Html$legend = _VirtualDom_node('legend');
 var elm$html$Html$Attributes$name = elm$html$Html$Attributes$stringProperty('name');
+var elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var justgage$tachyons_elm$Tachyons$Classes$b = 'b';
 var justgage$tachyons_elm$Tachyons$Classes$black_40 = 'black-40';
 var justgage$tachyons_elm$Tachyons$Classes$bn = 'bn';
 var justgage$tachyons_elm$Tachyons$Classes$center = 'center';
 var justgage$tachyons_elm$Tachyons$Classes$dt = 'dt';
 var justgage$tachyons_elm$Tachyons$Classes$dtc = 'dtc';
-var justgage$tachyons_elm$Tachyons$Classes$f2 = 'f2';
-var justgage$tachyons_elm$Tachyons$Classes$f3_ns = 'f3-ns';
-var justgage$tachyons_elm$Tachyons$Classes$fw6 = 'fw6';
 var justgage$tachyons_elm$Tachyons$Classes$lh_copy = 'lh-copy';
+var justgage$tachyons_elm$Tachyons$Classes$mb1 = 'mb1';
 var justgage$tachyons_elm$Tachyons$Classes$mb2 = 'mb2';
 var justgage$tachyons_elm$Tachyons$Classes$min_vh_100 = 'min-vh-100';
+var justgage$tachyons_elm$Tachyons$Classes$mt4 = 'mt4';
 var justgage$tachyons_elm$Tachyons$Classes$mw7 = 'mw7';
 var justgage$tachyons_elm$Tachyons$Classes$overflow_hidden = 'overflow-hidden';
 var justgage$tachyons_elm$Tachyons$Classes$pa0 = 'pa0';
@@ -6972,11 +6992,9 @@ var justgage$tachyons_elm$Tachyons$Classes$pa4 = 'pa4';
 var justgage$tachyons_elm$Tachyons$Classes$pb6 = 'pb6';
 var justgage$tachyons_elm$Tachyons$Classes$ph4_l = 'ph4-l';
 var justgage$tachyons_elm$Tachyons$Classes$relative = 'relative';
-var justgage$tachyons_elm$Tachyons$Classes$right_0 = 'right-0';
 var justgage$tachyons_elm$Tachyons$Classes$tl = 'tl';
 var justgage$tachyons_elm$Tachyons$Classes$v_mid = 'v-mid';
-var justgage$tachyons_elm$Tachyons$Classes$w_20 = 'w-20';
-var justgage$tachyons_elm$Tachyons$Classes$w_70 = 'w-70';
+var justgage$tachyons_elm$Tachyons$Classes$w3 = 'w3';
 var author$project$Pages$Login$view = F2(
 	function (sharedState, model) {
 		return A2(
@@ -7000,12 +7018,30 @@ var author$project$Pages$Login$view = F2(
 					_List_fromArray(
 						[
 							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									justgage$tachyons_elm$Tachyons$classes(
+									_List_fromArray(
+										[justgage$tachyons_elm$Tachyons$Classes$w3, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$mt4]))
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$img,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$src('/assets/Logo.svg')
+										]),
+									_List_Nil)
+								])),
+							A2(
 							elm$html$Html$form,
 							_List_fromArray(
 								[
 									justgage$tachyons_elm$Tachyons$classes(
 									_List_fromArray(
-										[justgage$tachyons_elm$Tachyons$Classes$bg_white, justgage$tachyons_elm$Tachyons$Classes$mw7, justgage$tachyons_elm$Tachyons$Classes$center, justgage$tachyons_elm$Tachyons$Classes$pa4, justgage$tachyons_elm$Tachyons$Classes$black_40]))
+										[justgage$tachyons_elm$Tachyons$Classes$mw7, justgage$tachyons_elm$Tachyons$Classes$center, justgage$tachyons_elm$Tachyons$Classes$pa4, justgage$tachyons_elm$Tachyons$Classes$black_40]))
 								]),
 							_List_fromArray(
 								[
@@ -7025,7 +7061,8 @@ var author$project$Pages$Login$view = F2(
 												[
 													justgage$tachyons_elm$Tachyons$classes(
 													_List_fromArray(
-														[justgage$tachyons_elm$Tachyons$Classes$pa0, justgage$tachyons_elm$Tachyons$Classes$f2, justgage$tachyons_elm$Tachyons$Classes$f3_ns, justgage$tachyons_elm$Tachyons$Classes$b, justgage$tachyons_elm$Tachyons$Classes$mb2, justgage$tachyons_elm$Tachyons$Classes$black_80]))
+														[justgage$tachyons_elm$Tachyons$Classes$pa0, justgage$tachyons_elm$Tachyons$Classes$mb2])),
+													author$project$Utils$Styles$headerStyle
 												]),
 											_List_fromArray(
 												[
@@ -7047,7 +7084,8 @@ var author$project$Pages$Login$view = F2(
 														[
 															justgage$tachyons_elm$Tachyons$classes(
 															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$fw6, justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy]))
+																[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
+															author$project$Utils$Styles$labelStyle
 														]),
 													_List_fromArray(
 														[
@@ -7082,7 +7120,8 @@ var author$project$Pages$Login$view = F2(
 														[
 															justgage$tachyons_elm$Tachyons$classes(
 															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$fw6, justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy]))
+																[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
+															author$project$Utils$Styles$labelStyle
 														]),
 													_List_fromArray(
 														[
@@ -7097,22 +7136,55 @@ var author$project$Pages$Login$view = F2(
 															author$project$Utils$Styles$inputStyle,
 															justgage$tachyons_elm$Tachyons$classes(
 															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$w_70]))
+																[justgage$tachyons_elm$Tachyons$Classes$w_100]))
 														]),
-													_List_Nil),
-													A2(
-													elm$html$Html$button,
+													_List_Nil)
+												])),
+											A2(
+											elm$html$Html$button,
+											_List_fromArray(
+												[
+													author$project$Utils$Styles$buttonGreyStyle,
+													justgage$tachyons_elm$Tachyons$classes(
 													_List_fromArray(
-														[
-															author$project$Utils$Styles$buttonRedStyle,
-															justgage$tachyons_elm$Tachyons$classes(
-															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$w_20, justgage$tachyons_elm$Tachyons$Classes$right_0]))
-														]),
-													_List_fromArray(
-														[
-															elm$html$Html$text('Anmelden')
-														]))
+														[justgage$tachyons_elm$Tachyons$Classes$mt4, justgage$tachyons_elm$Tachyons$Classes$w_100]))
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Anmelden')
+												]))
+										])),
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											justgage$tachyons_elm$Tachyons$classes(
+											_List_fromArray(
+												[justgage$tachyons_elm$Tachyons$Classes$mt3]))
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$a,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$href('#'),
+													author$project$Utils$Styles$linkGreyStyle
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Passwort vergessen?')
+												])),
+											A2(
+											elm$html$Html$a,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$href('#'),
+													author$project$Utils$Styles$linkGreyStyle
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Registrieren')
 												]))
 										]))
 								]))
@@ -7179,8 +7251,9 @@ var author$project$Routing$Router$pageView = F2(
 						]));
 		}
 	});
-var justgage$tachyons_elm$Tachyons$Classes$bg_near_white = 'bg-near-white';
 var justgage$tachyons_elm$Tachyons$Classes$h_100 = 'h-100';
+var justgage$tachyons_elm$Tachyons$Classes$helvetica = 'helvetica';
+var justgage$tachyons_elm$Tachyons$Classes$white = 'white';
 var author$project$Routing$Router$noTabPage = F2(
 	function (sharedState, model) {
 		return A2(
@@ -7189,7 +7262,7 @@ var author$project$Routing$Router$noTabPage = F2(
 				[
 					justgage$tachyons_elm$Tachyons$classes(
 					_List_fromArray(
-						[justgage$tachyons_elm$Tachyons$Classes$h_100, justgage$tachyons_elm$Tachyons$Classes$relative, justgage$tachyons_elm$Tachyons$Classes$bg_near_white]))
+						[justgage$tachyons_elm$Tachyons$Classes$h_100, justgage$tachyons_elm$Tachyons$Classes$relative, justgage$tachyons_elm$Tachyons$Classes$white, justgage$tachyons_elm$Tachyons$Classes$helvetica]))
 				]),
 			_List_fromArray(
 				[
@@ -7210,7 +7283,7 @@ var author$project$Routing$Router$tabPage = F2(
 				[
 					justgage$tachyons_elm$Tachyons$classes(
 					_List_fromArray(
-						[justgage$tachyons_elm$Tachyons$Classes$vh_100, justgage$tachyons_elm$Tachyons$Classes$dt, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$bg_near_white]))
+						[justgage$tachyons_elm$Tachyons$Classes$vh_100, justgage$tachyons_elm$Tachyons$Classes$dt, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$white, justgage$tachyons_elm$Tachyons$Classes$helvetica]))
 				]),
 			_List_fromArray(
 				[

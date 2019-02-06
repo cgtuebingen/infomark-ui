@@ -59,10 +59,17 @@ view sharedState model =
                 , TC.ph3 
                 , TC.ph4_l] -- Center on parent
             ]
-            [ Html.form 
+            [ div 
                 [ classes 
-                    [ TC.bg_white
-                    , TC.mw7
+                    [ TC.w3
+                    , TC.dib
+                    , TC.mt4
+                    ]
+                ]
+                [ img [src "/assets/Logo.svg"] []]
+            , Html.form 
+                [ classes 
+                    [ TC.mw7
                     , TC.center
                     , TC.pa4
                     , TC.black_40
@@ -77,35 +84,41 @@ view sharedState model =
                     [ legend 
                         [ classes 
                             [ TC.pa0 
-                            , TC.f2 
-                            , TC.f3_ns
-                            , TC.b 
                             , TC.mb2
-                            , TC.black_80
                             ]
+                        , Styles.headerStyle
                         ]
-                        [ text "Anmelden" ] -- Replace with translation
+                        [ text "Anmelden" ] -- TODO: Replace with translation
                     , div [ classes[ TC.mt3 ] ]
                         [
-                            label [ classes [ TC.fw6, TC.f6, TC.db, TC.lh_copy ] ]
-                                [ text "Email address" -- Replace with translation
+                            label [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+                                  , Styles.labelStyle ]
+                                [ text "Email address" -- TODO: Replace with translation
                                 ] 
                             , input [ type_ "text", name "email", 
                                     Styles.inputStyle,
                                     classes [TC.w_100]
-                                    ] [] -- Add update function
+                                    ] [] -- TODO: Add update function
                         ]
                     , div [ classes[ TC.mt3 ] ]
                         [
-                            label [ classes [ TC.fw6, TC.f6, TC.db, TC.lh_copy ] ]
-                                [ text "Passwort" -- Replace with translation
+                            label [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+                                  , Styles.labelStyle ]
+                                [ text "Passwort" -- TODO: Replace with translation
                                 ] 
                             , input [ type_ "password", name "password", 
                                     Styles.inputStyle,
-                                    classes [TC.w_70]
-                                    ] [] -- Add update function
-                            , button [ Styles.buttonRedStyle, classes [TC.w_20, TC.right_0] ] [ text "Anmelden"] -- Replace with translation
+                                    classes [TC.w_100]
+                                    ] [] -- TODO: Add update function
+                            
                         ]
+                    , button [ 
+                        Styles.buttonGreyStyle, 
+                        classes[TC.mt4, TC.w_100] ] [ text "Anmelden"] -- TODO: Replace with translation
+                    ]
+                    , div [ classes [ TC.mt3 ]]
+                    [ a [ href "#", Styles.linkGreyStyle ] [ text "Passwort vergessen?" ]
+                    , a [ href "#", Styles.linkGreyStyle ] [ text "Registrieren" ]
                     ]
                 ]   
             ] 

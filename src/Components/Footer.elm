@@ -85,10 +85,10 @@ view sharedState model =
         ]
         [ small 
             [ classes 
-                [ TC.f6
-                , TC.db
+                [ TC.db
                 , TC.tc
                 ]
+            , Styles.textStyle
             ]
             [ text "© 2019 "
                 , b [ classes [TC.ttu] ]
@@ -101,8 +101,8 @@ view sharedState model =
                 , TC.mt3
                 ]
             ]
-            [ a [ href "#0", Styles.linkRedStyle ] [ text "Deutsch" ]
-            , a [ href "#0", Styles.linkRedStyle ] [ text "English" ]
-            , a [ href "#0", Styles.linkRedStyle ] [ text "Terms of Use" ]
+            [ a [ href "#0", Styles.linkGreyStyle ] [ text "Deutsch" ]
+            , a [ href "#0", Styles.linkGreyStyle ] [ text "English" ]
+            , a [ href "#0", Styles.linkGreyStyle ] [ text "Terms of Use" ]
             ]
         ]

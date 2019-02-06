@@ -137,7 +137,8 @@ tabPage sharedState model =
             [ TC.vh_100
             , TC.dt
             , TC.w_100
-            , TC.bg_near_white
+            , TC.white
+            , TC.helvetica
             ]
         ] 
         [ text "Tabs"
@@ -150,7 +151,8 @@ noTabPage sharedState model =
             [ classes
                 [ TC.h_100
                 , TC.relative
-                , TC.bg_near_white
+                , TC.white
+                , TC.helvetica
                 ]
             ]
             [ pageView sharedState model 

@@ -1,6 +1,7 @@
 module Utils.Styles exposing (linkBlackStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, 
                               buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle,
-                              inputStyle)
+                              inputStyle,
+                              headerStyle, labelStyle, textStyle)
 
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
@@ -35,7 +36,8 @@ buttonStyle =
     [ TC.f5 
     , TC.no_underline
     , TC.bg_animate
-    , TC.inline_flex 
+    , TC.dib
+    , TC.b
     , TC.items_center 
     , TC.pa3 
     , TC.ba 
@@ -85,7 +87,25 @@ inputStyle = classes
     , TC.input_reset 
     , TC.ba 
     , TC.bg_transparent 
-    , TC.hover_bg_dark_red
+    , TC.hover_bg_dark_gray
     , TC.hover_white
+    , TC.dark_gray
+    ]
+
+headerStyle = classes
+    [ TC.f1
+    , TC.fw8
+    , TC.black 
+    , TC.b
+    ]
+
+labelStyle = classes
+    [ TC.f6
+    , TC.fw6
+    , TC.black_80
+    ]
+
+textStyle = classes
+    [ TC.f6
     , TC.black_80
     ]
