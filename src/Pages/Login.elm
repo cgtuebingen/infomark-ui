@@ -17,12 +17,15 @@ import I18n
 import Time
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
+import Api.Data.Account exposing (Account)
+import Api.Data.Role exposing (Role)
+import Api.Request.Auth exposing (sessionPost)
 
 
 type alias Model =
     { email : String
     , plain_password : String
-    , loginProgress : WebData String -- TODO: Tokens here too
+    , loginProgress : WebData Role
     , errors : (List Error)
     }
 
@@ -38,7 +41,7 @@ type Msg
     = NavigateTo Route
     | Login
     | SetField Field String
-    | LoginResponse (WebData String) -- TODO: more like Tokens. Save tokens to shared state
+    | LoginResponse (WebData Role) -- TODO: more like Tokens. Save tokens to shared state
 
 
 type Field
@@ -85,10 +88,19 @@ update sharedState msg model =
                     ( {model | errors = errors}, Cmd.none, NoUpdate)
 
                 Ok _ -> 
-                    ( {model | loginProgress = Loading, errors = []}, Cmd.none, NoUpdate) -- TODO: Start the web request here.
+                    let
+                        account = { email = model.email, plain_password = model.plain_password }
+                    in
+                    ( {model | loginProgress = Loading, errors = []}, sessionPost account LoginResponse, NoUpdate) -- TODO: Start the web request here.
 
         LoginResponse response ->
             (model, pushUrl sharedState.navKey (reverseRoute HomeRoute), NoUpdate) -- TODO: Update the shared state
+
+
+type alias LoginBody =
+    { email : String
+    , plain_password : String
+    }
 
 
 view : SharedState -> Model -> Html Msg

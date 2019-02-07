@@ -22,10 +22,6 @@ type SharedStateUpdate
 
 update : SharedState -> SharedStateUpdate -> SharedState
 update sharedState sharedStateUpdate =
-    let 
-        _ = Debug.log "SharedStateUpdate" sharedStateUpdate
-        _ = Debug.log "Old Shared State" sharedState
-    in
     case sharedStateUpdate of
         UpdateTime time ->
             { sharedState | currentTime = time }
