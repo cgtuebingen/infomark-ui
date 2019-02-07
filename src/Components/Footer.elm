@@ -5,6 +5,7 @@ import Dict
 import Http
 import Html exposing (..)
 import Html.Attributes exposing (href)
+import Html.Events exposing (onClick)
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import RemoteData exposing (RemoteData(..), WebData)
@@ -39,7 +40,7 @@ update sharedState msg model =
             )
 
         HandleTranslationsResponse webData ->
-            case webData of
+            case Debug.log "TranslationReceived" webData of
                 Success translations ->
                     ( model, Cmd.none, UpdateTranslations translations )
 
@@ -101,8 +102,8 @@ view sharedState model =
                 , TC.mt3
                 ]
             ]
-            [ a [ href "#0", Styles.linkGreyStyle ] [ text "Deutsch" ]
-            , a [ href "#0", Styles.linkGreyStyle ] [ text "English" ]
-            , a [ href "#0", Styles.linkGreyStyle ] [ text "Terms of Use" ]
+            [ button [ Styles.linkGreyStyle, onClick <| SelectedLanguage German ] [ text "Deutsch" ]
+            , button [ Styles.linkGreyStyle, onClick <| SelectedLanguage English ] [ text "English" ]
+            , a [ Styles.linkGreyStyle ] [ text "Terms of Use" ]
             ]
         ]

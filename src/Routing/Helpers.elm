@@ -14,9 +14,6 @@ type Route
 reverseRoute : Route -> String
 reverseRoute route =
     case route of
-        LoginRoute ->
-            "#/login"
-
         RegistrationRoute ->
             "#/registration"
 
@@ -29,8 +26,8 @@ reverseRoute route =
 
 routeParser =
     Url.Parser.oneOf
-        [ Url.Parser.map HomeRoute Url.Parser.top
-        , Url.Parser.map LoginRoute (Url.Parser.s "login")
+        [ Url.Parser.map LoginRoute Url.Parser.top
+        , Url.Parser.map HomeRoute (Url.Parser.s "home") 
         , Url.Parser.map RegistrationRoute (Url.Parser.s "registration")
         ]
 

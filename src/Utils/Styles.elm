@@ -13,6 +13,13 @@ linkStyle =
     , TC.ph2 
     , TC.link
     , TC.dim 
+    , TC.pointer
+    , TC.button_reset ---Everything for applying the style to a button instead of "a" 
+    , TC.input_reset
+    , TC.bg_transparent
+    , TC.hover_bg_transparent
+    , TC.bn
+    , TC.no_underline
     ]
 
 linkBlackStyle = classes <|

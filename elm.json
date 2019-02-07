@@ -20,6 +20,7 @@
             "krisajenkins/remotedata": "6.0.1",
             "rtfeldman/elm-css": "16.0.0",
             "rtfeldman/elm-iso8601-date-strings": "1.1.2",
+            "rtfeldman/elm-validate": "4.0.1",
             "ryannhg/date-format": "2.3.0",
             "simonh1000/elm-jwt": "7.0.0"
         },

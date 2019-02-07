@@ -79,13 +79,46 @@ update sharedState msg model =
             (model, Cmd.none, NoUpdate)
 
         LoginMsg loginMsg ->
-            (model, Cmd.none, NoUpdate)
+            updateLogin sharedState model loginMsg
 
         RegistrationMsg registrationMsg ->
-            (model, Cmd.none, NoUpdate)
+            updateRegistration sharedState model registrationMsg
 
         FooterMsg footerMsg ->
-            (model, Cmd.none, NoUpdate)
+            updateFooter sharedState model footerMsg
+
+
+updateLogin : SharedState -> Model -> Login.Msg -> (Model, Cmd Msg, SharedStateUpdate)
+updateLogin sharedState model loginMsg = 
+    let 
+        (nextLoginModel, loginCmd, sharedStateUpdate) =
+            Login.update sharedState loginMsg model.loginModel
+    in
+    ( { model | loginModel = nextLoginModel}
+    , Cmd.map LoginMsg loginCmd
+    , sharedStateUpdate)
+
+
+updateRegistration : SharedState -> Model -> Registration.Msg -> (Model, Cmd Msg, SharedStateUpdate)
+updateRegistration sharedState model registrationMsg = 
+    let 
+        (nextRegistrationModel, registrationCmd, sharedStateUpdate) =
+            Registration.update sharedState registrationMsg model.registrationModel
+    in
+    ( { model | registrationModel = nextRegistrationModel}
+    , Cmd.map RegistrationMsg registrationCmd
+    , sharedStateUpdate)
+
+
+updateFooter : SharedState -> Model -> Footer.Msg -> (Model, Cmd Msg, SharedStateUpdate)
+updateFooter sharedState model footerMsg = 
+    let 
+        (nextFooterModel, footerCmd, sharedStateUpdate) =
+            Footer.update sharedState footerMsg model.footerModel
+    in
+    ( { model | footerModel = nextFooterModel}
+    , Cmd.map FooterMsg footerCmd
+    , sharedStateUpdate)
 
 
 view : (Msg -> msg) -> SharedState -> Model -> Browser.Document msg
@@ -100,7 +133,7 @@ view msgMapper sharedState model =
                     "Login"
                 
                 RegistrationRoute ->
-                    "Registration" -- Get translation from file
+                    "Registration" -- TODO: Get translation from file
             
                 HomeRoute ->
                     "Home"
@@ -168,7 +201,6 @@ pageView sharedState model =
             Home.view sharedState model.homeModel
                 |> Html.map HomeMsg
             
-
         LoginRoute ->
             Login.view sharedState model.loginModel
                 |> Html.map LoginMsg

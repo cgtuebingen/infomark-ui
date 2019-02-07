@@ -56,7 +56,7 @@ init flags url navKey =
       , navKey = navKey
       }
     , Http.get 
-        { url = "/translations/en.json"
+        { url = "/translations/de.json"
         , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
         }
     )
@@ -191,4 +191,4 @@ view model =
         FailedToInitialize ->
             { title = "Failure"
             , body = [ text "The application failed to initialize. " ]
-            }
+            } -- TODO: Style everything!

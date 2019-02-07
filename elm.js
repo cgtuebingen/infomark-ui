@@ -4504,6 +4504,107 @@ function _Browser_load(url)
 }
 
 
+// CREATE
+
+var _Regex_never = /.^/;
+
+var _Regex_fromStringWith = F2(function(options, string)
+{
+	var flags = 'g';
+	if (options.multiline) { flags += 'm'; }
+	if (options.caseInsensitive) { flags += 'i'; }
+
+	try
+	{
+		return elm$core$Maybe$Just(new RegExp(string, flags));
+	}
+	catch(error)
+	{
+		return elm$core$Maybe$Nothing;
+	}
+});
+
+
+// USE
+
+var _Regex_contains = F2(function(re, string)
+{
+	return string.match(re) !== null;
+});
+
+
+var _Regex_findAtMost = F3(function(n, re, str)
+{
+	var out = [];
+	var number = 0;
+	var string = str;
+	var lastIndex = re.lastIndex;
+	var prevLastIndex = -1;
+	var result;
+	while (number++ < n && (result = re.exec(string)))
+	{
+		if (prevLastIndex == re.lastIndex) break;
+		var i = result.length - 1;
+		var subs = new Array(i);
+		while (i > 0)
+		{
+			var submatch = result[i];
+			subs[--i] = submatch
+				? elm$core$Maybe$Just(submatch)
+				: elm$core$Maybe$Nothing;
+		}
+		out.push(A4(elm$regex$Regex$Match, result[0], result.index, number, _List_fromArray(subs)));
+		prevLastIndex = re.lastIndex;
+	}
+	re.lastIndex = lastIndex;
+	return _List_fromArray(out);
+});
+
+
+var _Regex_replaceAtMost = F4(function(n, re, replacer, string)
+{
+	var count = 0;
+	function jsReplacer(match)
+	{
+		if (count++ >= n)
+		{
+			return match;
+		}
+		var i = arguments.length - 3;
+		var submatches = new Array(i);
+		while (i > 0)
+		{
+			var submatch = arguments[i];
+			submatches[--i] = submatch
+				? elm$core$Maybe$Just(submatch)
+				: elm$core$Maybe$Nothing;
+		}
+		return replacer(A4(elm$regex$Regex$Match, match, arguments[arguments.length - 2], count, _List_fromArray(submatches)));
+	}
+	return string.replace(re, jsReplacer);
+});
+
+var _Regex_splitAtMost = F3(function(n, re, str)
+{
+	var string = str;
+	var out = [];
+	var start = re.lastIndex;
+	var restoreLastIndex = re.lastIndex;
+	while (n--)
+	{
+		var result = re.exec(string);
+		if (!result) break;
+		out.push(string.slice(start, result.index));
+		start = re.lastIndex;
+	}
+	out.push(string.slice(start));
+	re.lastIndex = restoreLastIndex;
+	return _List_fromArray(out);
+});
+
+var _Regex_infinity = Infinity;
+
+
 
 function _Time_now(millisToPosix)
 {
@@ -5975,7 +6076,7 @@ var author$project$Main$init = F3(
 						elm$http$Http$expectJson,
 						A2(elm$core$Basics$composeR, krisajenkins$remotedata$RemoteData$fromResult, author$project$Main$HandleTranslationsResponse),
 						author$project$Decoders$decodeTranslations),
-					url: '/translations/en.json'
+					url: '/translations/de.json'
 				}));
 	});
 var author$project$Main$Ready = F2(
@@ -6104,11 +6205,11 @@ var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
 var author$project$Routing$Helpers$routeParser = elm$url$Url$Parser$oneOf(
 	_List_fromArray(
 		[
-			A2(elm$url$Url$Parser$map, author$project$Routing$Helpers$HomeRoute, elm$url$Url$Parser$top),
+			A2(elm$url$Url$Parser$map, author$project$Routing$Helpers$LoginRoute, elm$url$Url$Parser$top),
 			A2(
 			elm$url$Url$Parser$map,
-			author$project$Routing$Helpers$LoginRoute,
-			elm$url$Url$Parser$s('login')),
+			author$project$Routing$Helpers$HomeRoute,
+			elm$url$Url$Parser$s('home')),
 			A2(
 			elm$url$Url$Parser$map,
 			author$project$Routing$Helpers$RegistrationRoute,
@@ -6257,8 +6358,6 @@ var author$project$Routing$Helpers$parseUrl = function (url) {
 };
 var author$project$Routing$Helpers$reverseRoute = function (route) {
 	switch (route.$) {
-		case 'LoginRoute':
-			return '#/login';
 		case 'RegistrationRoute':
 			return '#/registration';
 		case 'HomeRoute':
@@ -6267,7 +6366,170 @@ var author$project$Routing$Helpers$reverseRoute = function (route) {
 			return '#/';
 	}
 };
+var author$project$Components$Footer$HandleTranslationsResponse = function (a) {
+	return {$: 'HandleTranslationsResponse', a: a};
+};
+var author$project$Components$Footer$getTranslations = function (language) {
+	var url = function () {
+		if (language.$ === 'English') {
+			return '/translations/en.json';
+		} else {
+			return '/translations/de.json';
+		}
+	}();
+	return elm$http$Http$get(
+		{
+			expect: A2(
+				elm$http$Http$expectJson,
+				A2(elm$core$Basics$composeR, krisajenkins$remotedata$RemoteData$fromResult, author$project$Components$Footer$HandleTranslationsResponse),
+				author$project$Decoders$decodeTranslations),
+			url: url
+		});
+};
 var author$project$SharedState$NoUpdate = {$: 'NoUpdate'};
+var author$project$SharedState$UpdateTranslations = function (a) {
+	return {$: 'UpdateTranslations', a: a};
+};
+var elm$core$Debug$log = _Debug_log;
+var elm$core$Platform$Cmd$batch = _Platform_batch;
+var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var author$project$Components$Footer$update = F3(
+	function (sharedState, msg, model) {
+		if (msg.$ === 'SelectedLanguage') {
+			var lang = msg.a;
+			return _Utils_Tuple3(
+				_Utils_update(
+					model,
+					{selectedLanguage: lang}),
+				author$project$Components$Footer$getTranslations(lang),
+				author$project$SharedState$NoUpdate);
+		} else {
+			var webData = msg.a;
+			var _n1 = A2(elm$core$Debug$log, 'TranslationReceived', webData);
+			if (_n1.$ === 'Success') {
+				var translations = _n1.a;
+				return _Utils_Tuple3(
+					model,
+					elm$core$Platform$Cmd$none,
+					author$project$SharedState$UpdateTranslations(translations));
+			} else {
+				return _Utils_Tuple3(model, elm$core$Platform$Cmd$none, author$project$SharedState$NoUpdate);
+			}
+		}
+	});
+var author$project$Routing$Router$FooterMsg = function (a) {
+	return {$: 'FooterMsg', a: a};
+};
+var elm$core$Platform$Cmd$map = _Platform_map;
+var author$project$Routing$Router$updateFooter = F3(
+	function (sharedState, model, footerMsg) {
+		var _n0 = A3(author$project$Components$Footer$update, sharedState, footerMsg, model.footerModel);
+		var nextFooterModel = _n0.a;
+		var footerCmd = _n0.b;
+		var sharedStateUpdate = _n0.c;
+		return _Utils_Tuple3(
+			_Utils_update(
+				model,
+				{footerModel: nextFooterModel}),
+			A2(elm$core$Platform$Cmd$map, author$project$Routing$Router$FooterMsg, footerCmd),
+			sharedStateUpdate);
+	});
+var author$project$Pages$Login$Email = {$: 'Email'};
+var author$project$Pages$Login$Password = {$: 'Password'};
+var rtfeldman$elm_validate$Validate$Validator = function (a) {
+	return {$: 'Validator', a: a};
+};
+var rtfeldman$elm_validate$Validate$all = function (validators) {
+	var newGetErrors = function (subject) {
+		var accumulateErrors = F2(
+			function (_n0, totalErrors) {
+				var getErrors = _n0.a;
+				return _Utils_ap(
+					totalErrors,
+					getErrors(subject));
+			});
+		return A3(elm$core$List$foldl, accumulateErrors, _List_Nil, validators);
+	};
+	return rtfeldman$elm_validate$Validate$Validator(newGetErrors);
+};
+var rtfeldman$elm_validate$Validate$ifTrue = F2(
+	function (test, error) {
+		var getErrors = function (subject) {
+			return test(subject) ? _List_fromArray(
+				[error]) : _List_Nil;
+		};
+		return rtfeldman$elm_validate$Validate$Validator(getErrors);
+	});
+var rtfeldman$elm_validate$Validate$isWhitespaceChar = function (_char) {
+	return _Utils_eq(
+		_char,
+		_Utils_chr(' ')) || (_Utils_eq(
+		_char,
+		_Utils_chr('\n')) || (_Utils_eq(
+		_char,
+		_Utils_chr('\t')) || _Utils_eq(
+		_char,
+		_Utils_chr('\u000d'))));
+};
+var rtfeldman$elm_validate$Validate$isBlank = function (str) {
+	isBlank:
+	while (true) {
+		var _n0 = elm$core$String$uncons(str);
+		if (_n0.$ === 'Just') {
+			var _n1 = _n0.a;
+			var _char = _n1.a;
+			var rest = _n1.b;
+			if (rtfeldman$elm_validate$Validate$isWhitespaceChar(_char)) {
+				var $temp$str = rest;
+				str = $temp$str;
+				continue isBlank;
+			} else {
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+};
+var rtfeldman$elm_validate$Validate$ifBlank = F2(
+	function (subjectToString, error) {
+		return A2(
+			rtfeldman$elm_validate$Validate$ifTrue,
+			function (subject) {
+				return rtfeldman$elm_validate$Validate$isBlank(
+					subjectToString(subject));
+			},
+			error);
+	});
+var author$project$Pages$Login$modelValidator = rtfeldman$elm_validate$Validate$all(
+	_List_fromArray(
+		[
+			A2(
+			rtfeldman$elm_validate$Validate$ifBlank,
+			function ($) {
+				return $.email;
+			},
+			_Utils_Tuple2(author$project$Pages$Login$Email, 'Bitte gib deine E-Mail ein.')),
+			A2(
+			rtfeldman$elm_validate$Validate$ifBlank,
+			function ($) {
+				return $.plain_password;
+			},
+			_Utils_Tuple2(author$project$Pages$Login$Password, 'Bitte gib dein Passwort ein.'))
+		]));
+var author$project$Pages$Login$setField = F3(
+	function (model, field, value) {
+		var _n0 = A2(elm$core$Debug$log, 'SetField Called', value);
+		if (field.$ === 'Email') {
+			return _Utils_update(
+				model,
+				{email: value});
+		} else {
+			return _Utils_update(
+				model,
+				{plain_password: value});
+		}
+	});
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
 };
@@ -6484,8 +6746,377 @@ var elm$url$Url$fromString = function (str) {
 		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
 };
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var elm$core$Platform$Cmd$batch = _Platform_batch;
-var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var krisajenkins$remotedata$RemoteData$Loading = {$: 'Loading'};
+var rtfeldman$elm_validate$Validate$Valid = function (a) {
+	return {$: 'Valid', a: a};
+};
+var rtfeldman$elm_validate$Validate$validate = F2(
+	function (_n0, subject) {
+		var getErrors = _n0.a;
+		var _n1 = getErrors(subject);
+		if (!_n1.b) {
+			return elm$core$Result$Ok(
+				rtfeldman$elm_validate$Validate$Valid(subject));
+		} else {
+			var errors = _n1;
+			return elm$core$Result$Err(errors);
+		}
+	});
+var author$project$Pages$Login$update = F3(
+	function (sharedState, msg, model) {
+		switch (msg.$) {
+			case 'NavigateTo':
+				var route = msg.a;
+				return _Utils_Tuple3(
+					model,
+					A2(
+						elm$browser$Browser$Navigation$pushUrl,
+						sharedState.navKey,
+						author$project$Routing$Helpers$reverseRoute(route)),
+					author$project$SharedState$NoUpdate);
+			case 'SetField':
+				var field = msg.a;
+				var value = msg.b;
+				return _Utils_Tuple3(
+					A3(author$project$Pages$Login$setField, model, field, value),
+					elm$core$Platform$Cmd$none,
+					author$project$SharedState$NoUpdate);
+			case 'Login':
+				var _n1 = A2(rtfeldman$elm_validate$Validate$validate, author$project$Pages$Login$modelValidator, model);
+				if (_n1.$ === 'Err') {
+					var errors = _n1.a;
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{errors: errors}),
+						elm$core$Platform$Cmd$none,
+						author$project$SharedState$NoUpdate);
+				} else {
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{errors: _List_Nil, loginProgress: krisajenkins$remotedata$RemoteData$Loading}),
+						elm$core$Platform$Cmd$none,
+						author$project$SharedState$NoUpdate);
+				}
+			default:
+				var response = msg.a;
+				return _Utils_Tuple3(
+					model,
+					A2(
+						elm$browser$Browser$Navigation$pushUrl,
+						sharedState.navKey,
+						author$project$Routing$Helpers$reverseRoute(author$project$Routing$Helpers$HomeRoute)),
+					author$project$SharedState$NoUpdate);
+		}
+	});
+var author$project$Routing$Router$LoginMsg = function (a) {
+	return {$: 'LoginMsg', a: a};
+};
+var author$project$Routing$Router$updateLogin = F3(
+	function (sharedState, model, loginMsg) {
+		var _n0 = A3(author$project$Pages$Login$update, sharedState, loginMsg, model.loginModel);
+		var nextLoginModel = _n0.a;
+		var loginCmd = _n0.b;
+		var sharedStateUpdate = _n0.c;
+		return _Utils_Tuple3(
+			_Utils_update(
+				model,
+				{loginModel: nextLoginModel}),
+			A2(elm$core$Platform$Cmd$map, author$project$Routing$Router$LoginMsg, loginCmd),
+			sharedStateUpdate);
+	});
+var author$project$Pages$Registration$Email = {$: 'Email'};
+var author$project$Pages$Registration$FirstName = {$: 'FirstName'};
+var author$project$Pages$Registration$LastName = {$: 'LastName'};
+var author$project$Pages$Registration$Password = {$: 'Password'};
+var author$project$Pages$Registration$PasswordRepeat = {$: 'PasswordRepeat'};
+var author$project$Pages$Registration$Semester = {$: 'Semester'};
+var author$project$Pages$Registration$StudentNumber = {$: 'StudentNumber'};
+var author$project$Pages$Registration$Subject = {$: 'Subject'};
+var rtfeldman$elm_validate$Validate$firstErrorHelp = F2(
+	function (validators, subject) {
+		firstErrorHelp:
+		while (true) {
+			if (!validators.b) {
+				return _List_Nil;
+			} else {
+				var getErrors = validators.a.a;
+				var rest = validators.b;
+				var _n1 = getErrors(subject);
+				if (!_n1.b) {
+					var $temp$validators = rest,
+						$temp$subject = subject;
+					validators = $temp$validators;
+					subject = $temp$subject;
+					continue firstErrorHelp;
+				} else {
+					var errors = _n1;
+					return errors;
+				}
+			}
+		}
+	});
+var rtfeldman$elm_validate$Validate$firstError = function (validators) {
+	var getErrors = function (subject) {
+		return A2(rtfeldman$elm_validate$Validate$firstErrorHelp, validators, subject);
+	};
+	return rtfeldman$elm_validate$Validate$Validator(getErrors);
+};
+var rtfeldman$elm_validate$Validate$ifFalse = F2(
+	function (test, error) {
+		var getErrors = function (subject) {
+			return test(subject) ? _List_Nil : _List_fromArray(
+				[error]);
+		};
+		return rtfeldman$elm_validate$Validate$Validator(getErrors);
+	});
+var elm$regex$Regex$Match = F4(
+	function (match, index, number, submatches) {
+		return {index: index, match: match, number: number, submatches: submatches};
+	});
+var elm$regex$Regex$contains = _Regex_contains;
+var elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
+var elm$regex$Regex$never = _Regex_never;
+var rtfeldman$elm_validate$Validate$validEmail = A2(
+	elm$core$Maybe$withDefault,
+	elm$regex$Regex$never,
+	A2(
+		elm$regex$Regex$fromStringWith,
+		{caseInsensitive: true, multiline: false},
+		'^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'));
+var rtfeldman$elm_validate$Validate$isValidEmail = function (email) {
+	return A2(elm$regex$Regex$contains, rtfeldman$elm_validate$Validate$validEmail, email);
+};
+var rtfeldman$elm_validate$Validate$ifInvalidEmail = F2(
+	function (subjectToEmail, errorFromEmail) {
+		var getErrors = function (subject) {
+			var email = subjectToEmail(subject);
+			return rtfeldman$elm_validate$Validate$isValidEmail(email) ? _List_Nil : _List_fromArray(
+				[
+					errorFromEmail(email)
+				]);
+		};
+		return rtfeldman$elm_validate$Validate$Validator(getErrors);
+	});
+var rtfeldman$elm_validate$Validate$isInt = function (str) {
+	var _n0 = elm$core$String$toInt(str);
+	if (_n0.$ === 'Nothing') {
+		return false;
+	} else {
+		return true;
+	}
+};
+var rtfeldman$elm_validate$Validate$ifNotInt = F2(
+	function (subjectToString, errorFromString) {
+		var getErrors = function (subject) {
+			var str = subjectToString(subject);
+			return rtfeldman$elm_validate$Validate$isInt(str) ? _List_Nil : _List_fromArray(
+				[
+					errorFromString(str)
+				]);
+		};
+		return rtfeldman$elm_validate$Validate$Validator(getErrors);
+	});
+var author$project$Pages$Registration$modelValidator = rtfeldman$elm_validate$Validate$all(
+	_List_fromArray(
+		[
+			rtfeldman$elm_validate$Validate$firstError(
+			_List_fromArray(
+				[
+					A2(
+					rtfeldman$elm_validate$Validate$ifBlank,
+					function ($) {
+						return $.email;
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$Email, 'Bitte gib deine E-Mail ein.')),
+					A2(
+					rtfeldman$elm_validate$Validate$ifInvalidEmail,
+					function ($) {
+						return $.email;
+					},
+					function (value) {
+						return _Utils_Tuple2(author$project$Pages$Registration$Email, 'Die eingegebene E-Mail Addresse ' + (value + ' ist nicht gültig.'));
+					})
+				])),
+			rtfeldman$elm_validate$Validate$firstError(
+			_List_fromArray(
+				[
+					A2(
+					rtfeldman$elm_validate$Validate$ifBlank,
+					function ($) {
+						return $.semester;
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$Semester, 'Bitte gib dein Semester ein.')),
+					A2(
+					rtfeldman$elm_validate$Validate$ifNotInt,
+					function ($) {
+						return $.semester;
+					},
+					function (value) {
+						return _Utils_Tuple2(author$project$Pages$Registration$Semester, value + ' ist keine gültige Zahl.');
+					})
+				])),
+			rtfeldman$elm_validate$Validate$firstError(
+			_List_fromArray(
+				[
+					A2(
+					rtfeldman$elm_validate$Validate$ifBlank,
+					function ($) {
+						return $.password;
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$Password, 'Bitte gib ein Passwort ein.')),
+					A2(
+					rtfeldman$elm_validate$Validate$ifBlank,
+					function ($) {
+						return $.passwordRepeat;
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$PasswordRepeat, 'Bitte gib dein Passwort erneut ein.')),
+					A2(
+					rtfeldman$elm_validate$Validate$ifFalse,
+					function (model) {
+						return _Utils_eq(model.password, model.passwordRepeat);
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$Password, 'Die Passwörter müssen identisch sein.'))
+				])),
+			A2(
+			rtfeldman$elm_validate$Validate$ifBlank,
+			function ($) {
+				return $.firstName;
+			},
+			_Utils_Tuple2(author$project$Pages$Registration$FirstName, 'Bitte gib deinen Vornamen ein.')),
+			A2(
+			rtfeldman$elm_validate$Validate$ifBlank,
+			function ($) {
+				return $.lastName;
+			},
+			_Utils_Tuple2(author$project$Pages$Registration$LastName, 'Bitte gib deinen Nachnamen ein.')),
+			rtfeldman$elm_validate$Validate$firstError(
+			_List_fromArray(
+				[
+					A2(
+					rtfeldman$elm_validate$Validate$ifBlank,
+					function ($) {
+						return $.studentNumber;
+					},
+					_Utils_Tuple2(author$project$Pages$Registration$StudentNumber, 'Bitte gib deine Martrikelnummer ein.')),
+					A2(
+					rtfeldman$elm_validate$Validate$ifNotInt,
+					function ($) {
+						return $.studentNumber;
+					},
+					function (value) {
+						return _Utils_Tuple2(author$project$Pages$Registration$StudentNumber, value + ' ist keine gültige Zahl.');
+					})
+				])),
+			A2(
+			rtfeldman$elm_validate$Validate$ifBlank,
+			function ($) {
+				return $.subject;
+			},
+			_Utils_Tuple2(author$project$Pages$Registration$Subject, 'Bitte gib dein Fach ein.'))
+		]));
+var author$project$Pages$Registration$setField = F3(
+	function (model, field, value) {
+		switch (field.$) {
+			case 'Email':
+				return _Utils_update(
+					model,
+					{email: value});
+			case 'Password':
+				return _Utils_update(
+					model,
+					{password: value});
+			case 'PasswordRepeat':
+				return _Utils_update(
+					model,
+					{passwordRepeat: value});
+			case 'FirstName':
+				return _Utils_update(
+					model,
+					{firstName: value});
+			case 'LastName':
+				return _Utils_update(
+					model,
+					{lastName: value});
+			case 'StudentNumber':
+				return _Utils_update(
+					model,
+					{studentNumber: value});
+			case 'Semester':
+				return _Utils_update(
+					model,
+					{semester: value});
+			default:
+				return _Utils_update(
+					model,
+					{subject: value});
+		}
+	});
+var author$project$Pages$Registration$update = F3(
+	function (sharedState, msg, model) {
+		switch (msg.$) {
+			case 'NavigateTo':
+				var route = msg.a;
+				return _Utils_Tuple3(
+					model,
+					A2(
+						elm$browser$Browser$Navigation$pushUrl,
+						sharedState.navKey,
+						author$project$Routing$Helpers$reverseRoute(route)),
+					author$project$SharedState$NoUpdate);
+			case 'SetField':
+				var field = msg.a;
+				var value = msg.b;
+				return _Utils_Tuple3(
+					A3(author$project$Pages$Registration$setField, model, field, value),
+					elm$core$Platform$Cmd$none,
+					author$project$SharedState$NoUpdate);
+			case 'Registrate':
+				var _n1 = A2(rtfeldman$elm_validate$Validate$validate, author$project$Pages$Registration$modelValidator, model);
+				if (_n1.$ === 'Err') {
+					var errors = _n1.a;
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{errors: errors}),
+						elm$core$Platform$Cmd$none,
+						author$project$SharedState$NoUpdate);
+				} else {
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{errors: _List_Nil, registrationProgress: krisajenkins$remotedata$RemoteData$Loading}),
+						elm$core$Platform$Cmd$none,
+						author$project$SharedState$NoUpdate);
+				}
+			default:
+				var response = msg.a;
+				return _Utils_Tuple3(
+					model,
+					A2(
+						elm$browser$Browser$Navigation$pushUrl,
+						sharedState.navKey,
+						author$project$Routing$Helpers$reverseRoute(author$project$Routing$Helpers$LoginRoute)),
+					author$project$SharedState$NoUpdate);
+		}
+	});
+var author$project$Routing$Router$RegistrationMsg = function (a) {
+	return {$: 'RegistrationMsg', a: a};
+};
+var author$project$Routing$Router$updateRegistration = F3(
+	function (sharedState, model, registrationMsg) {
+		var _n0 = A3(author$project$Pages$Registration$update, sharedState, registrationMsg, model.registrationModel);
+		var nextRegistrationModel = _n0.a;
+		var registrationCmd = _n0.b;
+		var sharedStateUpdate = _n0.c;
+		return _Utils_Tuple3(
+			_Utils_update(
+				model,
+				{registrationModel: nextRegistrationModel}),
+			A2(elm$core$Platform$Cmd$map, author$project$Routing$Router$RegistrationMsg, registrationCmd),
+			sharedStateUpdate);
+	});
 var author$project$Routing$Router$update = F3(
 	function (sharedState, msg, model) {
 		switch (msg.$) {
@@ -6513,17 +7144,19 @@ var author$project$Routing$Router$update = F3(
 				return _Utils_Tuple3(model, elm$core$Platform$Cmd$none, author$project$SharedState$NoUpdate);
 			case 'LoginMsg':
 				var loginMsg = msg.a;
-				return _Utils_Tuple3(model, elm$core$Platform$Cmd$none, author$project$SharedState$NoUpdate);
+				return A3(author$project$Routing$Router$updateLogin, sharedState, model, loginMsg);
 			case 'RegistrationMsg':
 				var registrationMsg = msg.a;
-				return _Utils_Tuple3(model, elm$core$Platform$Cmd$none, author$project$SharedState$NoUpdate);
+				return A3(author$project$Routing$Router$updateRegistration, sharedState, model, registrationMsg);
 			default:
 				var footerMsg = msg.a;
-				return _Utils_Tuple3(model, elm$core$Platform$Cmd$none, author$project$SharedState$NoUpdate);
+				return A3(author$project$Routing$Router$updateFooter, sharedState, model, footerMsg);
 		}
 	});
 var author$project$SharedState$update = F2(
 	function (sharedState, sharedStateUpdate) {
+		var _n0 = A2(elm$core$Debug$log, 'SharedStateUpdate', sharedStateUpdate);
+		var _n1 = A2(elm$core$Debug$log, 'Old Shared State', sharedState);
 		switch (sharedStateUpdate.$) {
 			case 'UpdateTime':
 				var time = sharedStateUpdate.a;
@@ -6544,8 +7177,6 @@ var author$project$SharedState$update = F2(
 				return sharedState;
 		}
 	});
-var elm$core$Debug$log = _Debug_log;
-var elm$core$Platform$Cmd$map = _Platform_map;
 var author$project$Main$updateRouter = F2(
 	function (model, routerMsg) {
 		var _n0 = model.appState;
@@ -6610,8 +7241,9 @@ var author$project$Components$Footer$initModel = {selectedLanguage: author$proje
 var author$project$Pages$Home$init = _Utils_Tuple2(
 	{logged_in: false},
 	elm$core$Platform$Cmd$none);
-var author$project$Pages$Login$initModel = {plain_password: '', username: ''};
-var author$project$Pages$Registration$initModel = {plain_password: '', username: ''};
+var krisajenkins$remotedata$RemoteData$NotAsked = {$: 'NotAsked'};
+var author$project$Pages$Login$initModel = {email: '', errors: _List_Nil, loginProgress: krisajenkins$remotedata$RemoteData$NotAsked, plain_password: ''};
+var author$project$Pages$Registration$initModel = {email: '', errors: _List_Nil, firstName: '', lastName: '', password: '', passwordRepeat: '', registrationProgress: krisajenkins$remotedata$RemoteData$NotAsked, semester: '', studentNumber: '', subject: ''};
 var author$project$Routing$Router$HomeMsg = function (a) {
 	return {$: 'HomeMsg', a: a};
 };
@@ -6631,9 +7263,6 @@ var author$project$Routing$Router$init = function (url) {
 			route: author$project$Routing$Helpers$parseUrl(url)
 		},
 		A2(elm$core$Platform$Cmd$map, author$project$Routing$Router$HomeMsg, homeCmd));
-};
-var author$project$SharedState$UpdateTranslations = function (a) {
-	return {$: 'UpdateTranslations', a: a};
 };
 var author$project$Main$updateTranslations = F2(
 	function (model, webData) {
@@ -6777,13 +7406,24 @@ var author$project$I18n$get = F2(
 			key,
 			A2(elm$core$Dict$get, key, dict));
 	});
+var author$project$Components$Footer$SelectedLanguage = function (a) {
+	return {$: 'SelectedLanguage', a: a};
+};
+var author$project$Types$English = {$: 'English'};
+var justgage$tachyons_elm$Tachyons$Classes$bg_transparent = 'bg-transparent';
+var justgage$tachyons_elm$Tachyons$Classes$bn = 'bn';
+var justgage$tachyons_elm$Tachyons$Classes$button_reset = 'button-reset';
 var justgage$tachyons_elm$Tachyons$Classes$dib = 'dib';
 var justgage$tachyons_elm$Tachyons$Classes$dim = 'dim';
 var justgage$tachyons_elm$Tachyons$Classes$f6 = 'f6';
+var justgage$tachyons_elm$Tachyons$Classes$hover_bg_transparent = 'hover-bg-transparent';
+var justgage$tachyons_elm$Tachyons$Classes$input_reset = 'input-reset';
 var justgage$tachyons_elm$Tachyons$Classes$link = 'link';
+var justgage$tachyons_elm$Tachyons$Classes$no_underline = 'no-underline';
 var justgage$tachyons_elm$Tachyons$Classes$ph2 = 'ph2';
+var justgage$tachyons_elm$Tachyons$Classes$pointer = 'pointer';
 var author$project$Utils$Styles$linkStyle = _List_fromArray(
-	[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$ph2, justgage$tachyons_elm$Tachyons$Classes$link, justgage$tachyons_elm$Tachyons$Classes$dim]);
+	[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$ph2, justgage$tachyons_elm$Tachyons$Classes$link, justgage$tachyons_elm$Tachyons$Classes$dim, justgage$tachyons_elm$Tachyons$Classes$pointer, justgage$tachyons_elm$Tachyons$Classes$button_reset, justgage$tachyons_elm$Tachyons$Classes$input_reset, justgage$tachyons_elm$Tachyons$Classes$bg_transparent, justgage$tachyons_elm$Tachyons$Classes$hover_bg_transparent, justgage$tachyons_elm$Tachyons$Classes$bn, justgage$tachyons_elm$Tachyons$Classes$no_underline]);
 var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6809,16 +7449,28 @@ var author$project$Utils$Styles$textStyle = justgage$tachyons_elm$Tachyons$class
 		[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$black_80]));
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$b = _VirtualDom_node('b');
+var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$footer = _VirtualDom_node('footer');
 var elm$html$Html$small = _VirtualDom_node('small');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var elm$html$Html$Attributes$href = function (url) {
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
 	return A2(
-		elm$html$Html$Attributes$stringProperty,
-		'href',
-		_VirtualDom_noJavaScriptUri(url));
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
 };
 var justgage$tachyons_elm$Tachyons$Classes$absolute = 'absolute';
 var justgage$tachyons_elm$Tachyons$Classes$bottom_0 = 'bottom-0';
@@ -6882,22 +7534,24 @@ var author$project$Components$Footer$view = F2(
 					_List_fromArray(
 						[
 							A2(
-							elm$html$Html$a,
+							elm$html$Html$button,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkGreyStyle
+									author$project$Utils$Styles$linkGreyStyle,
+									elm$html$Html$Events$onClick(
+									author$project$Components$Footer$SelectedLanguage(author$project$Types$German))
 								]),
 							_List_fromArray(
 								[
 									elm$html$Html$text('Deutsch')
 								])),
 							A2(
-							elm$html$Html$a,
+							elm$html$Html$button,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkGreyStyle
+									author$project$Utils$Styles$linkGreyStyle,
+									elm$html$Html$Events$onClick(
+									author$project$Components$Footer$SelectedLanguage(author$project$Types$English))
 								]),
 							_List_fromArray(
 								[
@@ -6906,10 +7560,7 @@ var author$project$Components$Footer$view = F2(
 							A2(
 							elm$html$Html$a,
 							_List_fromArray(
-								[
-									elm$html$Html$Attributes$href('#0'),
-									author$project$Utils$Styles$linkGreyStyle
-								]),
+								[author$project$Utils$Styles$linkGreyStyle]),
 							_List_fromArray(
 								[
 									elm$html$Html$text('Terms of Use')
@@ -6917,29 +7568,164 @@ var author$project$Components$Footer$view = F2(
 						]))
 				]));
 	});
-var author$project$Routing$Router$FooterMsg = function (a) {
-	return {$: 'FooterMsg', a: a};
-};
 var author$project$Pages$Home$view = F2(
 	function (sharedState, model) {
 		return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 	});
-var justgage$tachyons_elm$Tachyons$Classes$b = 'b';
+var author$project$Pages$Login$Login = {$: 'Login'};
+var author$project$Pages$Login$NavigateTo = function (a) {
+	return {$: 'NavigateTo', a: a};
+};
+var author$project$Pages$Login$SetField = F2(
+	function (a, b) {
+		return {$: 'SetField', a: a, b: b};
+	});
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$html$Html$li = _VirtualDom_node('li');
+var elm$html$Html$ul = _VirtualDom_node('ul');
+var justgage$tachyons_elm$Tachyons$Classes$center = 'center';
+var justgage$tachyons_elm$Tachyons$Classes$list = 'list';
+var justgage$tachyons_elm$Tachyons$Classes$pl0 = 'pl0';
+var justgage$tachyons_elm$Tachyons$Classes$red = 'red';
+var author$project$Pages$Login$viewFormErrors = F2(
+	function (field, errors) {
+		return A2(
+			elm$html$Html$ul,
+			_List_fromArray(
+				[
+					justgage$tachyons_elm$Tachyons$classes(
+					_List_fromArray(
+						[justgage$tachyons_elm$Tachyons$Classes$list, justgage$tachyons_elm$Tachyons$Classes$pl0, justgage$tachyons_elm$Tachyons$Classes$center]))
+				]),
+			A2(
+				elm$core$List$map,
+				function (_n1) {
+					var error = _n1.b;
+					return A2(
+						elm$html$Html$li,
+						_List_fromArray(
+							[
+								justgage$tachyons_elm$Tachyons$classes(
+								_List_fromArray(
+									[justgage$tachyons_elm$Tachyons$Classes$red]))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(error)
+							]));
+				},
+				A2(
+					elm$core$List$filter,
+					function (_n0) {
+						var fieldError = _n0.a;
+						return _Utils_eq(fieldError, field);
+					},
+					errors)));
+	});
 var justgage$tachyons_elm$Tachyons$Classes$ba = 'ba';
+var justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray = 'hover-bg-dark-gray';
+var justgage$tachyons_elm$Tachyons$Classes$hover_white = 'hover-white';
+var justgage$tachyons_elm$Tachyons$Classes$pa3 = 'pa3';
+var author$project$Utils$Styles$inputStyle = justgage$tachyons_elm$Tachyons$classes(
+	_List_fromArray(
+		[justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$input_reset, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$bg_transparent, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray, justgage$tachyons_elm$Tachyons$Classes$hover_white, justgage$tachyons_elm$Tachyons$Classes$dark_gray]));
+var justgage$tachyons_elm$Tachyons$Classes$fw6 = 'fw6';
+var author$project$Utils$Styles$labelStyle = justgage$tachyons_elm$Tachyons$classes(
+	_List_fromArray(
+		[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$fw6, justgage$tachyons_elm$Tachyons$Classes$black_80]));
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$label = _VirtualDom_node('label');
+var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
+var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
+	});
+var elm$html$Html$Events$targetValue = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	elm$json$Json$Decode$string);
+var elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysStop,
+			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
+};
+var justgage$tachyons_elm$Tachyons$Classes$lh_copy = 'lh-copy';
+var justgage$tachyons_elm$Tachyons$Classes$mb1 = 'mb1';
+var author$project$Pages$Login$inputElement = F6(
+	function (inputLabel, inputPlaceholder, fieldType, field, curVal, errors) {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$label,
+				_List_fromArray(
+					[
+						justgage$tachyons_elm$Tachyons$classes(
+						_List_fromArray(
+							[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
+						author$project$Utils$Styles$labelStyle
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(inputLabel)
+					])),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_(fieldType),
+						author$project$Utils$Styles$inputStyle,
+						justgage$tachyons_elm$Tachyons$classes(
+						_List_fromArray(
+							[justgage$tachyons_elm$Tachyons$Classes$w_100])),
+						elm$html$Html$Attributes$placeholder(inputPlaceholder),
+						elm$html$Html$Events$onInput(
+						author$project$Pages$Login$SetField(field)),
+						elm$html$Html$Attributes$value(curVal)
+					]),
+				_List_Nil),
+				A2(author$project$Pages$Login$viewFormErrors, field, errors)
+			]);
+	});
+var justgage$tachyons_elm$Tachyons$Classes$b = 'b';
 var justgage$tachyons_elm$Tachyons$Classes$bg_animate = 'bg-animate';
 var justgage$tachyons_elm$Tachyons$Classes$bg_white = 'bg-white';
 var justgage$tachyons_elm$Tachyons$Classes$border_box = 'border-box';
-var justgage$tachyons_elm$Tachyons$Classes$button_reset = 'button-reset';
 var justgage$tachyons_elm$Tachyons$Classes$f5 = 'f5';
 var justgage$tachyons_elm$Tachyons$Classes$items_center = 'items-center';
-var justgage$tachyons_elm$Tachyons$Classes$no_underline = 'no-underline';
-var justgage$tachyons_elm$Tachyons$Classes$pa3 = 'pa3';
-var justgage$tachyons_elm$Tachyons$Classes$pointer = 'pointer';
 var author$project$Utils$Styles$buttonStyle = _List_fromArray(
 	[justgage$tachyons_elm$Tachyons$Classes$f5, justgage$tachyons_elm$Tachyons$Classes$no_underline, justgage$tachyons_elm$Tachyons$Classes$bg_animate, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$b, justgage$tachyons_elm$Tachyons$Classes$items_center, justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$border_box, justgage$tachyons_elm$Tachyons$Classes$bg_white, justgage$tachyons_elm$Tachyons$Classes$pointer, justgage$tachyons_elm$Tachyons$Classes$button_reset]);
 var justgage$tachyons_elm$Tachyons$Classes$b__dark_gray = 'b--dark-gray';
-var justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray = 'hover-bg-dark-gray';
-var justgage$tachyons_elm$Tachyons$Classes$hover_white = 'hover-white';
 var author$project$Utils$Styles$buttonGreyStyle = justgage$tachyons_elm$Tachyons$classes(
 	_Utils_ap(
 		author$project$Utils$Styles$buttonStyle,
@@ -6951,37 +7737,41 @@ var justgage$tachyons_elm$Tachyons$Classes$fw8 = 'fw8';
 var author$project$Utils$Styles$headerStyle = justgage$tachyons_elm$Tachyons$classes(
 	_List_fromArray(
 		[justgage$tachyons_elm$Tachyons$Classes$f1, justgage$tachyons_elm$Tachyons$Classes$fw8, justgage$tachyons_elm$Tachyons$Classes$black, justgage$tachyons_elm$Tachyons$Classes$b]));
-var justgage$tachyons_elm$Tachyons$Classes$bg_transparent = 'bg-transparent';
-var justgage$tachyons_elm$Tachyons$Classes$input_reset = 'input-reset';
-var author$project$Utils$Styles$inputStyle = justgage$tachyons_elm$Tachyons$classes(
-	_List_fromArray(
-		[justgage$tachyons_elm$Tachyons$Classes$pa3, justgage$tachyons_elm$Tachyons$Classes$input_reset, justgage$tachyons_elm$Tachyons$Classes$ba, justgage$tachyons_elm$Tachyons$Classes$bg_transparent, justgage$tachyons_elm$Tachyons$Classes$hover_bg_dark_gray, justgage$tachyons_elm$Tachyons$Classes$hover_white, justgage$tachyons_elm$Tachyons$Classes$dark_gray]));
-var justgage$tachyons_elm$Tachyons$Classes$fw6 = 'fw6';
-var author$project$Utils$Styles$labelStyle = justgage$tachyons_elm$Tachyons$classes(
-	_List_fromArray(
-		[justgage$tachyons_elm$Tachyons$Classes$f6, justgage$tachyons_elm$Tachyons$Classes$fw6, justgage$tachyons_elm$Tachyons$Classes$black_80]));
-var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$fieldset = _VirtualDom_node('fieldset');
 var elm$html$Html$form = _VirtualDom_node('form');
 var elm$html$Html$img = _VirtualDom_node('img');
-var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$label = _VirtualDom_node('label');
 var elm$html$Html$legend = _VirtualDom_node('legend');
-var elm$html$Html$Attributes$name = elm$html$Html$Attributes$stringProperty('name');
 var elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Events$alwaysPreventDefault = function (msg) {
+	return _Utils_Tuple2(msg, true);
+};
+var elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
+	return {$: 'MayPreventDefault', a: a};
+};
+var elm$html$Html$Events$preventDefaultOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
+	});
+var elm$html$Html$Events$onSubmit = function (msg) {
+	return A2(
+		elm$html$Html$Events$preventDefaultOn,
+		'submit',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysPreventDefault,
+			elm$json$Json$Decode$succeed(msg)));
+};
 var justgage$tachyons_elm$Tachyons$Classes$black_40 = 'black-40';
-var justgage$tachyons_elm$Tachyons$Classes$bn = 'bn';
-var justgage$tachyons_elm$Tachyons$Classes$center = 'center';
 var justgage$tachyons_elm$Tachyons$Classes$dt = 'dt';
 var justgage$tachyons_elm$Tachyons$Classes$dtc = 'dtc';
-var justgage$tachyons_elm$Tachyons$Classes$lh_copy = 'lh-copy';
-var justgage$tachyons_elm$Tachyons$Classes$mb1 = 'mb1';
 var justgage$tachyons_elm$Tachyons$Classes$mb2 = 'mb2';
 var justgage$tachyons_elm$Tachyons$Classes$min_vh_100 = 'min-vh-100';
 var justgage$tachyons_elm$Tachyons$Classes$mt4 = 'mt4';
@@ -6997,6 +7787,7 @@ var justgage$tachyons_elm$Tachyons$Classes$v_mid = 'v-mid';
 var justgage$tachyons_elm$Tachyons$Classes$w3 = 'w3';
 var author$project$Pages$Login$view = F2(
 	function (sharedState, model) {
+		var t = author$project$I18n$get(sharedState.translations);
 		return A2(
 			elm$html$Html$div,
 			_List_fromArray(
@@ -7041,7 +7832,8 @@ var author$project$Pages$Login$view = F2(
 								[
 									justgage$tachyons_elm$Tachyons$classes(
 									_List_fromArray(
-										[justgage$tachyons_elm$Tachyons$Classes$mw7, justgage$tachyons_elm$Tachyons$Classes$center, justgage$tachyons_elm$Tachyons$Classes$pa4, justgage$tachyons_elm$Tachyons$Classes$black_40]))
+										[justgage$tachyons_elm$Tachyons$Classes$mw7, justgage$tachyons_elm$Tachyons$Classes$center, justgage$tachyons_elm$Tachyons$Classes$pa4, justgage$tachyons_elm$Tachyons$Classes$black_40])),
+									elm$html$Html$Events$onSubmit(author$project$Pages$Login$Login)
 								]),
 							_List_fromArray(
 								[
@@ -7066,7 +7858,8 @@ var author$project$Pages$Login$view = F2(
 												]),
 											_List_fromArray(
 												[
-													elm$html$Html$text('Anmelden')
+													elm$html$Html$text(
+													t('page-title-login'))
 												])),
 											A2(
 											elm$html$Html$div,
@@ -7076,34 +7869,7 @@ var author$project$Pages$Login$view = F2(
 													_List_fromArray(
 														[justgage$tachyons_elm$Tachyons$Classes$mt3]))
 												]),
-											_List_fromArray(
-												[
-													A2(
-													elm$html$Html$label,
-													_List_fromArray(
-														[
-															justgage$tachyons_elm$Tachyons$classes(
-															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
-															author$project$Utils$Styles$labelStyle
-														]),
-													_List_fromArray(
-														[
-															elm$html$Html$text('Email address')
-														])),
-													A2(
-													elm$html$Html$input,
-													_List_fromArray(
-														[
-															elm$html$Html$Attributes$type_('text'),
-															elm$html$Html$Attributes$name('email'),
-															author$project$Utils$Styles$inputStyle,
-															justgage$tachyons_elm$Tachyons$classes(
-															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$w_100]))
-														]),
-													_List_Nil)
-												])),
+											A6(author$project$Pages$Login$inputElement, 'Email address', 'Email', 'email', author$project$Pages$Login$Email, model.email, model.errors)),
 											A2(
 											elm$html$Html$div,
 											_List_fromArray(
@@ -7112,34 +7878,7 @@ var author$project$Pages$Login$view = F2(
 													_List_fromArray(
 														[justgage$tachyons_elm$Tachyons$Classes$mt3]))
 												]),
-											_List_fromArray(
-												[
-													A2(
-													elm$html$Html$label,
-													_List_fromArray(
-														[
-															justgage$tachyons_elm$Tachyons$classes(
-															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
-															author$project$Utils$Styles$labelStyle
-														]),
-													_List_fromArray(
-														[
-															elm$html$Html$text('Passwort')
-														])),
-													A2(
-													elm$html$Html$input,
-													_List_fromArray(
-														[
-															elm$html$Html$Attributes$type_('password'),
-															elm$html$Html$Attributes$name('password'),
-															author$project$Utils$Styles$inputStyle,
-															justgage$tachyons_elm$Tachyons$classes(
-															_List_fromArray(
-																[justgage$tachyons_elm$Tachyons$Classes$w_100]))
-														]),
-													_List_Nil)
-												])),
+											A6(author$project$Pages$Login$inputElement, 'Passwort', 'Password', 'password', author$project$Pages$Login$Password, model.plain_password, model.errors)),
 											A2(
 											elm$html$Html$button,
 											_List_fromArray(
@@ -7165,21 +7904,19 @@ var author$project$Pages$Login$view = F2(
 									_List_fromArray(
 										[
 											A2(
-											elm$html$Html$a,
+											elm$html$Html$button,
 											_List_fromArray(
-												[
-													elm$html$Html$Attributes$href('#'),
-													author$project$Utils$Styles$linkGreyStyle
-												]),
+												[author$project$Utils$Styles$linkGreyStyle]),
 											_List_fromArray(
 												[
 													elm$html$Html$text('Passwort vergessen?')
 												])),
 											A2(
-											elm$html$Html$a,
+											elm$html$Html$button,
 											_List_fromArray(
 												[
-													elm$html$Html$Attributes$href('#'),
+													elm$html$Html$Events$onClick(
+													author$project$Pages$Login$NavigateTo(author$project$Routing$Helpers$RegistrationRoute)),
 													author$project$Utils$Styles$linkGreyStyle
 												]),
 											_List_fromArray(
@@ -7191,16 +7928,346 @@ var author$project$Pages$Login$view = F2(
 						]))
 				]));
 	});
+var author$project$Pages$Registration$NavigateTo = function (a) {
+	return {$: 'NavigateTo', a: a};
+};
+var author$project$Pages$Registration$Registrate = {$: 'Registrate'};
+var author$project$Pages$Registration$SetField = F2(
+	function (a, b) {
+		return {$: 'SetField', a: a, b: b};
+	});
+var author$project$Pages$Registration$viewFormErrors = F2(
+	function (field, errors) {
+		return A2(
+			elm$html$Html$ul,
+			_List_fromArray(
+				[
+					justgage$tachyons_elm$Tachyons$classes(
+					_List_fromArray(
+						[justgage$tachyons_elm$Tachyons$Classes$list, justgage$tachyons_elm$Tachyons$Classes$pl0, justgage$tachyons_elm$Tachyons$Classes$center]))
+				]),
+			A2(
+				elm$core$List$map,
+				function (_n1) {
+					var error = _n1.b;
+					return A2(
+						elm$html$Html$li,
+						_List_fromArray(
+							[
+								justgage$tachyons_elm$Tachyons$classes(
+								_List_fromArray(
+									[justgage$tachyons_elm$Tachyons$Classes$red]))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(error)
+							]));
+				},
+				A2(
+					elm$core$List$filter,
+					function (_n0) {
+						var fieldError = _n0.a;
+						return _Utils_eq(fieldError, field);
+					},
+					errors)));
+	});
+var author$project$Pages$Registration$inputElement = F6(
+	function (inputLabel, inputPlaceholder, fieldType, field, curVal, errors) {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$label,
+				_List_fromArray(
+					[
+						justgage$tachyons_elm$Tachyons$classes(
+						_List_fromArray(
+							[justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$lh_copy, justgage$tachyons_elm$Tachyons$Classes$mb1])),
+						author$project$Utils$Styles$labelStyle
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(inputLabel)
+					])),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_(fieldType),
+						author$project$Utils$Styles$inputStyle,
+						justgage$tachyons_elm$Tachyons$classes(
+						_List_fromArray(
+							[justgage$tachyons_elm$Tachyons$Classes$w_100])),
+						elm$html$Html$Attributes$placeholder(inputPlaceholder),
+						elm$html$Html$Events$onInput(
+						author$project$Pages$Registration$SetField(field)),
+						elm$html$Html$Attributes$value(curVal)
+					]),
+				_List_Nil),
+				A2(author$project$Pages$Registration$viewFormErrors, field, errors)
+			]);
+	});
+var justgage$tachyons_elm$Tachyons$Classes$cf = 'cf';
+var justgage$tachyons_elm$Tachyons$Classes$fl = 'fl';
+var justgage$tachyons_elm$Tachyons$Classes$ph2_ns = 'ph2-ns';
+var justgage$tachyons_elm$Tachyons$Classes$pl2_ns = 'pl2-ns';
+var justgage$tachyons_elm$Tachyons$Classes$w_30_ns = 'w-30-ns';
+var justgage$tachyons_elm$Tachyons$Classes$w_50_ns = 'w-50-ns';
+var justgage$tachyons_elm$Tachyons$Classes$w_70_ns = 'w-70-ns';
 var author$project$Pages$Registration$view = F2(
 	function (sharedState, model) {
-		return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+		var t = author$project$I18n$get(sharedState.translations);
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					justgage$tachyons_elm$Tachyons$classes(
+					_List_fromArray(
+						[justgage$tachyons_elm$Tachyons$Classes$min_vh_100, justgage$tachyons_elm$Tachyons$Classes$overflow_hidden, justgage$tachyons_elm$Tachyons$Classes$db, justgage$tachyons_elm$Tachyons$Classes$relative, justgage$tachyons_elm$Tachyons$Classes$pb6, justgage$tachyons_elm$Tachyons$Classes$dt, justgage$tachyons_elm$Tachyons$Classes$w_100]))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							justgage$tachyons_elm$Tachyons$classes(
+							_List_fromArray(
+								[justgage$tachyons_elm$Tachyons$Classes$v_mid, justgage$tachyons_elm$Tachyons$Classes$dtc, justgage$tachyons_elm$Tachyons$Classes$tc, justgage$tachyons_elm$Tachyons$Classes$ph3, justgage$tachyons_elm$Tachyons$Classes$ph4_l]))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									justgage$tachyons_elm$Tachyons$classes(
+									_List_fromArray(
+										[justgage$tachyons_elm$Tachyons$Classes$w3, justgage$tachyons_elm$Tachyons$Classes$dib, justgage$tachyons_elm$Tachyons$Classes$mt4]))
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$img,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$src('/assets/Logo.svg')
+										]),
+									_List_Nil)
+								])),
+							A2(
+							elm$html$Html$form,
+							_List_fromArray(
+								[
+									justgage$tachyons_elm$Tachyons$classes(
+									_List_fromArray(
+										[justgage$tachyons_elm$Tachyons$Classes$mw7, justgage$tachyons_elm$Tachyons$Classes$center, justgage$tachyons_elm$Tachyons$Classes$pa4, justgage$tachyons_elm$Tachyons$Classes$black_40])),
+									elm$html$Html$Events$onSubmit(author$project$Pages$Registration$Registrate)
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$fieldset,
+									_List_fromArray(
+										[
+											justgage$tachyons_elm$Tachyons$classes(
+											_List_fromArray(
+												[justgage$tachyons_elm$Tachyons$Classes$tl, justgage$tachyons_elm$Tachyons$Classes$bn]))
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$legend,
+											_List_fromArray(
+												[
+													justgage$tachyons_elm$Tachyons$classes(
+													_List_fromArray(
+														[justgage$tachyons_elm$Tachyons$Classes$pa0, justgage$tachyons_elm$Tachyons$Classes$mb2])),
+													author$project$Utils$Styles$headerStyle
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text(
+													t('page-title-registration'))
+												])),
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													justgage$tachyons_elm$Tachyons$classes(
+													_List_fromArray(
+														[justgage$tachyons_elm$Tachyons$Classes$w_100]))
+												]),
+											_List_fromArray(
+												[
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															justgage$tachyons_elm$Tachyons$classes(
+															_List_fromArray(
+																[justgage$tachyons_elm$Tachyons$Classes$mt3, justgage$tachyons_elm$Tachyons$Classes$cf, justgage$tachyons_elm$Tachyons$Classes$ph2_ns]))
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_50_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'First name', 'First name', 'text', author$project$Pages$Registration$FirstName, model.firstName, model.errors)),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_50_ns, justgage$tachyons_elm$Tachyons$Classes$pl2_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Last name', 'Last name', 'text', author$project$Pages$Registration$LastName, model.lastName, model.errors))
+														])),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															justgage$tachyons_elm$Tachyons$classes(
+															_List_fromArray(
+																[justgage$tachyons_elm$Tachyons$Classes$mt3, justgage$tachyons_elm$Tachyons$Classes$cf, justgage$tachyons_elm$Tachyons$Classes$ph2_ns]))
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_70_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Subject', 'Subject', 'text', author$project$Pages$Registration$Subject, model.subject, model.errors)),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_30_ns, justgage$tachyons_elm$Tachyons$Classes$pl2_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Semester', 'Semester', 'number', author$project$Pages$Registration$Semester, model.semester, model.errors))
+														])),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															justgage$tachyons_elm$Tachyons$classes(
+															_List_fromArray(
+																[justgage$tachyons_elm$Tachyons$Classes$mt3, justgage$tachyons_elm$Tachyons$Classes$cf, justgage$tachyons_elm$Tachyons$Classes$ph2_ns]))
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Student Number', 'Student Number', 'number', author$project$Pages$Registration$StudentNumber, model.studentNumber, model.errors))
+														])),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															justgage$tachyons_elm$Tachyons$classes(
+															_List_fromArray(
+																[justgage$tachyons_elm$Tachyons$Classes$mt3, justgage$tachyons_elm$Tachyons$Classes$cf, justgage$tachyons_elm$Tachyons$Classes$ph2_ns]))
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Email address', 'Email', 'email', author$project$Pages$Registration$Email, model.email, model.errors))
+														])),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															justgage$tachyons_elm$Tachyons$classes(
+															_List_fromArray(
+																[justgage$tachyons_elm$Tachyons$Classes$mt3, justgage$tachyons_elm$Tachyons$Classes$cf, justgage$tachyons_elm$Tachyons$Classes$ph2_ns]))
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_50_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Password', 'Password', 'password', author$project$Pages$Registration$Password, model.password, model.errors)),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	justgage$tachyons_elm$Tachyons$classes(
+																	_List_fromArray(
+																		[justgage$tachyons_elm$Tachyons$Classes$fl, justgage$tachyons_elm$Tachyons$Classes$w_100, justgage$tachyons_elm$Tachyons$Classes$w_50_ns, justgage$tachyons_elm$Tachyons$Classes$pl2_ns]))
+																]),
+															A6(author$project$Pages$Registration$inputElement, 'Repeat Password', 'Password', 'password', author$project$Pages$Registration$PasswordRepeat, model.passwordRepeat, model.errors))
+														]))
+												])),
+											A2(
+											elm$html$Html$button,
+											_List_fromArray(
+												[
+													author$project$Utils$Styles$buttonGreyStyle,
+													justgage$tachyons_elm$Tachyons$classes(
+													_List_fromArray(
+														[justgage$tachyons_elm$Tachyons$Classes$mt4, justgage$tachyons_elm$Tachyons$Classes$w_100]))
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Registrieren')
+												]))
+										])),
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											justgage$tachyons_elm$Tachyons$classes(
+											_List_fromArray(
+												[justgage$tachyons_elm$Tachyons$Classes$mt3]))
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$button,
+											_List_fromArray(
+												[
+													elm$html$Html$Events$onClick(
+													author$project$Pages$Registration$NavigateTo(author$project$Routing$Helpers$LoginRoute)),
+													author$project$Utils$Styles$linkGreyStyle
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Anmelden')
+												]))
+										]))
+								]))
+						]))
+				]));
 	});
-var author$project$Routing$Router$LoginMsg = function (a) {
-	return {$: 'LoginMsg', a: a};
-};
-var author$project$Routing$Router$RegistrationMsg = function (a) {
-	return {$: 'RegistrationMsg', a: a};
-};
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
@@ -7354,7 +8421,6 @@ var author$project$Main$view = function (model) {
 };
 var elm$browser$Browser$application = _Browser_application;
 var elm$json$Json$Decode$andThen = _Json_andThen;
-var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$int = _Json_decodeInt;
 var elm$time$Time$Every = F2(
 	function (a, b) {
