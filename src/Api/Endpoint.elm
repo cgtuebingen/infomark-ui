@@ -32,3 +32,7 @@ url paths queryParams =
 sessions : Endpoint
 sessions =
     url ["auth", "sessions" ] []
+
+account : Endpoint
+account =
+    url ["account"] []

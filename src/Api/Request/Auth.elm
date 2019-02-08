@@ -17,5 +17,5 @@ sessionPost account msg = post (unwrap sessions)
     (Http.jsonBody (Account.encoder account)) 
     msg Role.decoder
 
-sessionDelete : (WebData Account -> msg) -> Cmd msg
-sessionDelete msg = delete (unwrap sessions) msg Account.decoder
+sessionDelete : (WebData String -> msg) -> Cmd msg
+sessionDelete msg = delete (unwrap sessions) msg Decode.string

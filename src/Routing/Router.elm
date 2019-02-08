@@ -84,7 +84,7 @@ update sharedState msg model =
                 _ -> (model, Cmd.none, NoUpdate)
 
         HomeMsg homeMsg ->
-            (model, Cmd.none, NoUpdate)
+            updateHome sharedState model homeMsg
 
         LoginMsg loginMsg ->
             updateLogin sharedState model loginMsg
@@ -94,6 +94,17 @@ update sharedState msg model =
 
         FooterMsg footerMsg ->
             updateFooter sharedState model footerMsg
+
+
+updateHome : SharedState -> Model -> Home.Msg -> (Model, Cmd Msg, SharedStateUpdate)
+updateHome sharedState model homeMsg = 
+    let
+        (nextHomeModel, homeCmd, sharedStateUpdate) =
+            Home.update sharedState homeMsg model.homeModel
+    in
+    ( {model | homeModel = nextHomeModel}
+    , Cmd.map HomeMsg homeCmd
+    , sharedStateUpdate)
 
 
 updateLogin : SharedState -> Model -> Login.Msg -> (Model, Cmd Msg, SharedStateUpdate)
@@ -178,11 +189,14 @@ tabPage sharedState model =
             [ TC.vh_100
             , TC.dt
             , TC.w_100
-            , TC.white
+            , TC.bg_white
+            , TC.black
             , TC.helvetica
             ]
         ] 
-        [ text "Tabs"
+        [ pageView sharedState model 
+        , Footer.view sharedState model.footerModel
+            |> Html.map FooterMsg
         ]
 
 
