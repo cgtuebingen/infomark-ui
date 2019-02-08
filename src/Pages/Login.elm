@@ -56,11 +56,6 @@ type Field
 
 setField : Model -> Field -> String -> Model
 setField model field value = 
-    let
-        _ =
-            Debug.log "SetField Called"
-                value
-    in
     case field of
         Email ->
             { model | email = value }
