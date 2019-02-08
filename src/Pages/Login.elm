@@ -17,10 +17,13 @@ import I18n
 import Time
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
+import Utils.Icons as Icons
 import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Spinner
+import Svg 
+import Svg.Attributes as SvgAttr
 
 
 type alias Model =
@@ -104,11 +107,15 @@ update sharedState msg model =
                     in
                     ( {model | loginProgress = Loading, errors = []}, sessionPost account LoginResponse, NoUpdate) -- TODO: Start the web request here.
 
+
+        LoginResponse (RemoteData.Failure err) ->
+            ({model | loginProgress = RemoteData.Failure err}, Cmd.none, NoUpdate)
+
         LoginResponse (RemoteData.Success role) ->
-            ({model | loginProgress = RemoteData.Success role}, pushUrl sharedState.navKey (reverseRoute HomeRoute), UpdateRole <| Just role)
+            ({model | loginProgress = RemoteData.NotAsked}, pushUrl sharedState.navKey (reverseRoute HomeRoute), UpdateRole <| Just role)
 
         LoginResponse response -> -- TODO show errors
-            (model, pushUrl sharedState.navKey (reverseRoute HomeRoute), NoUpdate) -- TODO: Update the shared state
+            (model, Cmd.none, NoUpdate) -- TODO: Update the shared state
 
 
 
@@ -136,7 +143,8 @@ view sharedState model =
             , TC.w_100
             ] -- Fill nearly everythin
         ] 
-        [ div
+        [ parseWebDataForLoginView model.loginProgress
+        , div
             [ classes
                 [ TC.v_mid
                 , TC.dtc 
@@ -180,7 +188,6 @@ view sharedState model =
                     , div [ classes[ TC.mt3 ] ]
                         <| inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
                     , viewLoginButtonOrSpinner model.loginProgress model
-                        
                     ]
                     , div [ classes [ TC.mt3 ]]
                     [ button [ Styles.linkGreyStyle ] [ text "Passwort vergessen?" ] -- TODO: Create password reset page
@@ -211,8 +218,36 @@ viewLoginButtonOrSpinner status model =
                 ]
                 [ text "Anmelden"] -- TODO: Replace with translation
             
-        
+parseWebDataForLoginView : WebData a -> Html Msg
+parseWebDataForLoginView data =
+    case data of
+        RemoteData.Failure (Http.BadStatus 400) -> 
+            viewLoginError "Wrong E-Mail and/or Password." -- TODO replace with translation
 
+        RemoteData.Failure _ ->
+            viewLoginError "Something went wrong" -- TODO replace with HELPFUL translation
+        
+        _ ->
+            text ""
+
+viewLoginError : String -> Html Msg
+viewLoginError error =
+    div 
+        [ classes 
+            [ TC.items_center
+            , TC.justify_center
+            , TC.w_100
+            , TC.bg_red
+            , TC.white
+            , TC.flex
+            , TC.pa4
+            , TC.absolute
+            ]
+        , Styles.textStyle
+        ]
+        [ span [ classes [TC.mr2 ]] [Svg.svg [SvgAttr.width "22", SvgAttr.height "22", SvgAttr.viewBox "0 0 22 22"][Icons.warning Icons.white]]
+        , text error
+        ]
 
 inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
 inputElement inputLabel inputPlaceholder fieldType field curVal errors =

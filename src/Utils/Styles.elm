@@ -10,6 +10,7 @@ import Spinner
 import Color exposing (Color)
 
 
+
 linkStyle =  
     [ TC.f6 
     , TC.dib 
