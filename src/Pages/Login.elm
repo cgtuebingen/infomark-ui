@@ -1,4 +1,4 @@
-module Pages.Login exposing(Model, Msg, initModel, update, view)
+module Pages.Login exposing(Model, Msg(..), initModel, update, view)
 
 import Browser.Navigation exposing (pushUrl)
 import Decoders
@@ -20,6 +20,7 @@ import Utils.Styles as Styles
 import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
+import Spinner
 
 
 type alias Model =
@@ -27,6 +28,7 @@ type alias Model =
     , plain_password : String
     , loginProgress : WebData Role
     , errors : (List Error)
+    , spinner : Spinner.Model
     }
 
 initModel : Model
@@ -35,11 +37,13 @@ initModel =
     , plain_password = ""
     , loginProgress = NotAsked
     , errors = []
+    , spinner = Spinner.init
     }
 
 type Msg
     = NavigateTo Route
     | Login
+    | SpinnerMsg Spinner.Msg
     | SetField Field String
     | LoginResponse (WebData Role) -- TODO: more like Tokens. Save tokens to shared state
 
@@ -82,6 +86,13 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate)
 
+        SpinnerMsg spinmsg ->
+            let
+                spinnerModel =
+                    Spinner.update spinmsg model.spinner
+            in
+                ({ model | spinner = spinnerModel }, Cmd.none, NoUpdate)
+
         Login ->
             case validate modelValidator model of
                 Err errors ->
@@ -93,8 +104,13 @@ update sharedState msg model =
                     in
                     ( {model | loginProgress = Loading, errors = []}, sessionPost account LoginResponse, NoUpdate) -- TODO: Start the web request here.
 
-        LoginResponse response ->
+        LoginResponse (RemoteData.Success role) ->
+            ({model | loginProgress = RemoteData.Success role}, pushUrl sharedState.navKey (reverseRoute HomeRoute), UpdateRole <| Just role)
+
+        LoginResponse response -> -- TODO show errors
             (model, pushUrl sharedState.navKey (reverseRoute HomeRoute), NoUpdate) -- TODO: Update the shared state
+
+
 
 
 type alias LoginBody =
@@ -163,11 +179,7 @@ view sharedState model =
                          <| inputElement "Email address" "Email" "email" Email model.email model.errors
                     , div [ classes[ TC.mt3 ] ]
                         <| inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
-                    , button 
-                        [ Styles.buttonGreyStyle
-                        , classes[TC.mt4, TC.w_100]
-                        ]
-                        [ text "Anmelden"] -- TODO: Replace with translation
+                    , viewLoginButtonOrSpinner model.loginProgress model
                         
                     ]
                     , div [ classes [ TC.mt3 ]]
@@ -177,6 +189,30 @@ view sharedState model =
                 ]   
             ] 
         ] 
+
+viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg
+viewLoginButtonOrSpinner status model =
+    case status of
+        RemoteData.Loading ->
+            div [ 
+                classes 
+                    [ TC.dib
+                    , TC.relative
+                    , TC.w_100
+                    , TC.mt5
+                    , TC.mb3 
+                    ]
+                ] [Spinner.view Styles.spinnerRedStyle model.spinner]
+
+        _ ->
+            button 
+                [ Styles.buttonGreyStyle
+                , classes[TC.mt4, TC.w_100]
+                ]
+                [ text "Anmelden"] -- TODO: Replace with translation
+            
+        
+
 
 inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
 inputElement inputLabel inputPlaceholder fieldType field curVal errors =

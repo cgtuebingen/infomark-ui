@@ -1,10 +1,13 @@
 module Utils.Styles exposing (linkBlackStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, 
                               buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle,
                               inputStyle,
-                              headerStyle, labelStyle, textStyle)
+                              headerStyle, labelStyle, textStyle,
+                              spinnerRedStyle, spinnerGreyStyle, spinnerGoldStyle)
 
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
+import Spinner
+import Color exposing (Color)
 
 
 linkStyle =  
@@ -116,3 +119,26 @@ textStyle = classes
     [ TC.f6
     , TC.black_80
     ]
+
+spinnerStyle = 
+    { lines = 10
+    , length = 0
+    , width = 8
+    , radius = 35
+    , scale = 0.5
+    , corners = 1
+    , opacity = 0.25
+    , rotate = 0
+    , direction = Spinner.Clockwise
+    , speed = 1
+    , trail = 100
+    , translateX = 50
+    , translateY = 50
+    , shadow = True
+    , hwaccel = False
+    , color = always <| Color.rgba 1 1 1 1 
+    }
+
+spinnerRedStyle = { spinnerStyle | color = always <| Color.rgba (165/255) (30/255) (55/255) 1 }
+spinnerGoldStyle = { spinnerStyle | color = always <| Color.rgba (180/255) (160/255) (105/255) 1 }
+spinnerGreyStyle = { spinnerStyle | color = always <| Color.rgba (50/255) (65/255) (75/255) 1 }

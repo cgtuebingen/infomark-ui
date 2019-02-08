@@ -15,6 +15,7 @@ import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Types exposing (Translations)
 import Url exposing (Url)
+import Spinner
 
 
 type alias Model = 
@@ -29,6 +30,7 @@ type alias Model =
 type Msg
     = UrlChange Url
     | NavigateTo Route
+    | SpinnerMsg Spinner.Msg
     | FooterMsg Footer.Msg
     | HomeMsg Home.Msg
     | LoginMsg Login.Msg
@@ -74,6 +76,12 @@ update sharedState msg model =
             , Browser.Navigation.pushUrl sharedState.navKey (reverseRoute route)
             , NoUpdate
             )
+
+        SpinnerMsg spinnerMsg ->
+            case model.route of -- Check in which part we are and forward the spinner msg if needed
+                LoginRoute -> updateLogin sharedState model (Login.SpinnerMsg spinnerMsg)
+            
+                _ -> (model, Cmd.none, NoUpdate)
 
         HomeMsg homeMsg ->
             (model, Cmd.none, NoUpdate)

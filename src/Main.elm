@@ -11,6 +11,7 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Time exposing (Posix)
 import Types exposing (Translations)
 import Url exposing (Url)
+import Spinner
 
 main : Program Flags Model Msg
 main =
@@ -20,7 +21,7 @@ main =
         , view = view
         , onUrlChange = UrlChange
         , onUrlRequest = LinkClicked
-        , subscriptions = \_ -> Time.every 1000 TimeChange
+        , subscriptions = subscriptions
         }
 
 
@@ -45,6 +46,7 @@ type Msg
     = UrlChange Url
     | LinkClicked UrlRequest
     | TimeChange Posix
+    | SpinnerMsg Spinner.Msg
     | HandleTranslationsResponse (WebData Translations)
     | RouterMsg Router.Msg
 
@@ -76,6 +78,9 @@ update msg model =
 
         RouterMsg routerMsg ->
             updateRouter model routerMsg
+
+        SpinnerMsg spinnerMsg ->
+            updateRouter model (Router.SpinnerMsg spinnerMsg)
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -149,7 +154,7 @@ updateTranslations model webData =
                             { navKey = model.navKey
                             , currentTime = time
                             , translations = translations
-                            , token = Nothing
+                            , role = Nothing
                             }
 
                         ( initRouterModel, routerCmd ) =
@@ -175,6 +180,14 @@ updateTranslations model webData =
 
         _ ->
             ( model, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch 
+        [ Time.every 1000 TimeChange
+        , Sub.map SpinnerMsg Spinner.subscription
+        ]
 
 
 view : Model -> Browser.Document Msg

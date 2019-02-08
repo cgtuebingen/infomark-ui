@@ -7,19 +7,19 @@ import Json.Encode as Encode
 
 
 type alias Role =
-    { admin : Bool
+    { root : Bool
     }
 
 
 decoder : Decoder Role
 decoder =
     Decode.succeed Role
-        |> required "admin" Decode.bool
+        |> required "root" Decode.bool
 
 
 
 encoder : Role -> Encode.Value
 encoder model =
     Encode.object
-        [ ( "admin", Encode.bool model.admin )
+        [ ( "root", Encode.bool model.root )
         ]
