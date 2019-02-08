@@ -17,13 +17,10 @@ import I18n
 import Time
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
-import Utils.Icons as Icons
 import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Spinner
-import Svg 
-import Svg.Attributes as SvgAttr
 
 
 type alias Model =
@@ -240,9 +237,10 @@ viewLoginError error =
             ]
         , Styles.textStyle
         ]
-        [ span [ classes [TC.mr2 ]] [Svg.svg [SvgAttr.width "22", SvgAttr.height "22", SvgAttr.viewBox "0 0 22 22"][Icons.warning Icons.white]]
+        [ img [src "/assets/alert-circle.svg", classes [TC.w2, TC.mr3]][]
         , text error
         ]
+        
 
 inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
 inputElement inputLabel inputPlaceholder fieldType field curVal errors =
