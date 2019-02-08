@@ -45,6 +45,9 @@ view sharedState model = div [] [ viewAccountOrError model.userProgress ]
 
 viewAccountOrError : WebData User -> Html Msg
 viewAccountOrError data =
+    let 
+        _ = Debug.log "Data:" data
+    in
     case data of
         RemoteData.Success user ->
             text user.email

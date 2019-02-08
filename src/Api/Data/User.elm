@@ -23,8 +23,8 @@ decoder : Decoder User
 decoder =
     Decode.succeed User
         |> required "id" Decode.int
-        |> required "firstname" Decode.string
-        |> required "lastname" Decode.string
+        |> required "first_name" Decode.string
+        |> required "last_name" Decode.string
         |> optional "avatar_url" (Decode.nullable Decode.string) Nothing
         |> required "email" Decode.string
         |> optional "student_number" (Decode.nullable Decode.string) Nothing
@@ -38,8 +38,8 @@ encoder : User -> Encode.Value
 encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
-        , ( "firstname", Encode.string model.firstname )
-        , ( "lastname", Encode.string model.lastname )
+        , ( "first_name", Encode.string model.firstname )
+        , ( "last_name", Encode.string model.lastname )
         , ( "avatar_url", Maybe.withDefault Encode.null (Maybe.map Encode.string model.avatarUrl) )
         , ( "email", Encode.string model.email )
         , ( "student_number", Maybe.withDefault Encode.null (Maybe.map Encode.string model.studentNumber) )
