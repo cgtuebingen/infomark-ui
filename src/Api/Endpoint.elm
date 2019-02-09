@@ -1,4 +1,4 @@
-module Api.Endpoint exposing (..)
+module Api.Endpoint exposing (Endpoint(..), account, basePath, sessions, unwrap, url)
 
 import Http
 import Url.Builder exposing (QueryParameter)
@@ -15,7 +15,11 @@ unwrap (Endpoint str) =
 
 basePath : String
 basePath =
-    "http://laburnum.informatik.uni-tuebingen.de:3000"
+    "http://localhost:3000"
+
+
+
+-- "http://laburnum.informatik.uni-tuebingen.de:3000"
 
 
 url : List String -> List QueryParameter -> Endpoint
@@ -27,12 +31,16 @@ url paths queryParams =
         queryParams
         |> Endpoint
 
+
+
 -- ENDPOINTS
+
 
 sessions : Endpoint
 sessions =
-    url ["auth", "sessions" ] []
+    url [ "auth", "sessions" ] []
+
 
 account : Endpoint
 account =
-    url ["account"] []
+    url [ "account" ] []
