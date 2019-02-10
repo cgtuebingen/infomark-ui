@@ -1,4 +1,4 @@
-git module Api.Request.Auth exposing (sessionDelete, sessionPost)
+module Api.Request.Auth exposing (sessionDelete, sessionPost)
 
 --import Api.Helper exposing (..)
 
