@@ -51,6 +51,7 @@ type Msg
 type Field
     = Email | Password
 
+
 setField : Model -> Field -> String -> Model
 setField model field value = 
     case field of
@@ -59,6 +60,7 @@ setField model field value =
         
         Password ->
             { model | plain_password = value }
+
 
 type alias Error =
     (Field, String)
@@ -186,7 +188,7 @@ view sharedState model =
                     , button [ onClick <| NavigateTo RegistrationRoute, Styles.linkGreyStyle ] [ text "Registrieren" ]
                     ]
                 ]   
-            ] 
+            ]
         ] 
 
 viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg

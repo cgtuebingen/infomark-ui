@@ -1,5 +1,24 @@
 {
     "site-title": "InfoMark",
     "page-title-login": "Anmelden",
-    "page-title-registration": "Registrierung"
+    "page-title-registration": "Registrierung",
+    "month-jan": "Januar",
+    "month-feb": "Februar",
+    "month-mar": "März",
+    "month-apr": "April",
+    "month-may": "Mai",
+    "month-jun": "Juni",
+    "month-jul": "Juli",
+    "month-aug": "August",
+    "month-sept": "September",
+    "month-oct": "Oktober",
+    "month-nov": "November",
+    "month-dec": "Dezember",
+    "day-mon": "Montag",
+    "day-tue": "Dienstag",
+    "day-wed": "Mittwoch",
+    "day-thu": "Donnerstag",
+    "day-fri": "Freitag",
+    "day-sat": "Samstag",
+    "day-sun": "Sonntag"
 }

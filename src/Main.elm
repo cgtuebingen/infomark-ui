@@ -8,7 +8,8 @@ import Html exposing (..)
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Router as Router
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Time exposing (Posix)
+import Time exposing (Posix, Zone)
+import Task
 import Types exposing (Translations)
 import Url exposing (Url)
 import Spinner
@@ -37,7 +38,7 @@ type alias Flags =
 
 
 type AppState
-    = NotReady Posix
+    = NotReady (Maybe Posix) (Maybe Zone)
     | Ready SharedState Router.Model
     | FailedToInitialize
 
@@ -49,18 +50,22 @@ type Msg
     | SpinnerMsg Spinner.Msg
     | HandleTranslationsResponse (WebData Translations)
     | RouterMsg Router.Msg
+    | AdjustTimeZone Zone
 
 
 init : Flags -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    ( { appState = NotReady (Time.millisToPosix flags.currentTime)
+    ( { appState = NotReady (Just (Time.millisToPosix flags.currentTime)) (Just Time.utc)
       , url = url
       , navKey = navKey
       }
-    , Http.get 
-        { url = "/translations/de.json"
-        , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
-        }
+    , Cmd.batch 
+        [ Http.get 
+            { url = "/translations/de.json"
+            , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
+            }
+        , Task.perform AdjustTimeZone Time.here
+        ]
     )
 
 
@@ -69,6 +74,9 @@ update msg model =
     case msg of
         TimeChange time ->
             updateTime model time
+
+        AdjustTimeZone zone ->
+            updateTimeZone model zone
 
         HandleTranslationsResponse webData ->
             updateTranslations model webData
@@ -94,13 +102,30 @@ update msg model =
 updateTime : Model -> Posix -> ( Model, Cmd Msg )
 updateTime model time =
     case model.appState of
-        NotReady _ ->
-            ( { model | appState = NotReady time }
+        NotReady _ zone ->
+            ( { model | appState = NotReady (Just time) zone }
             , Cmd.none
             )
 
         Ready sharedState routerModel ->
             ( { model | appState = Ready (SharedState.update sharedState (UpdateTime time)) routerModel }
+            , Cmd.none
+            )
+
+        FailedToInitialize ->
+            ( model, Cmd.none )
+
+
+updateTimeZone : Model -> Zone -> ( Model, Cmd Msg )
+updateTimeZone model zone =
+    case model.appState of
+        NotReady time _ ->
+            ( { model | appState = NotReady time (Just zone) }
+            , Cmd.none
+            )
+
+        Ready sharedState routerModel ->
+            ( { model | appState = Ready (SharedState.update sharedState (UpdateTimezone zone)) routerModel }
             , Cmd.none
             )
 
@@ -147,12 +172,13 @@ updateTranslations model webData =
         --   b) update the current running application.
         Success translations ->
             case model.appState of
-                NotReady time ->
+                NotReady time zone ->
                     -- We don't have a ready app, let's create one now
                     let
                         initSharedState =
                             { navKey = model.navKey
                             , currentTime = time
+                            , timezone = zone
                             , translations = translations
                             , role = Nothing
                             }
@@ -196,7 +222,7 @@ view model =
         Ready sharedState routerModel ->
             Router.view RouterMsg sharedState routerModel
 
-        NotReady _ ->
+        NotReady _ _ ->
             { title = "Loading"
             , body = [ text "Loading" ]
             }

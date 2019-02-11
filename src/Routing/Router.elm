@@ -11,6 +11,7 @@ import Components.Footer as Footer
 import Pages.Home as Home
 import Pages.Login as Login
 import Pages.Registration as Registration
+import Pages.Courses as Courses
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Types exposing (Translations)
@@ -22,6 +23,7 @@ type alias Model =
     { homeModel : Home.Model
     , loginModel : Login.Model
     , registrationModel : Registration.Model
+    , coursesModel : Courses.Model
     , footerModel : Footer.Model
     , route : Route
     }
@@ -34,13 +36,14 @@ type Msg
     | FooterMsg Footer.Msg
     | HomeMsg Home.Msg
     | LoginMsg Login.Msg
+    | CoursesMsg Courses.Msg
     | RegistrationMsg Registration.Msg
 
 
 init : Url -> ( Model, Cmd Msg )
 init url =
     let 
-        ( homeModel, homeCmd) =
+        ( homeModel, homeCmd ) =
             Home.init
 
         loginModel =
@@ -49,16 +52,23 @@ init url =
         registrationModel =
             Registration.initModel
 
+        ( coursesModel, coursesCmd ) =
+            Courses.init
+
         footerModel = 
             Footer.initModel
     in
     ( { homeModel = homeModel 
       , loginModel = loginModel
       , registrationModel = registrationModel
+      , coursesModel = coursesModel
       , footerModel = footerModel
       , route = parseUrl url
       }
-    , Cmd.map HomeMsg homeCmd
+    , Cmd.batch 
+        [ Cmd.map HomeMsg homeCmd
+        , Cmd.map CoursesMsg coursesCmd
+        ]
     )
 
 
@@ -92,6 +102,9 @@ update sharedState msg model =
         RegistrationMsg registrationMsg ->
             updateRegistration sharedState model registrationMsg
 
+        CoursesMsg coursesMsg ->
+            updateCourse sharedState model coursesMsg
+
         FooterMsg footerMsg ->
             updateFooter sharedState model footerMsg
 
@@ -104,6 +117,17 @@ updateHome sharedState model homeMsg =
     in
     ( {model | homeModel = nextHomeModel}
     , Cmd.map HomeMsg homeCmd
+    , sharedStateUpdate)
+
+
+updateCourse : SharedState -> Model -> Courses.Msg -> (Model, Cmd Msg, SharedStateUpdate)
+updateCourse sharedState model coursesMsg = 
+    let
+        (nextCoursesModel, coursesCmd, sharedStateUpdate) =
+            Courses.update sharedState coursesMsg model.coursesModel
+    in
+    ( {model | coursesModel = nextCoursesModel}
+    , Cmd.map CoursesMsg coursesCmd
     , sharedStateUpdate)
 
 
@@ -157,6 +181,9 @@ view msgMapper sharedState model =
                 HomeRoute ->
                     "Home"
                 
+                CoursesRoute ->
+                    "Courses"
+                
                 NotFoundRoute ->
                     "404"
         
@@ -168,6 +195,9 @@ view msgMapper sharedState model =
                 noTabPage sharedState model
 
             HomeRoute ->
+                tabPage sharedState model
+
+            CoursesRoute ->
                 tabPage sharedState model
 
             NotFoundRoute ->
@@ -222,6 +252,10 @@ pageView sharedState model =
         HomeRoute ->
             Home.view sharedState model.homeModel
                 |> Html.map HomeMsg
+
+        CoursesRoute ->
+            Courses.view sharedState model.coursesModel
+                |> Html.map CoursesMsg
             
         LoginRoute ->
             Login.view sharedState model.loginModel

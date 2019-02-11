@@ -8,6 +8,7 @@ type Route
     = LoginRoute
     | RegistrationRoute
     | HomeRoute
+    | CoursesRoute
     | NotFoundRoute
 
 
@@ -20,6 +21,9 @@ reverseRoute route =
         HomeRoute ->
             "#/home"
 
+        CoursesRoute ->
+            "#/courses"
+
         _ ->
             "#/"
 
@@ -28,6 +32,7 @@ routeParser =
     Url.Parser.oneOf
         [ Url.Parser.map LoginRoute Url.Parser.top
         , Url.Parser.map HomeRoute (Url.Parser.s "home") 
+        , Url.Parser.map CoursesRoute (Url.Parser.s "courses") 
         , Url.Parser.map RegistrationRoute (Url.Parser.s "registration")
         ]
 

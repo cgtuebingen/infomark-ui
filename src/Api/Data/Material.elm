@@ -1,11 +1,11 @@
 module Api.Data.Material exposing (Material, decoder, encoder)
 
 import Dict exposing (Dict)
-import Iso8061
+import Iso8601
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
-import Time
+import Time exposing (Posix)
 
 
 type MaterialType
@@ -18,8 +18,8 @@ type alias Material =
     , file_url : Maybe String
     , name : String
     , material_type : MaterialType -- TODO enum? supplementary or slide
-    , published_at : Time
-    , lecture_at : Time
+    , published_at : Posix
+    , lecture_at : Posix
     }
 
 
@@ -30,8 +30,8 @@ decoder =
         |> optional "file_url" (Decode.nullable Decode.string) Nothing
         |> required "name" Decode.string
         |> required "material_type" typeDecoder
-        |> required "published_at" Iso8601.toTime
-        |> required "lecture_at" Iso8601.toTime
+        |> required "published_at" Iso8601.decoder
+        |> required "lecture_at" Iso8601.decoder
 
 
 encoder : Material -> Encode.Value
@@ -41,22 +41,22 @@ encoder model =
         , ( "file_url", Maybe.withDefault Encode.null <| Maybe.map Encode.string model.file_url )
         , ( "name", Encode.string model.name )
         , ( "material_type", typeEncoder model.material_type )
-        , ( "published_at", Iso8601.fromTime model.published_at )
-        , ( "lecture_at", Iso8601.fromTime model.lecture_at )
+        , ( "published_at", Iso8601.encode model.published_at )
+        , ( "lecture_at", Iso8601.encode model.lecture_at )
         ]
 
 
 typeDecoder : Decoder MaterialType
 typeDecoder =
-    Decoder.string
+    Decode.string
         |> Decode.andThen
             (\str ->
                 case str of
-                    "supplementary" ->
-                        Decode.succeed Supplementary
-
                     "slide" ->
                         Decode.succeed Slide
+
+                    _ ->
+                        Decode.succeed Supplementary
             )
 
 
