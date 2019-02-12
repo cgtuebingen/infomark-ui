@@ -249,7 +249,17 @@ viewCoursesHeader lbl toggable model =
                 text ""
     in
     
-    div [classes [TC.w_100, TC.flex, TC.flex_row, TC.justify_between, TC.items_center]] 
+    div 
+        [classes 
+            [TC.w_100
+            , TC.flex
+            , TC.flex_row
+            , TC.justify_between
+            , TC.items_center
+            , TC.bb
+            , TC.bw2
+            ]
+        ] 
         [ h1 [ Styles.headerStyle ] [text lbl]
         , toggle
         ]
@@ -260,9 +270,9 @@ viewRenderCourse sharedState course =
         [ header [classes [TC.measure]]
             [ h1 [ Styles.listHeadingStyle ] [text course.name] -- Bold header
             , dl [Styles.dateStyle ]
-                [ dt [classes [TC.black]] [text "Beginn "]
+                [ dt [classes [TC.black, TC.fw6]] [text "Beginn "]
                 , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.begins_at ]
-                , dt [classes [TC.black]] [text " Ende "]
+                , dt [classes [TC.black, TC.fw6]] [text " Ende "]
                 , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.ends_at ]
                 ]
             ]
