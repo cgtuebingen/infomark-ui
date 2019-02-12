@@ -178,12 +178,7 @@ view sharedState model =
                     [ viewCoursesHeader "Aktuell"
                     , div 
                         [ classes 
-                            [ TC.flex
-                            , TC.flex_wrap
-                            , TC.flex_row_ns
-                            , TC.flex_column
-                            , TC.justify_start
-                            , TC.content_start
+                            [ TC.cf
                             ]
                         ] currentCourses
                     ]
@@ -205,7 +200,7 @@ view sharedState model =
                     else
                         cTemp
             in
-            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph2, TC.ph0_ns, TC.w_100]]
+            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100]]
                 [
                     div 
                         [classes 
@@ -214,6 +209,7 @@ view sharedState model =
                             , TC.ph5
                             , TC.ph0_l
                             , TC.center
+                            , TC.mw9_ns
                             ]
                         ]
                     content
@@ -227,8 +223,8 @@ viewCoursesHeader lbl = h1 [ Styles.headerStyle ] [text lbl]
 
 viewRenderCourse : SharedState -> Course -> Html Msg
 viewRenderCourse sharedState course =
-    article [ classes [TC.cf, TC.ph3, TC.pv5, TC.w_30_l, TC.w_50_m, TC.w_100]]
-        [ header [classes [TC.fn, TC.w_100, TC.measure]]
+    article [ classes [TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_25_ns]]
+        [ header [classes [TC.measure]]
             [ h1 [ Styles.listHeadingStyle ] [text course.name] -- Bold header
             , dl [Styles.dateStyle ]
                 [ dt [classes [TC.black]] [text "Beginn "]
@@ -237,7 +233,7 @@ viewRenderCourse sharedState course =
                 , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.ends_at ]
                 ]
             ]
-        , div [classes [TC.fn, TC.w_100, TC.measure]]
+        , div [classes [TC.measure]]
             [ p [ Styles.textStyle] [ text <| Maybe.withDefault "" course.description] -- Normal paragraph
             , button [ Styles.buttonGreyStyle, classes [TC.w_100] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
             ]
