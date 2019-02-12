@@ -2,7 +2,7 @@ module SharedState exposing (SharedState, SharedStateUpdate(..), update)
 
 import Browser.Navigation
 import Time exposing (Posix, Zone)
-import Types exposing (Translations)
+import Types exposing (Language(..), Translations)
 import Api.Data.Role as Role exposing (Role)
 
 
@@ -11,6 +11,7 @@ type alias SharedState =
     , currentTime : Maybe Posix
     , timezone : Maybe Zone
     , translations : Translations
+    , selectedLanguage : Language
     , role : Maybe Role
     }
 
@@ -19,7 +20,7 @@ type SharedStateUpdate
     = NoUpdate
     | UpdateTime Posix
     | UpdateTimezone Zone
-    | UpdateTranslations Translations
+    | UpdateLanguage Language Translations
     | UpdateRole (Maybe Role)
 
 
@@ -32,8 +33,8 @@ update sharedState sharedStateUpdate =
         UpdateTimezone zone ->
             { sharedState | timezone = Just zone }
 
-        UpdateTranslations translations ->
-            { sharedState | translations = translations }
+        UpdateLanguage language translations ->
+            { sharedState | translations = translations, selectedLanguage = language }
 
         UpdateRole role ->
             { sharedState | role = role }

@@ -1,22 +1,27 @@
 module Routing.Router exposing (..)
 --(Model, Msg(..), init, pageView, update, updateHome, updateSettings, view)
 
+import Decoders
 import Browser
 import Browser.Navigation exposing (Key)
+import Http
 import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import I18n
-import Components.Footer as Footer
 import Pages.Home as Home
 import Pages.Login as Login
 import Pages.Registration as Registration
 import Pages.Courses as Courses
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
+import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Types exposing (Translations)
+import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Spinner
+import Utils.Styles as Styles
 
 
 type alias Model = 
@@ -24,24 +29,25 @@ type alias Model =
     , loginModel : Login.Model
     , registrationModel : Registration.Model
     , coursesModel : Courses.Model
-    , footerModel : Footer.Model
     , route : Route
+    , selectedLanguage : Language
     }
 
 
 type Msg
     = UrlChange Url
     | NavigateTo Route
+    | SelectedLanguage Language
+    | HandleTranslationsResponse (WebData Translations)
     | SpinnerMsg Spinner.Msg
-    | FooterMsg Footer.Msg
     | HomeMsg Home.Msg
     | LoginMsg Login.Msg
     | CoursesMsg Courses.Msg
     | RegistrationMsg Registration.Msg
 
 
-init : Url -> ( Model, Cmd Msg )
-init url =
+init : Url -> Language -> ( Model, Cmd Msg )
+init url lang =
     let 
         ( homeModel, homeCmd ) =
             Home.init
@@ -54,16 +60,13 @@ init url =
 
         ( coursesModel, coursesCmd ) =
             Courses.init
-
-        footerModel = 
-            Footer.initModel
     in
     ( { homeModel = homeModel 
       , loginModel = loginModel
       , registrationModel = registrationModel
       , coursesModel = coursesModel
-      , footerModel = footerModel
       , route = parseUrl url
+      , selectedLanguage = lang
       }
     , Cmd.batch 
         [ Cmd.map HomeMsg homeCmd
@@ -87,6 +90,20 @@ update sharedState msg model =
             , NoUpdate
             )
 
+        SelectedLanguage lang ->
+            ( { model | selectedLanguage = lang }
+            , getTranslations lang
+            , NoUpdate
+            )
+
+        HandleTranslationsResponse webData ->
+            case Debug.log "TranslationReceived" webData of
+                Success translations ->
+                    ( model, Cmd.none, UpdateLanguage model.selectedLanguage translations )
+
+                _ -> 
+                    ( model, Cmd.none, NoUpdate )
+
         SpinnerMsg spinnerMsg ->
             case model.route of -- Check in which part we are and forward the spinner msg if needed
                 LoginRoute -> updateLogin sharedState model (Login.SpinnerMsg spinnerMsg)
@@ -104,9 +121,6 @@ update sharedState msg model =
 
         CoursesMsg coursesMsg ->
             updateCourse sharedState model coursesMsg
-
-        FooterMsg footerMsg ->
-            updateFooter sharedState model footerMsg
 
 
 updateHome : SharedState -> Model -> Home.Msg -> (Model, Cmd Msg, SharedStateUpdate)
@@ -150,17 +164,6 @@ updateRegistration sharedState model registrationMsg =
     in
     ( { model | registrationModel = nextRegistrationModel}
     , Cmd.map RegistrationMsg registrationCmd
-    , sharedStateUpdate)
-
-
-updateFooter : SharedState -> Model -> Footer.Msg -> (Model, Cmd Msg, SharedStateUpdate)
-updateFooter sharedState model footerMsg = 
-    let 
-        (nextFooterModel, footerCmd, sharedStateUpdate) =
-            Footer.update sharedState footerMsg model.footerModel
-    in
-    ( { model | footerModel = nextFooterModel}
-    , Cmd.map FooterMsg footerCmd
     , sharedStateUpdate)
 
 
@@ -210,23 +213,101 @@ view msgMapper sharedState model =
         ]
     }
 
+navView : SharedState -> Model -> Html Msg
+navView sharedState model = 
+    nav 
+        [ classes 
+            [ TC.w_100
+            , TC.flex
+            , TC.justify_between
+            , TC.items_center
+            , TC.bb
+            , TC.b__white_10
+            , TC.bg_dark_gray
+            ]
+        ]
+        [input 
+            [ type_ "image"
+            , src "/assets/Logo_white.svg"
+            , onClick <| NavigateTo HomeRoute
+            , classes 
+                [ TC.link
+                , TC.pointer
+                , TC.no_underline
+                , TC.flex
+                , TC.items_center
+                , TC.pa3
+                , TC.w2
+                , TC.h2
+                ]
+            ] []
+        , div 
+            [ classes 
+                [ TC.flex
+                , TC.pa3
+                ]
+            ]
+            [ button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Courses"] -- TODO use translations
+            , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Tutor"] -- TODO use Translations - Only show if tutor
+            , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Admin"] -- TODO use Translations - Only show if root
+            , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Logout"]
+            ]
+        ]
 
+footerView : SharedState -> Model -> Html Msg
+footerView sharedState model =
+    let
+        t = 
+            I18n.get sharedState.translations
+    in
+    footer 
+        [ classes 
+            [ TC.pv3
+            , TC.ph3
+            , TC.ph5_m
+            , TC.ph6_l
+            , TC.dark_red
+            , TC.w_100
+            , TC.db
+            ]
+        ]
+        [ small 
+            [ classes 
+                [ TC.db
+                , TC.tc
+                ]
+            , Styles.textStyle
+            ]
+            [ text "© 2019 "
+                , b [ classes [TC.ttu] ]
+                    [ text "University Tübingen" ]
+                , text "., All Rights Reserved"
+            ]
+        , div
+            [ classes
+                [ TC.tc
+                , TC.mt3
+                ]
+            ]
+            [ button [ Styles.linkGreyStyle, onClick <| SelectedLanguage German ] [ text "Deutsch" ]
+            , button [ Styles.linkGreyStyle, onClick <| SelectedLanguage English ] [ text "English" ]
+            , a [ Styles.linkGreyStyle ] [ text "Terms of Use" ]
+            ]
+        ]
 
 tabPage : SharedState -> Model -> Html Msg
 tabPage sharedState model = 
     main_ 
         [ classes 
-            [ TC.vh_100
-            , TC.dt
-            , TC.w_100
+            [ TC.w_100
             , TC.bg_white
             , TC.black
             , TC.helvetica
             ]
         ] 
-        [ pageView sharedState model 
-        , Footer.view sharedState model.footerModel
-            |> Html.map FooterMsg
+        [ navView sharedState model
+        , pageView sharedState model 
+        , footerView sharedState model
         ]
 
 
@@ -234,15 +315,13 @@ noTabPage : SharedState -> Model -> Html Msg
 noTabPage sharedState model = 
         div 
             [ classes
-                [ TC.h_100
-                , TC.relative
+                [ TC.w_100
                 , TC.white
                 , TC.helvetica
                 ]
             ]
             [ pageView sharedState model 
-            , Footer.view sharedState model.footerModel
-                |> Html.map FooterMsg
+            , footerView sharedState model
             ]
         
 
@@ -288,3 +367,21 @@ pageView sharedState model =
                         ]
                         [ text "404 :("]
                 ]
+
+
+getTranslations : Language -> Cmd Msg
+getTranslations language =
+    let
+        url =
+            case language of
+                English ->
+                    "/translations/en.json"
+
+                German ->
+                    "/translations/de.json"
+
+    in
+        Http.get 
+            { url = url
+            , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
+        }

@@ -1,7 +1,7 @@
-module Utils.Styles exposing (linkBlackStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, 
+module Utils.Styles exposing (linkBlackStyle, linkWhiteStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, 
                               buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle,
                               inputStyle,
-                              headerStyle, labelStyle, textStyle,
+                              headerStyle, labelStyle, textStyle, listHeadingStyle, dateStyle,
                               spinnerRedStyle, spinnerGreyStyle, spinnerGoldStyle)
 
 import Tachyons exposing (classes, tachyons)
@@ -12,7 +12,7 @@ import Color exposing (Color)
 
 
 linkStyle =  
-    [ TC.f6 
+    [ TC.f5 
     , TC.dib 
     , TC.ph2 
     , TC.link
@@ -29,6 +29,10 @@ linkStyle =
 linkBlackStyle = classes <|
     linkStyle ++
     [ TC.black ]
+
+linkWhiteStyle = classes <|
+    linkStyle ++
+    [ TC.white ]
 
 linkRedStyle = classes <|
     linkStyle ++
@@ -101,6 +105,7 @@ inputStyle = classes
     , TC.hover_bg_dark_gray
     , TC.hover_white
     , TC.dark_gray
+    , TC.f5
     ]
 
 headerStyle = classes
@@ -110,15 +115,27 @@ headerStyle = classes
     , TC.b
     ]
 
+listHeadingStyle = classes
+    [ TC.f3, TC.fw6, TC.lh_title, TC.black ]
+
 labelStyle = classes
-    [ TC.f6
+    [ TC.f5
     , TC.fw6
     , TC.black_80
     ]
 
 textStyle = classes
-    [ TC.f6
+    [ TC.f5
     , TC.black_80
+    , TC.lh_copy
+    ]
+
+dateStyle = classes 
+    [ TC.f5
+    , TC.ttu
+    , TC.tracked
+    , TC.dark_gray
+    , TC.lh_copy
     ]
 
 spinnerStyle = 

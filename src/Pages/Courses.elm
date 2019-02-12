@@ -12,10 +12,13 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import RemoteData exposing (RemoteData(..), WebData)
 import Utils.DateFormatter as DF
+import Utils.Styles as Styles
 import Time
 import I18n
 import Api.Data.Course exposing (Course)
@@ -61,6 +64,25 @@ init =
             ,   
                 { id = 1
                 , name = "Informatik II"
+                , description = Just 
+                """
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
+                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
+                commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
+                velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
+                occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
+                mollit anim id est laborum.
+                """
+                , begins_at = Time.millisToPosix 1554985735000
+                , ends_at = Time.millisToPosix 1570796935000
+                , required_points = Nothing
+                , sheets = Nothing
+                , materials = Nothing 
+                }
+            ,
+                { id = 2
+                , name = "Informatik III"
                 , description = Just 
                 """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
@@ -153,31 +175,70 @@ view sharedState model =
                     |> List.map (\course -> viewRenderCourse sharedState course)
 
                 cTemp = 
-                    [ text "Aktuell"
-                    ] ++ currentCourses
+                    [ viewCoursesHeader "Aktuell"
+                    , div 
+                        [ classes 
+                            [ TC.flex
+                            , TC.flex_wrap
+                            , TC.flex_row_ns
+                            , TC.flex_column
+                            , TC.justify_start
+                            , TC.content_start
+                            ]
+                        ] currentCourses
+                    ]
                 
                 content = 
                     if List.length oldCourses > 0 then
                         cTemp ++ 
-                            [ text "Archiv"
-                            ] ++ oldCourses
+                            [ viewCoursesHeader "Archiv"
+                            , div 
+                                [ classes 
+                                    [ TC.flex
+                                    , TC.flex_wrap
+                                    , TC.flex_row
+                                    , TC.justify_start
+                                    , TC.content_start
+                                    ]
+                                ] oldCourses
+                            ]
                     else
                         cTemp
             in
-            div [] content
+            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph2, TC.ph0_ns, TC.w_100]]
+                [
+                    div 
+                        [classes 
+                            [ TC.w_75_l
+                            , TC.w_100
+                            , TC.ph5
+                            , TC.ph0_l
+                            , TC.center
+                            ]
+                        ]
+                    content
+                ]
 
         _ ->
-            div [] []
+            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100]] []
         
+viewCoursesHeader : String -> Html Msg
+viewCoursesHeader lbl = h1 [ Styles.headerStyle ] [text lbl]
 
 viewRenderCourse : SharedState -> Course -> Html Msg
 viewRenderCourse sharedState course =
-    div []
-        [ text course.name -- Bold header
-        , text <| Maybe.withDefault "" course.description -- Normal paragraph
-        , text "Beginn"
-        , DF.fullDateFormatter sharedState course.begins_at
-        , text "Ende"
-        , DF.fullDateFormatter sharedState course.ends_at
-        , button [ ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
+    article [ classes [TC.cf, TC.ph3, TC.pv5, TC.w_30_l, TC.w_50_m, TC.w_100]]
+        [ header [classes [TC.fn, TC.w_100, TC.measure]]
+            [ h1 [ Styles.listHeadingStyle ] [text course.name] -- Bold header
+            , dl [Styles.dateStyle ]
+                [ dt [classes [TC.black]] [text "Beginn "]
+                , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.begins_at ]
+                , dt [classes [TC.black]] [text " Ende "]
+                , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.ends_at ]
+                ]
+            ]
+        , div [classes [TC.fn, TC.w_100, TC.measure]]
+            [ p [ Styles.textStyle] [ text <| Maybe.withDefault "" course.description] -- Normal paragraph
+            , button [ Styles.buttonGreyStyle, classes [TC.w_100] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
+            ]
         ]

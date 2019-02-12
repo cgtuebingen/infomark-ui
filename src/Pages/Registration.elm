@@ -138,14 +138,13 @@ view sharedState model =
     in
     div 
         [ classes
-            [ TC.min_vh_100
-            , TC.overflow_hidden
-            , TC.db
-            , TC.relative
-            , TC.pb6
+            [ TC.db
+            , TC.pv5_l
+            , TC.pv3_m
+            , TC.pv1
             , TC.dt
             , TC.w_100
-            ] -- Fill nearly everythin
+            ]
         ] 
         [ div
             [ classes

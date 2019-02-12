@@ -10,7 +10,7 @@ import Routing.Router as Router
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Time exposing (Posix, Zone)
 import Task
-import Types exposing (Translations)
+import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Spinner
 
@@ -180,11 +180,12 @@ updateTranslations model webData =
                             , currentTime = time
                             , timezone = zone
                             , translations = translations
+                            , selectedLanguage = German
                             , role = Nothing
                             }
 
                         ( initRouterModel, routerCmd ) =
-                            Router.init model.url
+                            Router.init model.url initSharedState.selectedLanguage
                     in
                     ( { model | appState = Ready initSharedState initRouterModel }
                     , Cmd.map RouterMsg routerCmd
@@ -195,7 +196,7 @@ updateTranslations model webData =
                     ( { model
                         | appState =
                             Ready
-                                (SharedState.update sharedState (UpdateTranslations translations))
+                                (SharedState.update sharedState (UpdateLanguage German translations))
                                 routerModel
                       }
                     , Cmd.none
