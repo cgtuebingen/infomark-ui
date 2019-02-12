@@ -27,6 +27,7 @@ type alias Model =
     { courseProgress : WebData (List Course)
     , enrollProgress : WebData String
     , disenrollProgress : WebData String
+    , showArchive : Bool
     }
 
 type Msg
@@ -35,6 +36,7 @@ type Msg
     | Disenroll Course
     | EnrollResponse (WebData String)
     | DisenrollResponse (WebData String)
+    | ToggleArchive
     | NavigateTo Route
     
 
@@ -121,6 +123,7 @@ init =
             ]
         , enrollProgress = NotAsked
         , disenrollProgress = NotAsked
+        , showArchive = False
         }
     , Cmd.none
     )
@@ -145,6 +148,9 @@ update sharedState msg model =
 
         NavigateTo route ->
             (model, Cmd.none, NoUpdate)
+
+        ToggleArchive ->
+            ({model | showArchive = not model.showArchive}, Cmd.none, NoUpdate)
 
 
 view : SharedState -> Model -> Html Msg
@@ -174,8 +180,22 @@ view sharedState model =
                     )
                     |> List.map (\course -> viewRenderCourse sharedState course)
 
+                displayCourseOrNot =
+                    if model.showArchive then
+                        div 
+                        [ classes 
+                            [ TC.flex
+                            , TC.flex_wrap
+                            , TC.flex_row
+                            , TC.justify_start
+                            , TC.content_start
+                            ]
+                        ] oldCourses
+                    else
+                        text ""
+
                 cTemp = 
-                    [ viewCoursesHeader "Aktuell"
+                    [ viewCoursesHeader "Aktuell" False model
                     , div 
                         [ classes 
                             [ TC.cf
@@ -186,16 +206,8 @@ view sharedState model =
                 content = 
                     if List.length oldCourses > 0 then
                         cTemp ++ 
-                            [ viewCoursesHeader "Archiv"
-                            , div 
-                                [ classes 
-                                    [ TC.flex
-                                    , TC.flex_wrap
-                                    , TC.flex_row
-                                    , TC.justify_start
-                                    , TC.content_start
-                                    ]
-                                ] oldCourses
+                            [ viewCoursesHeader "Archiv" True model
+                            , displayCourseOrNot
                             ]
                     else
                         cTemp
@@ -218,8 +230,29 @@ view sharedState model =
         _ ->
             div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100]] []
         
-viewCoursesHeader : String -> Html Msg
-viewCoursesHeader lbl = h1 [ Styles.headerStyle ] [text lbl]
+viewCoursesHeader : String -> Bool -> Model -> Html Msg
+viewCoursesHeader lbl toggable model = 
+    let
+        toggleText = 
+            if model.showArchive then
+                text "Hide"
+            else
+                text "Show"
+
+        toggle = 
+            if toggable then
+                button 
+                    [ Styles.buttonGreyStyle
+                    , classes [TC.br_pill, TC.ph3, TC.pv3]
+                    , onClick ToggleArchive] [toggleText]
+            else
+                text ""
+    in
+    
+    div [classes [TC.w_100, TC.flex, TC.flex_row, TC.justify_between, TC.items_center]] 
+        [ h1 [ Styles.headerStyle ] [text lbl]
+        , toggle
+        ]
 
 viewRenderCourse : SharedState -> Course -> Html Msg
 viewRenderCourse sharedState course =
