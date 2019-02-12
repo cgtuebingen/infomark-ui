@@ -194,8 +194,9 @@ view sharedState model =
                     else
                         text ""
 
+                userRole = Maybe.withDefault { root = False } sharedState.role
                 cTemp = 
-                    [ viewCoursesHeader "Aktuell" False model
+                    [ viewCoursesHeader "Aktuell" False userRole.root model
                     , div 
                         [ classes 
                             [ TC.cf
@@ -206,7 +207,7 @@ view sharedState model =
                 content = 
                     if List.length oldCourses > 0 then
                         cTemp ++ 
-                            [ viewCoursesHeader "Archiv" True model
+                            [ viewCoursesHeader "Archiv" True False model
                             , displayCourseOrNot
                             ]
                     else
@@ -230,8 +231,8 @@ view sharedState model =
         _ ->
             div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100]] []
         
-viewCoursesHeader : String -> Bool -> Model -> Html Msg
-viewCoursesHeader lbl toggable model = 
+viewCoursesHeader : String -> Bool -> Bool -> Model -> Html Msg
+viewCoursesHeader lbl toggable creatable model = 
     let
         toggleText = 
             if model.showArchive then
@@ -245,6 +246,15 @@ viewCoursesHeader lbl toggable model =
                     [ Styles.buttonGreyStyle
                     , classes [TC.br_pill, TC.ph3, TC.pv3]
                     , onClick ToggleArchive] [toggleText]
+            else
+                text ""
+
+        create =
+            if creatable then
+                button
+                    [ Styles.buttonGreenStyle
+                    , classes [TC.br_pill, TC.ph4, TC.pv3]
+                    ] [text "+"]
             else
                 text ""
     in
@@ -262,6 +272,7 @@ viewCoursesHeader lbl toggable model =
         ] 
         [ h1 [ Styles.headerStyle ] [text lbl]
         , toggle
+        , create
         ]
 
 viewRenderCourse : SharedState -> Course -> Html Msg

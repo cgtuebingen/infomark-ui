@@ -1,5 +1,5 @@
-module Utils.Styles exposing (linkBlackStyle, linkWhiteStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, 
-                              buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle,
+module Utils.Styles exposing (linkBlackStyle, linkWhiteStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, linkGreenStyle, 
+                              buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle, buttonGreenStyle,
                               inputStyle,
                               headerStyle, labelStyle, textStyle, listHeadingStyle, dateStyle,
                               spinnerRedStyle, spinnerGreyStyle, spinnerGoldStyle)
@@ -45,6 +45,10 @@ linkGoldStyle = classes <|
 linkGreyStyle = classes <|
     linkStyle ++
     [ TC.dark_gray ]
+
+linkGreenStyle = classes <|
+    linkStyle ++
+    [ TC.dark_green ]
 
 
 buttonStyle =
@@ -93,6 +97,14 @@ buttonGreyStyle = classes <|
     [ TC.dark_gray
     , TC.b__dark_gray
     , TC.hover_bg_dark_gray
+    , TC.hover_white 
+    ]
+
+buttonGreenStyle = classes <|
+    buttonStyle ++
+    [ TC.dark_green
+    , TC.b__dark_green
+    , TC.hover_bg_dark_green
     , TC.hover_white 
     ]
 
