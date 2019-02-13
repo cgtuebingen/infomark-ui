@@ -2,6 +2,7 @@ module Api.Endpoint exposing (Endpoint(..), account, basePath, sessions, unwrap,
 
 import Http
 import Url.Builder exposing (QueryParameter)
+import Api.Data.Course exposing (Course)
 
 
 type Endpoint
@@ -35,12 +36,48 @@ url paths queryParams =
 
 -- ENDPOINTS
 
-
+-- GET and DELETE
 sessions : Endpoint
 sessions =
     url [ "auth", "sessions" ] []
 
+-- POST
+requestPasswordReset : Endpoint
+requestPasswordReset =
+    url [ "auth", "request_password_reset" ]
 
+-- POST
+passwordResetSet : Endpoint
+passwordResetSet =
+    url [ "auth", "update_password" ]
+
+-- POST
+confirmEmail : Endpoint
+confirmEmail =
+    url [ "auth", "confirm_email" ]
+
+-- GET, PATCH and POST
 account : Endpoint
 account =
     url [ "account" ] []
+
+-- GET and POST
+accountAvatar : Endpoint
+accountAvatar =
+    url [ "account", "avatar" ] []
+
+users : Endpoint
+users =
+    url [ "users" ] []
+
+user : Int -> Endpoint
+user id =
+    url [ "users", String.fromtInt id ] []
+
+courses : Endpoint
+courses =
+    url [ "courses" ] []
+
+course : Int -> Endpoint
+course id =
+    url [ "courses", String.fromInt id ] []
