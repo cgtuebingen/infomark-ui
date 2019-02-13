@@ -1,6 +1,8 @@
 {-
     This is the home site with links to all courses.
     If the user is not logged in redirect to the login page
+
+    -- TODO: DEPRECATED: Delete this
 -}
 module Pages.Home exposing (..)
 

@@ -1,8 +1,8 @@
 {-
     This is the course site. Here, all courses are listed.
-        - New courses can be created by root users.
+        - New courses can be created/edited/deleted by root users.
         - Users can enroll in a course
-        - Users can be removed from the course 
+        - Users can disenroll from the course 
         - Courses are split between current and past (archive)
 -}
 module Pages.Courses exposing (..)
