@@ -223,7 +223,7 @@ navView sharedState model =
             , TC.items_center
             , TC.bb
             , TC.b__white_10
-            , TC.bg_dark_gray
+            , TC.bg_dark_red
             ]
         ]
         [input 
@@ -239,6 +239,7 @@ navView sharedState model =
                 , TC.pa3
                 , TC.w2
                 , TC.h2
+                , TC.dim
                 ]
             ] []
         , div 
@@ -248,7 +249,6 @@ navView sharedState model =
                 ]
             ]
             [ button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Courses"] -- TODO use translations
-            , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Tutor"] -- TODO use Translations - Only show if tutor
             , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Admin"] -- TODO use Translations - Only show if root
             , button [ Styles.linkWhiteStyle, classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] ] [text "Logout"]
             ]

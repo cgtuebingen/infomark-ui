@@ -44,17 +44,17 @@ sessions =
 -- POST
 requestPasswordReset : Endpoint
 requestPasswordReset =
-    url [ "auth", "request_password_reset" ]
+    url [ "auth", "request_password_reset" ] []
 
 -- POST
 passwordResetSet : Endpoint
 passwordResetSet =
-    url [ "auth", "update_password" ]
+    url [ "auth", "update_password" ] []
 
 -- POST
 confirmEmail : Endpoint
 confirmEmail =
-    url [ "auth", "confirm_email" ]
+    url [ "auth", "confirm_email" ] []
 
 -- GET, PATCH and POST
 account : Endpoint
@@ -72,7 +72,7 @@ users =
 
 user : Int -> Endpoint
 user id =
-    url [ "users", String.fromtInt id ] []
+    url [ "users", String.fromInt id ] []
 
 courses : Endpoint
 courses =
