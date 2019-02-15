@@ -1,6 +1,7 @@
-module Utils.Utils exposing (..)
+module Utils.Utils exposing (perform)
 
 import Task
+
 
 perform : msg -> Cmd msg
 perform =

@@ -1,42 +1,44 @@
-module Routing.Router exposing (..)
+module Routing.Router exposing (CurrentModel(..), Model, Msg(..), footerView, getTranslations, init, initWith, navView, navigateTo, noTabPage, pageView, tabPage, update, updateWith, view)
+
 --(Model, Msg(..), init, pageView, update, updateHome, updateSettings, view)
 
-import Decoders
 import Browser
 import Browser.Navigation exposing (Key)
-import Http
+import Decoders
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Tachyons exposing (classes, tachyons)
-import Tachyons.Classes as TC
+import Http
 import I18n
+import Pages.Admin as Admin
+import Pages.CourseDetail as CourseDetail
+import Pages.CourseEditor as CourseEditor
+import Pages.Courses as Courses
+import Pages.Dashboard as Dashboard
 import Pages.Login as Login
 import Pages.Registration as Registration
-import Pages.Dashboard as Dashboard
-import Pages.Courses as Courses
-import Pages.CourseEditor as CourseEditor
-import Pages.CourseDetail as CourseDetail
-import Pages.SheetEditor as SheetEditor
 import Pages.SheetDetail as SheetDetail
-import Pages.TaskEditor as TaskEditor
-import Pages.Admin as Admin
+import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
-import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
+import Pages.TaskEditor as TaskEditor
 import RemoteData exposing (RemoteData(..), WebData)
+import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
+import Spinner
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
-import Spinner
 import Utils.Styles as Styles
 import Utils.Utils as Utils
 
 
-type alias Model = 
+type alias Model =
     { currentModel : CurrentModel
     , route : Route
     , selectedLanguage : Language
     }
+
 
 type CurrentModel
     = LoginModel Login.Model
@@ -76,7 +78,8 @@ type Msg
 init : Url -> Language -> ( Model, Cmd Msg )
 init url lang =
     let
-        currentRoute = parseUrl url
+        currentRoute =
+            parseUrl url
     in
     ( { currentModel = NotFound
       , route = currentRoute
@@ -88,13 +91,16 @@ init url lang =
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
-    case (msg, model.currentModel) of
+    case ( msg, model.currentModel ) of
         ( UrlChange location, _ ) ->
-            let 
-                route = parseUrl location
-                (newModel, newCmd, newSharedStateUpdate) = navigateTo route model
+            let
+                route =
+                    parseUrl location
+
+                ( newModel, newCmd, newSharedStateUpdate ) =
+                    navigateTo route model
             in
-            ( {newModel | route = route }
+            ( { newModel | route = route }
             , newCmd
             , newSharedStateUpdate
             )
@@ -116,12 +122,13 @@ update sharedState msg model =
                 Success translations ->
                     ( model, Cmd.none, UpdateLanguage model.selectedLanguage translations )
 
-                _ -> 
+                _ ->
                     ( model, Cmd.none, NoUpdate )
 
         ( Logout, _ ) ->
-            (model, Cmd.none, NoUpdate) -- TODO send logout message
+            ( model, Cmd.none, NoUpdate )
 
+        -- TODO send logout message
         ( SpinnerMsg spinnerMsg, LoginModel login ) ->
             Login.update sharedState (Login.SpinnerMsg spinnerMsg) login
                 |> updateWith LoginModel LoginMsg model
@@ -130,20 +137,20 @@ update sharedState msg model =
             Login.update sharedState loginMsg login
                 |> updateWith LoginModel LoginMsg model
 
-        ( RegistrationMsg registrationMsg, RegistrationModel registration) ->
+        ( RegistrationMsg registrationMsg, RegistrationModel registration ) ->
             Registration.update sharedState registrationMsg registration
                 |> updateWith RegistrationModel RegistrationMsg model
 
-        ( DashboardMsg dashboardMsg, DashboardModel dashboard) ->
+        ( DashboardMsg dashboardMsg, DashboardModel dashboard ) ->
             Dashboard.update sharedState dashboardMsg dashboard
                 |> updateWith DashboardModel DashboardMsg model
 
-        ( CoursesMsg coursesMsg, CoursesModel courses) ->
+        ( CoursesMsg coursesMsg, CoursesModel courses ) ->
             Courses.update sharedState coursesMsg courses
                 |> updateWith CoursesModel CoursesMsg model
 
         ( CourseEditorMsg courseEditorMsg, CourseEditorModel courseEditor ) ->
-            CourseEditor.update sharedState courseEditorMsg courseEditor 
+            CourseEditor.update sharedState courseEditorMsg courseEditor
                 |> updateWith CourseEditorModel CourseEditorMsg model
 
         ( CourseDetailMsg courseDetailMsg, CourseDetailModel courseDetail ) ->
@@ -162,17 +169,18 @@ update sharedState msg model =
             TaskEditor.update sharedState taskEditorMsg taskEditor
                 |> updateWith TaskEditorModel TaskEditorMsg model
 
-        ( SubmissionGradingEditorMsg submissionEditorMsg, SubmissionGradingEditorModel submissionEditor) ->
+        ( SubmissionGradingEditorMsg submissionEditorMsg, SubmissionGradingEditorModel submissionEditor ) ->
             SubmissionGradingEditor.update sharedState submissionEditorMsg submissionEditor
                 |> updateWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model
 
         ( AdminMsg adminMsg, AdminModel admin ) ->
             Admin.update sharedState adminMsg admin
-                |> updateWith AdminModel AdminMsg model 
+                |> updateWith AdminModel AdminMsg model
 
         ( _, _ ) ->
             -- Message arrived for wrong page. Ignore that
-            (model, Cmd.none, NoUpdate) 
+            ( model, Cmd.none, NoUpdate )
+
 
 navigateTo : Route -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 navigateTo route model =
@@ -182,7 +190,7 @@ navigateTo route model =
 
         RegistrationRoute ->
             Registration.init |> initWith RegistrationModel RegistrationMsg model NoUpdate
-        
+
         DashboardRoute ->
             Dashboard.init |> initWith DashboardModel DashboardMsg model NoUpdate
 
@@ -225,38 +233,41 @@ navigateTo route model =
             , NoUpdate
             )
 
+
 view : (Msg -> msg) -> SharedState -> Model -> Browser.Document msg
 view msgMapper sharedState model =
-    let 
-        translate = 
+    let
+        translate =
             I18n.get sharedState.translations
 
         title =
             case model.route of
                 LoginRoute ->
                     "Login"
-                
+
                 RegistrationRoute ->
-                    "Registration" -- TODO: Get translation from file
-                
+                    "Registration"
+
+                -- TODO: Get translation from file
                 CoursesRoute ->
                     "Courses"
-                
+
                 NotFoundRoute ->
                     "404"
 
                 _ ->
                     "Placeholder"
-        
-        body = case model.route of
-            LoginRoute ->
-                noTabPage sharedState model
 
-            RegistrationRoute ->
-                noTabPage sharedState model
+        body =
+            case model.route of
+                LoginRoute ->
+                    noTabPage sharedState model
 
-            _ ->
-                tabPage sharedState model
+                RegistrationRoute ->
+                    noTabPage sharedState model
+
+                _ ->
+                    tabPage sharedState model
     in
     { title = "InfoMark - " ++ title
     , body =
@@ -265,10 +276,11 @@ view msgMapper sharedState model =
         ]
     }
 
+
 navView : SharedState -> Model -> Html Msg
-navView sharedState model = 
-    nav 
-        [ classes 
+navView sharedState model =
+    nav
+        [ classes
             [ TC.w_100
             , TC.flex
             , TC.justify_between
@@ -278,11 +290,11 @@ navView sharedState model =
             , TC.bg_dark_red
             ]
         ]
-        [input 
+        [ input
             [ type_ "image"
             , src "/assets/Logo_white.svg"
             , onClick <| NavigateTo DashboardRoute
-            , classes 
+            , classes
                 [ TC.link
                 , TC.pointer
                 , TC.no_underline
@@ -293,39 +305,48 @@ navView sharedState model =
                 , TC.h2
                 , TC.dim
                 ]
-            ] []
-        , div 
-            [ classes 
+            ]
+            []
+        , div
+            [ classes
                 [ TC.flex
                 , TC.pa3
                 ]
             ]
-            [ button 
+            [ button
                 [ Styles.linkWhiteStyle
-                , classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu]
+                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
                 , onClick <| NavigateTo CoursesRoute
-                ] [text "Courses"] -- TODO use translations
-            , button 
+                ]
+                [ text "Courses" ]
+
+            -- TODO use translations
+            , button
                 [ Styles.linkWhiteStyle
-                , classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu] 
+                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
                 , onClick <| NavigateTo AdminRoute
-                ] [text "Admin"] -- TODO use Translations - Only show if root
-            , button 
+                ]
+                [ text "Admin" ]
+
+            -- TODO use Translations - Only show if root
+            , button
                 [ Styles.linkWhiteStyle
-                , classes [TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu]
-                , onClick Logout 
-                ] [text "Logout"]
+                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
+                , onClick Logout
+                ]
+                [ text "Logout" ]
             ]
         ]
+
 
 footerView : SharedState -> Model -> Html Msg
 footerView sharedState model =
     let
-        t = 
+        t =
             I18n.get sharedState.translations
     in
-    footer 
-        [ classes 
+    footer
+        [ classes
             [ TC.pv3
             , TC.ph3
             , TC.ph5_m
@@ -335,17 +356,17 @@ footerView sharedState model =
             , TC.db
             ]
         ]
-        [ small 
-            [ classes 
+        [ small
+            [ classes
                 [ TC.db
                 , TC.tc
                 ]
             , Styles.textStyle
             ]
             [ text "© 2019 "
-                , b [ classes [TC.ttu] ]
-                    [ text "University Tübingen" ]
-                , text "., All Rights Reserved"
+            , b [ classes [ TC.ttu ] ]
+                [ text "University Tübingen" ]
+            , text "., All Rights Reserved"
             ]
         , div
             [ classes
@@ -359,37 +380,40 @@ footerView sharedState model =
             ]
         ]
 
+
 tabPage : SharedState -> Model -> Html Msg
-tabPage sharedState model = 
-    main_ 
-        [ classes 
+tabPage sharedState model =
+    main_
+        [ classes
             [ TC.w_100
             , TC.bg_white
             , TC.black
             , TC.helvetica
             ]
-        ] 
+        ]
         [ navView sharedState model
-        , pageView sharedState model 
+        , pageView sharedState model
         , footerView sharedState model
         ]
 
+
 noTabPage : SharedState -> Model -> Html Msg
-noTabPage sharedState model = 
-        div 
-            [ classes
-                [ TC.w_100
-                , TC.white
-                , TC.helvetica
-                ]
+noTabPage sharedState model =
+    div
+        [ classes
+            [ TC.w_100
+            , TC.white
+            , TC.helvetica
             ]
-            [ pageView sharedState model 
-            , footerView sharedState model
-            ]
-        
+        ]
+        [ pageView sharedState model
+        , footerView sharedState model
+        ]
+
+
 pageView : SharedState -> Model -> Html Msg
 pageView sharedState model =
-    case model.currentModel of 
+    case model.currentModel of
         LoginModel login ->
             Login.view sharedState login
                 |> Html.map LoginMsg
@@ -429,13 +453,13 @@ pageView sharedState model =
         SubmissionGradingEditorModel submissionEditor ->
             SubmissionGradingEditor.view sharedState submissionEditor
                 |> Html.map SubmissionGradingEditorMsg
-            
+
         AdminModel admin ->
             Admin.view sharedState admin
                 |> Html.map AdminMsg
 
         NotFound ->
-            div 
+            div
                 [ classes
                     [ TC.dtc
                     , TC.v_mid
@@ -445,18 +469,18 @@ pageView sharedState model =
                     , TC.ph4_l
                     ]
                 ]
-                [
-                    h1 
-                        [ classes 
-                            [ TC.f6
-                            , TC.f2_m
-                            , TC.f_subheadline_l
-                            , TC.fw6
-                            , TC.tc
-                            ]
+                [ h1
+                    [ classes
+                        [ TC.f6
+                        , TC.f2_m
+                        , TC.f_subheadline_l
+                        , TC.fw6
+                        , TC.tc
                         ]
-                        [ text "404 :("]
+                    ]
+                    [ text "404 :(" ]
                 ]
+
 
 getTranslations : Language -> Cmd Msg
 getTranslations language =
@@ -468,73 +492,76 @@ getTranslations language =
 
                 German ->
                     "/translations/de.json"
-
     in
-        Http.get 
-            { url = url
-            , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
+    Http.get
+        { url = url
+        , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
         }
 
+
+
 {-
-modelForRoute : Route -> CurrentModel
-modelForRoute route =
-    case route of
-        LoginRoute ->
-            LoginModel <| Tuple.first Login.init
+   modelForRoute : Route -> CurrentModel
+   modelForRoute route =
+       case route of
+           LoginRoute ->
+               LoginModel <| Tuple.first Login.init
 
-        RegistrationRoute ->
-            RegistrationModel <| Tuple.first Registration.init
+           RegistrationRoute ->
+               RegistrationModel <| Tuple.first Registration.init
 
-        DashboardRoute ->
-            DashboardModel <| Tuple.first Dashboard.init
+           DashboardRoute ->
+               DashboardModel <| Tuple.first Dashboard.init
 
-        CoursesRoute ->
-            CoursesModel <| Tuple.first Courses.init
+           CoursesRoute ->
+               CoursesModel <| Tuple.first Courses.init
 
-        CreateCourseRoute ->
-            CourseEditorModel <| Tuple.first CourseEditor.initCreate
+           CreateCourseRoute ->
+               CourseEditorModel <| Tuple.first CourseEditor.initCreate
 
-        EditCourseRoute id ->
-            CourseEditorModel <| Tuple.first <| CourseEditor.initEdit id
-            
-        CourseDetailRoute id ->
-            CourseDetailModel <| Tuple.first <| CourseDetail.init id
+           EditCourseRoute id ->
+               CourseEditorModel <| Tuple.first <| CourseEditor.initEdit id
 
-        CreateSheetRoute ->
-            SheetEditorModel <| Tuple.first SheetEditor.initCreate
+           CourseDetailRoute id ->
+               CourseDetailModel <| Tuple.first <| CourseDetail.init id
 
-        EditSheetRoute id ->
-            SheetEditorModel <| Tuple.first <| SheetEditor.initEdit id
+           CreateSheetRoute ->
+               SheetEditorModel <| Tuple.first SheetEditor.initCreate
 
-        SheetDetailRoute id ->
-            SheetDetailModel <| Tuple.first <| SheetDetail.init id
+           EditSheetRoute id ->
+               SheetEditorModel <| Tuple.first <| SheetEditor.initEdit id
 
-        CreateTaskRoute ->
-            TaskEditorModel <| Tuple.first TaskEditor.initCreate
+           SheetDetailRoute id ->
+               SheetDetailModel <| Tuple.first <| SheetDetail.init id
 
-        EditTaskRoute id ->
-            TaskEditorModel <| Tuple.first <| TaskEditor.initEdit id
+           CreateTaskRoute ->
+               TaskEditorModel <| Tuple.first TaskEditor.initCreate
 
-        SubmissionGradingRoute taskId groupId ->
-            SubmissionGradingEditorModel <| Tuple.first <| SubmissionGradingEditor.init taskId groupId
+           EditTaskRoute id ->
+               TaskEditorModel <| Tuple.first <| TaskEditor.initEdit id
 
-        AdminRoute ->
-            AdminModel <| Tuple.first Admin.init
+           SubmissionGradingRoute taskId groupId ->
+               SubmissionGradingEditorModel <| Tuple.first <| SubmissionGradingEditor.init taskId groupId
 
-        _ ->
-            NotFound
+           AdminRoute ->
+               AdminModel <| Tuple.first Admin.init
+
+           _ ->
+               NotFound
 -}
 
-updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate) -> ( Model, Cmd Msg, SharedStateUpdate )
-updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate )  =
-    ( {model | currentModel = toModel subModel }
+
+updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate ) -> ( Model, Cmd Msg, SharedStateUpdate )
+updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
+    ( { model | currentModel = toModel subModel }
     , Cmd.map toMsg subCmd
     , subSharedStateUpdate
     )
 
-initWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> SharedStateUpdate -> ( subModel, Cmd subMsg) -> ( Model, Cmd Msg, SharedStateUpdate )
+
+initWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> SharedStateUpdate -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg, SharedStateUpdate )
 initWith toModel toMsg model sharedStateUpdate ( subModel, subCmd ) =
-    ( {model | currentModel = toModel subModel }
+    ( { model | currentModel = toModel subModel }
     , Cmd.map toMsg subCmd
     , sharedStateUpdate
     )

@@ -1,12 +1,12 @@
 module SharedState exposing (SharedState, SharedStateUpdate(..), update)
 
+import Api.Data.Role as Role exposing (Role)
 import Browser.Navigation
 import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
-import Api.Data.Role as Role exposing (Role)
 
 
-type alias SharedState = 
+type alias SharedState =
     { navKey : Browser.Navigation.Key
     , currentTime : Maybe Posix
     , timezone : Maybe Zone

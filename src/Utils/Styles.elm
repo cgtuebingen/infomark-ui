@@ -1,23 +1,40 @@
-module Utils.Styles exposing (linkBlackStyle, linkWhiteStyle, linkRedStyle, linkGoldStyle, linkGreyStyle, linkGreenStyle, 
-                              buttonBlackStyle, buttonRedStyle, buttonGoldStyle, buttonGreyStyle, buttonGreenStyle,
-                              inputStyle,
-                              headerStyle, labelStyle, textStyle, listHeadingStyle, dateStyle,
-                              spinnerRedStyle, spinnerGreyStyle, spinnerGoldStyle)
+module Utils.Styles exposing
+    ( buttonBlackStyle
+    , buttonGoldStyle
+    , buttonGreenStyle
+    , buttonGreyStyle
+    , buttonRedStyle
+    , dateStyle
+    , headerStyle
+    , inputStyle
+    , labelStyle
+    , linkBlackStyle
+    , linkGoldStyle
+    , linkGreenStyle
+    , linkGreyStyle
+    , linkRedStyle
+    , linkWhiteStyle
+    , listHeadingStyle
+    , spinnerGoldStyle
+    , spinnerGreyStyle
+    , spinnerRedStyle
+    , textStyle
+    )
 
+import Color exposing (Color)
+import Spinner
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Spinner
-import Color exposing (Color)
 
 
-linkStyle =  
-    [ TC.f5 
-    , TC.dib 
-    , TC.ph2 
+linkStyle =
+    [ TC.f5
+    , TC.dib
+    , TC.ph2
     , TC.link
     , TC.dim
     , TC.pointer
-    , TC.button_reset ---Everything for applying the style to a button instead of "a" 
+    , TC.button_reset ---Everything for applying the style to a button instead of "a"
     , TC.input_reset
     , TC.bg_transparent
     , TC.hover_bg_transparent
@@ -25,40 +42,52 @@ linkStyle =
     , TC.no_underline
     ]
 
-linkBlackStyle = classes <|
-    linkStyle ++
-    [ TC.black ]
 
-linkWhiteStyle = classes <|
-    linkStyle ++
-    [ TC.white ]
+linkBlackStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.black ]
 
-linkRedStyle = classes <|
-    linkStyle ++
-    [ TC.dark_red ]
 
-linkGoldStyle = classes <|
-    linkStyle ++
-    [ TC.gold ]
+linkWhiteStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.white ]
 
-linkGreyStyle = classes <|
-    linkStyle ++
-    [ TC.dark_gray ]
 
-linkGreenStyle = classes <|
-    linkStyle ++
-    [ TC.dark_green ]
+linkRedStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.dark_red ]
+
+
+linkGoldStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.gold ]
+
+
+linkGreyStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.dark_gray ]
+
+
+linkGreenStyle =
+    classes <|
+        linkStyle
+            ++ [ TC.dark_green ]
 
 
 buttonStyle =
-    [ TC.f5 
+    [ TC.f5
     , TC.no_underline
     , TC.bg_animate
     , TC.dib
     , TC.b
-    , TC.items_center 
-    , TC.pa3 
-    , TC.ba 
+    , TC.items_center
+    , TC.pa3
+    , TC.ba
     , TC.border_box
     , TC.bg_white
     , TC.pointer
@@ -66,90 +95,110 @@ buttonStyle =
     ]
 
 
-buttonBlackStyle = classes <|
-    buttonStyle ++
-    [ TC.black 
-    , TC.b__black
-    , TC.hover_bg_black 
-    , TC.hover_white 
-    ]
+buttonBlackStyle =
+    classes <|
+        buttonStyle
+            ++ [ TC.black
+               , TC.b__black
+               , TC.hover_bg_black
+               , TC.hover_white
+               ]
 
 
-buttonRedStyle = classes <|
-    buttonStyle ++
-    [ TC.dark_red 
-    , TC.b__dark_red
-    , TC.hover_bg_dark_red
-    , TC.hover_white 
-    ]
-
-buttonGoldStyle = classes <|
-    buttonStyle ++
-    [ TC.gold 
-    , TC.b__gold
-    , TC.hover_bg_gold
-    , TC.hover_black
-    ]
-
-buttonGreyStyle = classes <|
-    buttonStyle ++
-    [ TC.dark_gray
-    , TC.b__dark_gray
-    , TC.hover_bg_dark_gray
-    , TC.hover_white 
-    ]
-
-buttonGreenStyle = classes <|
-    buttonStyle ++
-    [ TC.dark_green
-    , TC.b__dark_green
-    , TC.hover_bg_dark_green
-    , TC.hover_white 
-    ]
+buttonRedStyle =
+    classes <|
+        buttonStyle
+            ++ [ TC.dark_red
+               , TC.b__dark_red
+               , TC.hover_bg_dark_red
+               , TC.hover_white
+               ]
 
 
-inputStyle = classes
-    [ TC.pa3
-    , TC.input_reset 
-    , TC.ba 
-    , TC.bg_transparent 
-    , TC.hover_bg_dark_gray
-    , TC.hover_white
-    , TC.dark_gray
-    , TC.f5
-    ]
+buttonGoldStyle =
+    classes <|
+        buttonStyle
+            ++ [ TC.gold
+               , TC.b__gold
+               , TC.hover_bg_gold
+               , TC.hover_black
+               ]
 
-headerStyle = classes
-    [ TC.f1
-    , TC.fw8
-    , TC.black 
-    , TC.b
-    ]
 
-listHeadingStyle = classes
-    [ TC.f3, TC.fw6, TC.lh_title, TC.black ]
+buttonGreyStyle =
+    classes <|
+        buttonStyle
+            ++ [ TC.dark_gray
+               , TC.b__dark_gray
+               , TC.hover_bg_dark_gray
+               , TC.hover_white
+               ]
 
-labelStyle = classes
-    [ TC.f5
-    , TC.fw6
-    , TC.black_80
-    ]
 
-textStyle = classes
-    [ TC.f5
-    , TC.black_80
-    , TC.lh_copy
-    ]
+buttonGreenStyle =
+    classes <|
+        buttonStyle
+            ++ [ TC.dark_green
+               , TC.b__dark_green
+               , TC.hover_bg_dark_green
+               , TC.hover_white
+               ]
 
-dateStyle = classes 
-    [ TC.f5
-    , TC.ttu
-    , TC.tracked
-    , TC.dark_gray
-    , TC.lh_copy
-    ]
 
-spinnerStyle = 
+inputStyle =
+    classes
+        [ TC.pa3
+        , TC.input_reset
+        , TC.ba
+        , TC.bg_transparent
+        , TC.hover_bg_dark_gray
+        , TC.hover_white
+        , TC.dark_gray
+        , TC.f5
+        ]
+
+
+headerStyle =
+    classes
+        [ TC.f1
+        , TC.fw8
+        , TC.black
+        , TC.b
+        ]
+
+
+listHeadingStyle =
+    classes
+        [ TC.f3, TC.fw6, TC.lh_title, TC.black ]
+
+
+labelStyle =
+    classes
+        [ TC.f5
+        , TC.fw6
+        , TC.black_80
+        ]
+
+
+textStyle =
+    classes
+        [ TC.f5
+        , TC.black_80
+        , TC.lh_copy
+        ]
+
+
+dateStyle =
+    classes
+        [ TC.f5
+        , TC.ttu
+        , TC.tracked
+        , TC.dark_gray
+        , TC.lh_copy
+        ]
+
+
+spinnerStyle =
     { lines = 10
     , length = 0
     , width = 8
@@ -165,9 +214,17 @@ spinnerStyle =
     , translateY = 50
     , shadow = True
     , hwaccel = False
-    , color = always <| Color.rgba 1 1 1 1 
+    , color = always <| Color.rgba 1 1 1 1
     }
 
-spinnerRedStyle = { spinnerStyle | color = always <| Color.rgba (165/255) (30/255) (55/255) 1 }
-spinnerGoldStyle = { spinnerStyle | color = always <| Color.rgba (180/255) (160/255) (105/255) 1 }
-spinnerGreyStyle = { spinnerStyle | color = always <| Color.rgba (50/255) (65/255) (75/255) 1 }
+
+spinnerRedStyle =
+    { spinnerStyle | color = always <| Color.rgba (165 / 255) (30 / 255) (55 / 255) 1 }
+
+
+spinnerGoldStyle =
+    { spinnerStyle | color = always <| Color.rgba (180 / 255) (160 / 255) (105 / 255) 1 }
+
+
+spinnerGreyStyle =
+    { spinnerStyle | color = always <| Color.rgba (50 / 255) (65 / 255) (75 / 255) 1 }

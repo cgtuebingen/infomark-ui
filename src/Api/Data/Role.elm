@@ -17,7 +17,6 @@ decoder =
         |> required "root" Decode.bool
 
 
-
 encoder : Role -> Encode.Value
 encoder model =
     Encode.object

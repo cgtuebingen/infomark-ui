@@ -1,8 +1,9 @@
-module Api.Helper exposing (..)
+module Api.Helper exposing (delete, get, patch, post)
 
+import Http
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
-import Http
+
 
 get : String -> (WebData a -> msg) -> Decoder a -> Cmd msg
 get url msg decoder =
@@ -29,6 +30,7 @@ post url body msg decoder =
         , tracker = Nothing
         }
 
+
 patch : String -> Http.Body -> (WebData a -> msg) -> Decoder a -> Cmd msg
 patch url body msg decoder =
     Http.request
@@ -40,6 +42,7 @@ patch url body msg decoder =
         , timeout = Nothing
         , tracker = Nothing
         }
+
 
 delete : String -> (WebData a -> msg) -> Decoder a -> Cmd msg
 delete url msg decoder =

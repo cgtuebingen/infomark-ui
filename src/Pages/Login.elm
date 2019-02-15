@@ -1,47 +1,48 @@
-module Pages.Login exposing(Model, Msg(..), init, update, view)
+module Pages.Login exposing (Model, Msg(..), init, update, view)
 
-import Browser.Navigation exposing (pushUrl)
-import Decoders
-import Dict
-import Http
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, onSubmit)
-import Tachyons exposing (classes, tachyons)
-import Tachyons.Classes as TC
-import RemoteData exposing (RemoteData(..), WebData)
-import Validate exposing (Validator, ifBlank, validate)
-import Routing.Helpers exposing (Route(..), reverseRoute)
-import SharedState exposing (SharedState, SharedStateUpdate(..))
-import I18n
-import Time
-import Types exposing (Language(..), Translations)
-import Utils.Styles as Styles
 import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
+import Browser.Navigation exposing (pushUrl)
+import Decoders
+import Dict
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput, onSubmit)
+import Http
+import I18n
+import RemoteData exposing (RemoteData(..), WebData)
+import Routing.Helpers exposing (Route(..), reverseRoute)
+import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Spinner
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
+import Time
+import Types exposing (Language(..), Translations)
+import Utils.Styles as Styles
+import Validate exposing (Validator, ifBlank, validate)
 
 
 type alias Model =
     { email : String
     , plain_password : String
     , loginProgress : WebData Role
-    , errors : (List Error)
+    , errors : List Error
     , spinner : Spinner.Model
     }
 
-init : (Model, Cmd Msg)
+
+init : ( Model, Cmd Msg )
 init =
-    (
-        { email = ""
-        , plain_password = ""
-        , loginProgress = NotAsked
-        , errors = []
-        , spinner = Spinner.init
-        }
+    ( { email = ""
+      , plain_password = ""
+      , loginProgress = NotAsked
+      , errors = []
+      , spinner = Spinner.init
+      }
     , Cmd.none
     )
+
 
 type Msg
     = NavigateTo Route
@@ -52,67 +53,69 @@ type Msg
 
 
 type Field
-    = Email | Password
+    = Email
+    | Password
 
 
 setField : Model -> Field -> String -> Model
-setField model field value = 
+setField model field value =
     case field of
         Email ->
             { model | email = value }
-        
+
         Password ->
             { model | plain_password = value }
 
 
 type alias Error =
-    (Field, String)
+    ( Field, String )
 
 
 modelValidator : Validator Error Model
 modelValidator =
     Validate.all
-        [ ifBlank .email (Email, "Bitte gib deine E-Mail ein.")
-        , ifBlank .plain_password (Password, "Bitte gib dein Passwort ein.")
+        [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
+        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
         ]
 
 
-update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate)
+update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         SetField field value ->
-            ( setField model field value, Cmd.none, NoUpdate)
+            ( setField model field value, Cmd.none, NoUpdate )
 
         SpinnerMsg spinmsg ->
             let
                 spinnerModel =
                     Spinner.update spinmsg model.spinner
             in
-                ({ model | spinner = spinnerModel }, Cmd.none, NoUpdate)
+            ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
 
         Login ->
             case validate modelValidator model of
                 Err errors ->
-                    ( {model | errors = errors}, Cmd.none, NoUpdate)
+                    ( { model | errors = errors }, Cmd.none, NoUpdate )
 
-                Ok _ -> 
+                Ok _ ->
                     let
-                        account = { email = model.email, plain_password = model.plain_password }
+                        account =
+                            { email = model.email, plain_password = model.plain_password }
                     in
-                    ( {model | loginProgress = Loading, errors = []}, sessionPost account LoginResponse, NoUpdate) -- TODO: Start the web request here.
+                    ( { model | loginProgress = Loading, errors = [] }, sessionPost account LoginResponse, NoUpdate )
 
-
+        -- TODO: Start the web request here.
         LoginResponse (RemoteData.Failure err) ->
-            ({model | loginProgress = RemoteData.Failure err}, Cmd.none, NoUpdate)
+            ( { model | loginProgress = RemoteData.Failure err }, Cmd.none, NoUpdate )
 
         LoginResponse (RemoteData.Success role) ->
-            (model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRole <| Just role)
+            ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRole <| Just role )
 
         LoginResponse _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
 type alias LoginBody =
@@ -127,7 +130,7 @@ view sharedState model =
         t =
             I18n.get sharedState.translations
     in
-    div 
+    div
         [ classes
             [ TC.db
             , TC.pv5_l
@@ -136,26 +139,29 @@ view sharedState model =
             , TC.dt
             , TC.w_100
             ]
-        ] 
+        ]
         [ parseWebDataForLoginView model.loginProgress
         , div
             [ classes
                 [ TC.v_mid
-                , TC.dtc 
+                , TC.dtc
                 , TC.tc
-                , TC.ph3 
-                , TC.ph4_l] -- Center on parent
+                , TC.ph3
+                , TC.ph4_l
+                ]
+
+            -- Center on parent
             ]
-            [ div 
-                [ classes 
+            [ div
+                [ classes
                     [ TC.w3
                     , TC.dib
                     , TC.mt4
                     ]
                 ]
-                [ img [src "/assets/Logo.svg"] []]
-            , Html.form 
-                [ classes 
+                [ img [ src "/assets/Logo.svg" ] [] ]
+            , Html.form
+                [ classes
                     [ TC.mw7
                     , TC.center
                     , TC.pa4
@@ -163,71 +169,83 @@ view sharedState model =
                     ]
                 , onSubmit Login
                 ]
-                [ fieldset 
+                [ fieldset
                     [ classes
                         [ TC.tl
                         , TC.bn
                         ]
                     ]
-                    [ legend 
-                        [ classes 
-                            [ TC.pa0 
+                    [ legend
+                        [ classes
+                            [ TC.pa0
                             , TC.mb2
                             ]
                         , Styles.headerStyle
                         ]
-                        [ text (t "page-title-login")] -- TODO: Replace with translation
-                    , div [ classes[ TC.mt3 ] ]
-                         <| inputElement "Email address" "Email" "email" Email model.email model.errors
-                    , div [ classes[ TC.mt3 ] ]
-                        <| inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
+                        [ text (t "page-title-login") ]
+
+                    -- TODO: Replace with translation
+                    , div [ classes [ TC.mt3 ] ] <|
+                        inputElement "Email address" "Email" "email" Email model.email model.errors
+                    , div [ classes [ TC.mt3 ] ] <|
+                        inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
                     , viewLoginButtonOrSpinner model.loginProgress model
                     ]
-                    , div [ classes [ TC.mt3 ]]
+                , div [ classes [ TC.mt3 ] ]
                     [ button [ Styles.linkGreyStyle ] [ text "Passwort vergessen?" ] -- TODO: Create password reset page
                     , button [ onClick <| NavigateTo RegistrationRoute, Styles.linkGreyStyle ] [ text "Registrieren" ]
                     ]
-                ]   
+                ]
             ]
-        ] 
+        ]
+
 
 viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg
 viewLoginButtonOrSpinner status model =
     case status of
         RemoteData.Loading ->
-            div [ 
-                classes 
+            div
+                [ classes
                     [ TC.dib
                     , TC.relative
                     , TC.w_100
                     , TC.mt5
-                    , TC.mb3 
+                    , TC.mb3
                     ]
-                ] [Spinner.view Styles.spinnerRedStyle model.spinner]
+                ]
+                [ Spinner.view Styles.spinnerRedStyle model.spinner ]
 
         _ ->
-            button 
+            button
                 [ Styles.buttonGreyStyle
-                , classes[TC.mt4, TC.w_100]
+                , classes [ TC.mt4, TC.w_100 ]
                 ]
-                [ text "Anmelden"] -- TODO: Replace with translation
-            
+                [ text "Anmelden" ]
+
+
+
+-- TODO: Replace with translation
+
+
 parseWebDataForLoginView : WebData a -> Html Msg
 parseWebDataForLoginView data =
     case data of
-        RemoteData.Failure (Http.BadStatus 400) -> 
-            viewLoginError "Wrong E-Mail and/or Password." -- TODO replace with translation
+        RemoteData.Failure (Http.BadStatus 400) ->
+            viewLoginError "Wrong E-Mail and/or Password."
 
+        -- TODO replace with translation
         RemoteData.Failure _ ->
-            viewLoginError "Something went wrong" -- TODO replace with HELPFUL translation
-        
+            viewLoginError "Something went wrong"
+
+        -- TODO replace with HELPFUL translation
         _ ->
             text ""
 
+
 viewLoginError : String -> Html Msg
 viewLoginError error =
-    div 
-        [ classes 
+    div
+        [ classes
             [ TC.items_center
             , TC.justify_center
             , TC.w_100
@@ -239,31 +257,35 @@ viewLoginError error =
             ]
         , Styles.textStyle
         ]
-        [ img [src "/assets/alert-circle.svg", classes [TC.w2, TC.mr3]][]
+        [ img [ src "/assets/alert-circle.svg", classes [ TC.w2, TC.mr3 ] ] []
         , text error
         ]
-        
+
 
 inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
 inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label 
+    [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle ]
+        , Styles.labelStyle
+        ]
         [ text inputLabel
-        ] 
-        , input [ type_ fieldType
-                , Styles.inputStyle
-                , classes [TC.w_100]
-                , placeholder inputPlaceholder
-                , onInput <| SetField field
-                , value curVal
-                ] []
-        , viewFormErrors field errors
+        ]
+    , input
+        [ type_ fieldType
+        , Styles.inputStyle
+        , classes [ TC.w_100 ]
+        , placeholder inputPlaceholder
+        , onInput <| SetField field
+        , value curVal
+        ]
+        []
+    , viewFormErrors field errors
     ]
+
 
 viewFormErrors : Field -> List Error -> Html Msg
 viewFormErrors field errors =
     errors
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [TC.red]] [ text error ])
-        |> ul [ classes [TC.list, TC.pl0, TC.center] ]
+        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
+        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]

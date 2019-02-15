@@ -19,7 +19,6 @@ decoder =
         |> required "plain_password" Decode.string
 
 
-
 encoder : Account -> Encode.Value
 encoder model =
     Encode.object

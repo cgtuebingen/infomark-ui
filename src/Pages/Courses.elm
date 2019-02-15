@@ -1,27 +1,30 @@
 {-
-    This is the course site. Here, all courses are listed.
-        - New courses can be created/edited/deleted by root users.
-        - Users can enroll in a course
-        - Users can disenroll from the course 
-        - Courses are split between current and past (archive)
+   This is the course site. Here, all courses are listed.
+       - New courses can be created/edited/deleted by root users.
+       - Users can enroll in a course
+       - Users can disenroll from the course
+       - Courses are split between current and past (archive)
 -}
-module Pages.Courses exposing (..)
 
+
+module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
+
+import Api.Data.Course exposing (Course)
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
-import Tachyons exposing (classes, tachyons)
-import Tachyons.Classes as TC
+import I18n
+import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import RemoteData exposing (RemoteData(..), WebData)
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
+import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Time
-import I18n
-import Api.Data.Course exposing (Course)
+
 
 type alias Model =
     { courseProgress : WebData (List Course)
@@ -29,6 +32,7 @@ type alias Model =
     , disenrollProgress : WebData String
     , showArchive : Bool
     }
+
 
 type Msg
     = CourseResponse (WebData (List Course))
@@ -38,17 +42,17 @@ type Msg
     | DisenrollResponse (WebData String)
     | ToggleArchive
     | NavigateTo Route
-    
 
-init : (Model, Cmd Msg)
-init = 
-    ( 
-        { courseProgress = RemoteData.Success 
-            [ 
-                { id = 0
-                , name = "Informatik I"
-                , description = Just 
-                """
+
+init : ( Model, Cmd Msg )
+init =
+    ( { courseProgress =
+            RemoteData.Success
+                [ { id = 0
+                  , name = "Informatik I"
+                  , description =
+                        Just
+                            """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
                 tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
                 veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
@@ -57,17 +61,17 @@ init =
                 occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
                 mollit anim id est laborum.
                 """
-                , begins_at = Time.millisToPosix 1549888135000
-                , ends_at = Time.millisToPosix 1560256135000
-                , required_points = Just 250
-                , sheets = Nothing
-                , materials = Nothing 
-                }
-            ,   
-                { id = 1
-                , name = "Informatik II"
-                , description = Just 
-                """
+                  , begins_at = Time.millisToPosix 1549888135000
+                  , ends_at = Time.millisToPosix 1560256135000
+                  , required_points = Just 250
+                  , sheets = Nothing
+                  , materials = Nothing
+                  }
+                , { id = 1
+                  , name = "Informatik II"
+                  , description =
+                        Just
+                            """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
                 tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
                 veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
@@ -76,17 +80,17 @@ init =
                 occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
                 mollit anim id est laborum.
                 """
-                , begins_at = Time.millisToPosix 1554985735000
-                , ends_at = Time.millisToPosix 1570796935000
-                , required_points = Nothing
-                , sheets = Nothing
-                , materials = Nothing 
-                }
-            ,
-                { id = 2
-                , name = "Informatik III"
-                , description = Just 
-                """
+                  , begins_at = Time.millisToPosix 1554985735000
+                  , ends_at = Time.millisToPosix 1570796935000
+                  , required_points = Nothing
+                  , sheets = Nothing
+                  , materials = Nothing
+                  }
+                , { id = 2
+                  , name = "Informatik III"
+                  , description =
+                        Just
+                            """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
                 tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
                 veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
@@ -95,17 +99,17 @@ init =
                 occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
                 mollit anim id est laborum.
                 """
-                , begins_at = Time.millisToPosix 1554985735000
-                , ends_at = Time.millisToPosix 1570796935000
-                , required_points = Nothing
-                , sheets = Nothing
-                , materials = Nothing 
-                }
-            ,   
-                { id = 1
-                , name = "ML"
-                , description = Just 
-                """
+                  , begins_at = Time.millisToPosix 1554985735000
+                  , ends_at = Time.millisToPosix 1570796935000
+                  , required_points = Nothing
+                  , sheets = Nothing
+                  , materials = Nothing
+                  }
+                , { id = 1
+                  , name = "ML"
+                  , description =
+                        Just
+                            """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
                 tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
                 veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
@@ -114,138 +118,155 @@ init =
                 occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
                 mollit anim id est laborum.
                 """
-                , begins_at = Time.millisToPosix 1528720135000
-                , ends_at = Time.millisToPosix 1541939335000
-                , required_points = Nothing
-                , sheets = Nothing
-                , materials = Nothing 
-                }
-            ]
-        , enrollProgress = NotAsked
-        , disenrollProgress = NotAsked
-        , showArchive = False
-        }
+                  , begins_at = Time.millisToPosix 1528720135000
+                  , ends_at = Time.millisToPosix 1541939335000
+                  , required_points = Nothing
+                  , sheets = Nothing
+                  , materials = Nothing
+                  }
+                ]
+      , enrollProgress = NotAsked
+      , disenrollProgress = NotAsked
+      , showArchive = False
+      }
     , Cmd.none
     )
 
-update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate)
+
+update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         CourseResponse response ->
-            ({model | courseProgress = response }, Cmd.none, NoUpdate)
-        
+            ( { model | courseProgress = response }, Cmd.none, NoUpdate )
+
         Enroll course ->
-            (model, Cmd.none, NoUpdate)
-        
+            ( model, Cmd.none, NoUpdate )
+
         Disenroll course ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         EnrollResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         DisenrollResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         NavigateTo route ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         ToggleArchive ->
-            ({model | showArchive = not model.showArchive}, Cmd.none, NoUpdate)
+            ( { model | showArchive = not model.showArchive }, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     let
-        translate = 
+        translate =
             I18n.get sharedState.translations
     in
     case model.courseProgress of
         RemoteData.Success courses ->
-            let 
-                currentTime = Maybe.withDefault 
-                    (Time.millisToPosix 0) -- THIS SHOULD NEVER HAPPEN!
-                    sharedState.currentTime
+            let
+                currentTime =
+                    Maybe.withDefault
+                        (Time.millisToPosix 0)
+                        -- THIS SHOULD NEVER HAPPEN!
+                        sharedState.currentTime
 
-                currentCourses = courses
-                    |> List.filter (\course -> 
-                        Time.posixToMillis course.ends_at
-                        |> (<) (Time.posixToMillis currentTime)
-                    )
-                    |> List.map (\course -> viewRenderCourse sharedState course)
-                
-                oldCourses = courses
-                    |> List.filter (\course -> 
-                        Time.posixToMillis course.ends_at
-                        |> (>) (Time.posixToMillis currentTime)
-                    )
-                    |> List.map (\course -> viewRenderCourse sharedState course)
+                currentCourses =
+                    courses
+                        |> List.filter
+                            (\course ->
+                                Time.posixToMillis course.ends_at
+                                    |> (<) (Time.posixToMillis currentTime)
+                            )
+                        |> List.map (\course -> viewRenderCourse sharedState course)
+
+                oldCourses =
+                    courses
+                        |> List.filter
+                            (\course ->
+                                Time.posixToMillis course.ends_at
+                                    |> (>) (Time.posixToMillis currentTime)
+                            )
+                        |> List.map (\course -> viewRenderCourse sharedState course)
 
                 displayCourseOrNot =
                     if model.showArchive then
-                        div 
-                        [ classes 
-                            [ TC.flex
-                            , TC.flex_wrap
-                            , TC.flex_row
-                            , TC.justify_start
-                            , TC.content_start
+                        div
+                            [ classes
+                                [ TC.flex
+                                , TC.flex_wrap
+                                , TC.flex_row
+                                , TC.justify_start
+                                , TC.content_start
+                                ]
                             ]
-                        ] oldCourses
+                            oldCourses
+
                     else
                         text ""
 
-                userRole = Maybe.withDefault { root = False } sharedState.role
-                cTemp = 
+                userRole =
+                    Maybe.withDefault { root = False } sharedState.role
+
+                cTemp =
                     [ viewCoursesHeader "Aktuell" False userRole.root model
-                    , div 
-                        [ classes 
+                    , div
+                        [ classes
                             [ TC.cf
                             ]
-                        ] currentCourses
+                        ]
+                        currentCourses
                     ]
-                
-                content = 
+
+                content =
                     if List.length oldCourses > 0 then
-                        cTemp ++ 
-                            [ viewCoursesHeader "Archiv" True False model
-                            , displayCourseOrNot
-                            ]
+                        cTemp
+                            ++ [ viewCoursesHeader "Archiv" True False model
+                               , displayCourseOrNot
+                               ]
+
                     else
                         cTemp
             in
-            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100]]
-                [
-                    div 
-                        [classes 
-                            [ TC.w_75_l
-                            , TC.w_100
-                            , TC.ph5
-                            , TC.ph0_l
-                            , TC.center
-                            , TC.mw9_ns
-                            ]
+            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+                [ div
+                    [ classes
+                        [ TC.w_75_l
+                        , TC.w_100
+                        , TC.ph5
+                        , TC.ph0_l
+                        , TC.center
+                        , TC.mw9_ns
                         ]
+                    ]
                     content
                 ]
 
         _ ->
-            div [ classes [TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100]] []
-        
+            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100 ] ] []
+
+
 viewCoursesHeader : String -> Bool -> Bool -> Model -> Html Msg
-viewCoursesHeader lbl toggable creatable model = 
+viewCoursesHeader lbl toggable creatable model =
     let
-        toggleText = 
+        toggleText =
             if model.showArchive then
                 text "Hide"
+
             else
                 text "Show"
 
-        toggle = 
+        toggle =
             if toggable then
-                button 
+                button
                     [ Styles.buttonGreyStyle
-                    , classes [TC.br_pill, TC.ph3, TC.pv3]
-                    , onClick ToggleArchive] [toggleText]
+                    , classes [ TC.br_pill, TC.ph3, TC.pv3 ]
+                    , onClick ToggleArchive
+                    ]
+                    [ toggleText ]
+
             else
                 text ""
 
@@ -253,15 +274,16 @@ viewCoursesHeader lbl toggable creatable model =
             if creatable then
                 button
                     [ Styles.buttonGreenStyle
-                    , classes [TC.br_pill, TC.ph4, TC.pv3]
-                    ] [text "+"]
+                    , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
+                    ]
+                    [ text "+" ]
+
             else
                 text ""
     in
-    
-    div 
-        [classes 
-            [TC.w_100
+    div
+        [ classes
+            [ TC.w_100
             , TC.flex
             , TC.flex_row
             , TC.justify_between
@@ -269,26 +291,27 @@ viewCoursesHeader lbl toggable creatable model =
             , TC.bb
             , TC.bw2
             ]
-        ] 
-        [ h1 [ Styles.headerStyle ] [text lbl]
+        ]
+        [ h1 [ Styles.headerStyle ] [ text lbl ]
         , toggle
         , create
         ]
 
+
 viewRenderCourse : SharedState -> Course -> Html Msg
 viewRenderCourse sharedState course =
-    article [ classes [TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns]]
-        [ header [classes [TC.measure]]
-            [ h1 [ Styles.listHeadingStyle ] [text course.name] -- Bold header
-            , dl [Styles.dateStyle ]
-                [ dt [classes [TC.black, TC.fw6]] [text "Beginn "]
-                , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.begins_at ]
-                , dt [classes [TC.black, TC.fw6]] [text " Ende "]
-                , dd [classes [TC.ml0]] [ DF.fullDateFormatter sharedState course.ends_at ]
+    article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
+        [ header [ classes [ TC.measure ] ]
+            [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
+            , dl [ Styles.dateStyle ]
+                [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
+                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
+                , dt [ classes [ TC.black, TC.fw6 ] ] [ text " Ende " ]
+                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
                 ]
             ]
-        , div [classes [TC.measure]]
-            [ p [ Styles.textStyle] [ text <| Maybe.withDefault "" course.description] -- Normal paragraph
-            , button [ Styles.buttonGreyStyle, classes [TC.w_100] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
+        , div [ classes [ TC.measure ] ]
+            [ p [ Styles.textStyle ] [ text <| Maybe.withDefault "" course.description ] -- Normal paragraph
+            , button [ Styles.buttonGreyStyle, classes [ TC.w_100 ] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
             ]
         ]

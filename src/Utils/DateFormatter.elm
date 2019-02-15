@@ -10,26 +10,30 @@ flip : (a -> b -> c) -> (b -> a -> c)
 flip f b a =
     f a b
 
+
 timeFormatter : SharedState -> Posix -> Html msg
 timeFormatter sharedState time =
     let
         hour =
             String.padLeft 2 '0' <|
                 String.fromInt
-                    (Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toHour time)
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toHour time
+                    )
 
         minute =
             String.padLeft 2 '0' <|
                 String.fromInt
-                    (Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toMinute time)
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toMinute time
+                    )
 
         second =
             String.padLeft 2 '0' <|
                 String.fromInt
-                    (Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toSecond time)
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toSecond time
+                    )
     in
     text (hour ++ ":" ++ minute ++ ":" ++ second)
 
@@ -43,11 +47,13 @@ shortDateFormatter sharedState time =
         day =
             String.padLeft 2 '0' <|
                 String.fromInt
-                    (Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toDay time)
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toDay time
+                    )
 
-        monthType = Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toMonth time
+        monthType =
+            Maybe.withDefault Time.utc sharedState.timezone
+                |> flip Time.toMonth time
 
         month =
             case monthType of
@@ -89,8 +95,9 @@ shortDateFormatter sharedState time =
 
         year =
             String.fromInt
-                (Maybe.withDefault Time.utc sharedState.timezone |>
-                    flip Time.toYear time)
+                (Maybe.withDefault Time.utc sharedState.timezone
+                    |> flip Time.toYear time
+                )
     in
     text (day ++ "/" ++ month ++ "/" ++ year)
 
@@ -117,8 +124,9 @@ fullDateFormatter sharedState time =
         t =
             I18n.get sharedState.translations
 
-        weekDayType = Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toWeekday time
+        weekDayType =
+            Maybe.withDefault Time.utc sharedState.timezone
+                |> flip Time.toWeekday time
 
         weekday =
             case weekDayType of
@@ -143,13 +151,16 @@ fullDateFormatter sharedState time =
                 Time.Sun ->
                     t "day-sun"
 
-        day = String.padLeft 2 '0' <|
+        day =
+            String.padLeft 2 '0' <|
                 String.fromInt
-                    (Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toDay time)
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toDay time
+                    )
 
-        monthType = Maybe.withDefault Time.utc sharedState.timezone |>
-                        flip Time.toMonth time
+        monthType =
+            Maybe.withDefault Time.utc sharedState.timezone
+                |> flip Time.toMonth time
 
         month =
             case monthType of
@@ -191,7 +202,8 @@ fullDateFormatter sharedState time =
 
         year =
             String.fromInt
-                (Maybe.withDefault Time.utc sharedState.timezone |>
-                    flip Time.toYear time)
+                (Maybe.withDefault Time.utc sharedState.timezone
+                    |> flip Time.toYear time
+                )
     in
     text <| String.toUpper (weekday ++ ", " ++ month ++ " " ++ day ++ ", " ++ year)

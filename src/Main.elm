@@ -3,16 +3,17 @@ module Main exposing (main)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation
 import Decoders
-import Http
 import Html exposing (..)
+import Http
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Router as Router
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Time exposing (Posix, Zone)
+import Spinner
 import Task
+import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
-import Spinner
+
 
 main : Program Flags Model Msg
 main =
@@ -59,8 +60,8 @@ init flags url navKey =
       , url = url
       , navKey = navKey
       }
-    , Cmd.batch 
-        [ Http.get 
+    , Cmd.batch
+        [ Http.get
             { url = "/translations/de.json"
             , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
             }
@@ -211,7 +212,7 @@ updateTranslations model webData =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch 
+    Sub.batch
         [ Time.every 1000 TimeChange
         , Sub.map SpinnerMsg Spinner.subscription
         ]
@@ -231,4 +232,8 @@ view model =
         FailedToInitialize ->
             { title = "Failure"
             , body = [ text "The application failed to initialize. " ]
-            } -- TODO: Style everything!
+            }
+
+
+
+-- TODO: Style everything!

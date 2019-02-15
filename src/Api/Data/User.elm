@@ -10,12 +10,12 @@ type alias User =
     { id : Int
     , firstname : String
     , lastname : String
-    , avatarUrl : Maybe (String)
+    , avatarUrl : Maybe String
     , email : String
-    , studentNumber : Maybe (String)
-    , semester : Maybe (Int)
-    , subject : Maybe (String)
-    , language : Maybe (String)
+    , studentNumber : Maybe String
+    , semester : Maybe Int
+    , subject : Maybe String
+    , language : Maybe String
     }
 
 
@@ -31,7 +31,6 @@ decoder =
         |> optional "semester" (Decode.nullable Decode.int) Nothing
         |> optional "subject" (Decode.nullable Decode.string) Nothing
         |> optional "language" (Decode.nullable Decode.string) Nothing
-
 
 
 encoder : User -> Encode.Value

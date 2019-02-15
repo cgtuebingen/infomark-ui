@@ -6,6 +6,7 @@ import Json.Decode exposing (Decoder, at, dict, field, float, int, string, succe
 import Json.Decode.Pipeline exposing (required, requiredAt)
 import Time exposing (Posix)
 
+
 type Language
     = English
     | German

@@ -64,7 +64,7 @@ reverseRoute route =
                     [ "task", String.fromInt id, "edit" ]
 
                 SubmissionGradingRoute taskId groupId ->
-                    [ "task", String.fromInt taskId, "grade", "group", String.fromInt groupId]
+                    [ "task", String.fromInt taskId, "grade", "group", String.fromInt groupId ]
 
                 AdminRoute ->
                     [ "admin" ]
