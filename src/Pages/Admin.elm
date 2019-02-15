@@ -1,19 +1,12 @@
 {-
-    This is the login site. Here, tutors and students should get
-    an overview about what to do next.
-        - Users should see:
-            - All enrolled courses
-        - Students should see (per course):
-            - An overview of their points for each sheet
-            - The total amount of points acquired
-            - The needed amount of points to pass the course
-            - What tasks are missing
-        - Tutors should see (per course):
-            - The point distribution per exercise sheet of the course or group?
-            - The tasks which are not done grading
+    Additional statistics about:
+        - Readiness for work of tutors
+            - How many missing graded submissions
+        - Readiness for work of students
+            - How many students stopped at submitting for sheet x
 -}
 
-module Pages.Dashboard exposing (..)
+module Pages.Admin exposing (..)
 
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
@@ -49,6 +42,7 @@ update sharedState msg model =
     case msg of
         NavigateTo route ->
             (model, Cmd.none, NoUpdate)
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model = div [] []

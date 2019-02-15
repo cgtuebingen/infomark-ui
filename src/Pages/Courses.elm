@@ -277,7 +277,7 @@ viewCoursesHeader lbl toggable creatable model =
 
 viewRenderCourse : SharedState -> Course -> Html Msg
 viewRenderCourse sharedState course =
-    article [ classes [TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_25_ns]]
+    article [ classes [TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns]]
         [ header [classes [TC.measure]]
             [ h1 [ Styles.listHeadingStyle ] [text course.name] -- Bold header
             , dl [Styles.dateStyle ]

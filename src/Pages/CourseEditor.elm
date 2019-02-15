@@ -1,19 +1,8 @@
 {-
-    This is the login site. Here, tutors and students should get
-    an overview about what to do next.
-        - Users should see:
-            - All enrolled courses
-        - Students should see (per course):
-            - An overview of their points for each sheet
-            - The total amount of points acquired
-            - The needed amount of points to pass the course
-            - What tasks are missing
-        - Tutors should see (per course):
-            - The point distribution per exercise sheet of the course or group?
-            - The tasks which are not done grading
+    This is the course creation page
 -}
 
-module Pages.Dashboard exposing (..)
+module Pages.CourseEditor exposing (..)
 
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
@@ -30,19 +19,19 @@ import Time
 import I18n
 import Api.Data.Course exposing (Course)
 
-
 type Msg
     = NavigateTo Route
-
 
 type alias Model =
     { dummy : Int
 
     }
 
+initCreate : (Model, Cmd Msg)
+initCreate = ({ dummy = 0 }, Cmd.none)
 
-init : (Model, Cmd Msg)
-init = ({ dummy = 0 }, Cmd.none)
+initEdit : Int -> (Model, Cmd Msg)
+initEdit id = ({ dummy = 0 }, Cmd.none)
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate)
 update sharedState msg model =

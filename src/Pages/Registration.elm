@@ -94,19 +94,22 @@ type Msg
     | RegistrationResponse (WebData String)
 
 
-initModel : Model
-initModel =
-    { email = ""
-    , password = ""
-    , passwordRepeat = ""
-    , firstName = ""
-    , lastName = ""
-    , studentNumber = ""
-    , semester = ""
-    , subject = ""
-    , registrationProgress = NotAsked
-    , errors = []
-    }
+init : (Model, Cmd Msg)
+init =
+    (
+        { email = ""
+        , password = ""
+        , passwordRepeat = ""
+        , firstName = ""
+        , lastName = ""
+        , studentNumber = ""
+        , semester = ""
+        , subject = ""
+        , registrationProgress = NotAsked
+        , errors = []
+        }
+    , Cmd.none
+    )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate)

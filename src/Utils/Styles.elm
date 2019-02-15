@@ -10,13 +10,12 @@ import Spinner
 import Color exposing (Color)
 
 
-
 linkStyle =  
     [ TC.f5 
     , TC.dib 
     , TC.ph2 
     , TC.link
-    , TC.dim 
+    , TC.dim
     , TC.pointer
     , TC.button_reset ---Everything for applying the style to a button instead of "a" 
     , TC.input_reset

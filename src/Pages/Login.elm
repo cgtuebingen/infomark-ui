@@ -1,4 +1,4 @@
-module Pages.Login exposing(Model, Msg(..), initModel, update, view)
+module Pages.Login exposing(Model, Msg(..), init, update, view)
 
 import Browser.Navigation exposing (pushUrl)
 import Decoders
@@ -31,14 +31,17 @@ type alias Model =
     , spinner : Spinner.Model
     }
 
-initModel : Model
-initModel =
-    { email = ""
-    , plain_password = ""
-    , loginProgress = NotAsked
-    , errors = []
-    , spinner = Spinner.init
-    }
+init : (Model, Cmd Msg)
+init =
+    (
+        { email = ""
+        , plain_password = ""
+        , loginProgress = NotAsked
+        , errors = []
+        , spinner = Spinner.init
+        }
+    , Cmd.none
+    )
 
 type Msg
     = NavigateTo Route
@@ -106,12 +109,10 @@ update sharedState msg model =
             ({model | loginProgress = RemoteData.Failure err}, Cmd.none, NoUpdate)
 
         LoginResponse (RemoteData.Success role) ->
-            ({model | loginProgress = RemoteData.NotAsked}, pushUrl sharedState.navKey (reverseRoute HomeRoute), UpdateRole <| Just role)
+            (model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRole <| Just role)
 
-        LoginResponse response -> -- TODO show errors
-            (model, Cmd.none, NoUpdate) -- TODO: Update the shared state
-
-
+        LoginResponse _ ->
+            (model, Cmd.none, NoUpdate)
 
 
 type alias LoginBody =

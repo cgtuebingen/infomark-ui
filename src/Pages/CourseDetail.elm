@@ -44,5 +44,25 @@ import Time
 import I18n
 import Api.Data.Course exposing (Course)
 
+
 type Msg
     = NavigateTo Route
+
+
+type alias Model =
+    { dummy : Int
+
+    }
+
+
+init : Int -> (Model, Cmd Msg)
+init id = ({ dummy = 0 }, Cmd.none)
+
+update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate)
+update sharedState msg model =
+    case msg of
+        NavigateTo route ->
+            (model, Cmd.none, NoUpdate)
+
+view : SharedState -> Model -> Html Msg
+view sharedState model = div [] []
