@@ -499,58 +499,6 @@ getTranslations language =
         }
 
 
-
-{-
-   modelForRoute : Route -> CurrentModel
-   modelForRoute route =
-       case route of
-           LoginRoute ->
-               LoginModel <| Tuple.first Login.init
-
-           RegistrationRoute ->
-               RegistrationModel <| Tuple.first Registration.init
-
-           DashboardRoute ->
-               DashboardModel <| Tuple.first Dashboard.init
-
-           CoursesRoute ->
-               CoursesModel <| Tuple.first Courses.init
-
-           CreateCourseRoute ->
-               CourseEditorModel <| Tuple.first CourseEditor.initCreate
-
-           EditCourseRoute id ->
-               CourseEditorModel <| Tuple.first <| CourseEditor.initEdit id
-
-           CourseDetailRoute id ->
-               CourseDetailModel <| Tuple.first <| CourseDetail.init id
-
-           CreateSheetRoute ->
-               SheetEditorModel <| Tuple.first SheetEditor.initCreate
-
-           EditSheetRoute id ->
-               SheetEditorModel <| Tuple.first <| SheetEditor.initEdit id
-
-           SheetDetailRoute id ->
-               SheetDetailModel <| Tuple.first <| SheetDetail.init id
-
-           CreateTaskRoute ->
-               TaskEditorModel <| Tuple.first TaskEditor.initCreate
-
-           EditTaskRoute id ->
-               TaskEditorModel <| Tuple.first <| TaskEditor.initEdit id
-
-           SubmissionGradingRoute taskId groupId ->
-               SubmissionGradingEditorModel <| Tuple.first <| SubmissionGradingEditor.init taskId groupId
-
-           AdminRoute ->
-               AdminModel <| Tuple.first Admin.init
-
-           _ ->
-               NotFound
--}
-
-
 updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate ) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
     ( { model | currentModel = toModel subModel }
