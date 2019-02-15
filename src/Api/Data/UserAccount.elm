@@ -9,21 +9,21 @@ import Json.Encode as Encode
 
 
 type alias UserAccount =
-    { user : Maybe User
-    , account : Maybe Account
+    { user : User
+    , account : Account
     }
 
 
 decoder : Decoder UserAccount
 decoder =
     Decode.succeed UserAccount
-        |> optional "user" (Decode.nullable User.decoder) Nothing
-        |> optional "account" (Decode.nullable Account.decoder) Nothing
+        |> required "user" User.decoder
+        |> required "account" Account.decoder
 
 
 encoder : UserAccount -> Encode.Value
 encoder model =
     Encode.object
-        [ ( "user", Maybe.withDefault Encode.null (Maybe.map User.encoder model.user) )
-        , ( "account", Maybe.withDefault Encode.null (Maybe.map Account.encoder model.account) )
+        [ ( "user", User.encoder model.user )
+        , ( "account", Account.encoder model.account )
         ]

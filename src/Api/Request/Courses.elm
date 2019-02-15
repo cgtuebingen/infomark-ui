@@ -1,6 +1,6 @@
 module Api.Request.Courses exposing (courseDelete, courseGet, coursePatch, coursesGet, coursesPost)
 
-import Api.Data.Courses as Course exposing (Course)
+import Api.Data.Course as Course exposing (Course)
 import Api.Data.Error as Error exposing (Error)
 import Api.Endpoint exposing (course, courses, unwrap)
 import Api.Helper exposing (..)
@@ -13,9 +13,9 @@ import RemoteData exposing (RemoteData(..), WebData)
 
 
 coursesPost : Course -> (WebData Course -> msg) -> Cmd msg
-coursesPost course msg =
+coursesPost courseNew msg =
     post (unwrap courses)
-        (Http.jsonBody (Course.encoder course))
+        (Http.jsonBody (Course.encoder courseNew))
         msg
         Course.decoder
 
@@ -36,9 +36,9 @@ courseGet id msg =
 
 
 coursePatch : Int -> Course -> (WebData String -> msg) -> Cmd msg
-coursePatch id course msg =
+coursePatch id courseUp msg =
     patch (unwrap <| course id)
-        (Http.jsonBody (Course.encoder course))
+        (Http.jsonBody (Course.encoder courseUp))
         msg
         Decode.string
 

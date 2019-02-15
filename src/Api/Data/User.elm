@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Json.Encode.Extra exposing (maybe)
 
 
 type alias User =
@@ -28,7 +29,7 @@ decoder =
         |> optional "avatar_url" (Decode.nullable Decode.string) Nothing
         |> required "email" Decode.string
         |> optional "student_number" (Decode.nullable Decode.string) Nothing
-        |> optional "semester" (Decode.nullable Decode.int) Nothing
+        |> optional "semester" (Decode.nullable Decode.string) Nothing
         |> optional "subject" (Decode.nullable Decode.string) Nothing
         |> optional "language" (Decode.nullable Decode.string) Nothing
 
@@ -39,10 +40,10 @@ encoder model =
         [ ( "id", Encode.int model.id )
         , ( "first_name", Encode.string model.firstname )
         , ( "last_name", Encode.string model.lastname )
-        , ( "avatar_url", Maybe.withDefault Encode.null (Maybe.map Encode.string model.avatarUrl) )
+        , ( "avatar_url", maybe Encode.string model.avatarUrl )
         , ( "email", Encode.string model.email )
-        , ( "student_number", Maybe.withDefault Encode.null (Maybe.map Encode.string model.studentNumber) )
-        , ( "semester", Maybe.withDefault Encode.null (Maybe.map Encode.int model.semester) )
-        , ( "subject", Maybe.withDefault Encode.null (Maybe.map Encode.string model.subject) )
-        , ( "language", Maybe.withDefault Encode.null (Maybe.map Encode.string model.subject) )
+        , ( "student_number", maybe Encode.string model.studentNumber )
+        , ( "semester", maybe Encode.int model.semester )
+        , ( "subject", maybe Encode.string model.subject )
+        , ( "language", maybe Encode.string model.subject )
         ]

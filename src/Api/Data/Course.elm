@@ -1,4 +1,4 @@
-module Api.Data.Course exposing (Course)
+module Api.Data.Course exposing (Course, decoder, encoder)
 
 import Api.Data.Material as Material exposing (Material)
 import Api.Data.Sheet as Sheet exposing (Sheet)
@@ -7,6 +7,7 @@ import Iso8601
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Json.Encode.Extra exposing (maybe)
 import Time exposing (Posix)
 
 
@@ -20,7 +21,6 @@ type alias Course =
     , sheets : Maybe (List Sheet)
     , materials : Maybe (List Material)
     }
-
 
 decoder : Decoder Course
 decoder =
@@ -40,10 +40,10 @@ encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
         , ( "name", Encode.string model.name )
-        , ( "description", Maybe.withDefault Encode.null <| Maybe.map Encode.string model.description )
+        , ( "description", maybe Encode.string model.description )
         , ( "begins_at", Iso8601.encode model.begins_at )
         , ( "ends_at", Iso8601.encode model.ends_at )
-        , ( "required_points", Maybe.withDefault Encode.null <| Maybe.map Encode.int model.required_points )
-        , ( "sheets", Maybe.withDefault Encode.null <| Maybe.map (Encode.list Sheet.encoder) model.sheets )
-        , ( "materials", Maybe.withDefault Encode.null <| Maybe.map (Encode.list Material.encoder) model.materials )
+        , ( "required_points", maybe Encode.int model.required_points )
+        , ( "sheets", maybe (Encode.list Sheet.encoder) model.sheets )
+        , ( "materials", maybe (Encode.list Material.encoder) model.materials )
         ]

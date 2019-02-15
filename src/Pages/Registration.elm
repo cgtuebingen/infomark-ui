@@ -100,7 +100,7 @@ modelValidator =
 
 type Msg
     = NavigateTo Route
-    | Registrate
+    | Register
     | SetField Field String
     | RegistrationResponse (WebData String)
 
@@ -131,7 +131,7 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
-        Registrate ->
+        Register ->
             case validate modelValidator model of
                 Err errors ->
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
@@ -191,7 +191,7 @@ view sharedState model =
                     , TC.pa4
                     , TC.black_40
                     ]
-                , onSubmit Registrate
+                , onSubmit Register
                 ]
                 [ fieldset
                     [ classes

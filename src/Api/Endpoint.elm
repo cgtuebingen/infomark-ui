@@ -1,4 +1,4 @@
-module Api.Endpoint exposing (Endpoint(..), account, basePath, sessions, unwrap, url)
+module Api.Endpoint exposing (..)
 
 import Api.Data.Course exposing (Course)
 import Http

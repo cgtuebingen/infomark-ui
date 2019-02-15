@@ -6,6 +6,7 @@ import Iso8601
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Json.Encode.Extra exposing (maybe)
 import Time exposing (Posix)
 
 
@@ -35,8 +36,8 @@ encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
         , ( "name", Encode.string model.name )
-        , ( "file_url", Maybe.withDefault Encode.null <| Maybe.map Encode.string model.file_url )
+        , ( "file_url", maybe Encode.string model.file_url )
         , ( "published_at", Iso8601.encode model.published_at )
         , ( "due_at", Iso8601.encode model.due_at )
-        , ( "tasks", Maybe.withDefault Encode.null <| Maybe.map (Encode.list Task.encoder) model.tasks )
+        , ( "tasks", maybe (Encode.list Task.encoder) model.tasks )
         ]

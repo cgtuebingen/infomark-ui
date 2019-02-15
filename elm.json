@@ -20,8 +20,10 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/json-extra": "4.0.0",
+            "elm-explorations/markdown": "1.0.0",
             "gampleman/elm-visualization": "2.0.0",
             "justgage/tachyons-elm": "4.1.1",
+            "justinmimbs/date": "3.1.2",
             "jzxhuang/http-extras": "1.0.2",
             "krisajenkins/remotedata": "6.0.1",
             "rtfeldman/elm-css": "16.0.0",
@@ -44,7 +46,6 @@
             "ianmackenzie/elm-geometry": "1.2.1",
             "ianmackenzie/elm-interval": "1.0.1",
             "ianmackenzie/elm-triangular-mesh": "1.0.2",
-            "justinmimbs/date": "3.1.2",
             "justinmimbs/time-extra": "1.1.0",
             "rtfeldman/elm-hex": "1.0.0",
             "truqu/elm-base64": "2.0.4"

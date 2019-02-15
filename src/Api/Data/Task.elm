@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Json.Encode.Extra exposing (maybe)
 
 
 type alias Task =
@@ -32,8 +33,8 @@ encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
         , ( "max_point", Encode.int model.max_point )
-        , ( "public_tests_url", Maybe.withDefault Encode.null (Maybe.map Encode.string model.public_tests_url) )
-        , ( "public_docker_image", Maybe.withDefault Encode.null (Maybe.map Encode.string model.public_docker_image) )
-        , ( "private_tests_url", Maybe.withDefault Encode.null (Maybe.map Encode.string model.private_tests_url) )
-        , ( "private_docker_image", Maybe.withDefault Encode.null (Maybe.map Encode.string model.private_docker_image) )
+        , ( "public_tests_url", maybe Encode.string model.public_tests_url )
+        , ( "public_docker_image", maybe Encode.string model.public_docker_image )
+        , ( "private_tests_url", maybe Encode.string model.private_tests_url )
+        , ( "private_docker_image", maybe Encode.string model.private_docker_image )
         ]
