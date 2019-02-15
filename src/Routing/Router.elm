@@ -310,6 +310,10 @@ view msgMapper sharedState model =
 
 navView : SharedState -> Model -> Html Msg
 navView sharedState model =
+    let
+        t = 
+            I18n.get sharedState.translations
+    in
     nav
         [ classes
             [ TC.w_100
@@ -335,6 +339,8 @@ navView sharedState model =
                 , TC.w2
                 , TC.h2
                 , TC.dim
+                , TC.ml1
+                , TC.ml4_ns
                 ]
             ]
             []
@@ -349,7 +355,7 @@ navView sharedState model =
                 , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
                 , onClick <| NavigateTo CoursesRoute
                 ]
-                [ text "Courses" ]
+                [ text (t "page-title-courses") ]
 
             -- TODO use translations
             , button
@@ -357,7 +363,7 @@ navView sharedState model =
                 , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
                 , onClick <| NavigateTo AdminRoute
                 ]
-                [ text "Admin" ]
+                [ text (t "page-title-admin") ]
 
             -- TODO use Translations - Only show if root
             , button
@@ -365,7 +371,7 @@ navView sharedState model =
                 , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
                 , onClick Logout
                 ]
-                [ text "Logout" ]
+                [ text (t "action-logout") ]
             ]
         ]
 
