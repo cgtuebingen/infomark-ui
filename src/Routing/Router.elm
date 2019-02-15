@@ -237,27 +237,55 @@ navigateTo route model =
 view : (Msg -> msg) -> SharedState -> Model -> Browser.Document msg
 view msgMapper sharedState model =
     let
-        translate =
+        t =
             I18n.get sharedState.translations
 
         title =
             case model.route of
                 LoginRoute ->
-                    "Login"
+                    "page-title-login"
 
                 RegistrationRoute ->
-                    "Registration"
+                    "page-title-registration"
 
-                -- TODO: Get translation from file
+                DashboardRoute ->
+                    "page-title-dashboard"
+
                 CoursesRoute ->
-                    "Courses"
+                    "page-title-courses"
 
+                CreateCourseRoute ->
+                    "page-title-create-course"
+
+                EditCourseRoute _ ->
+                    "page-title-edit-course"
+                
+                CourseDetailRoute _ ->
+                    "page-title-course"
+                
+                CreateSheetRoute ->
+                    "page-title-create-sheet"
+                    
+                EditSheetRoute _ ->
+                    "page-title-edit-sheet"
+                
+                SheetDetailRoute _ ->
+                    "page-title-sheet"
+                
+                CreateTaskRoute ->
+                    "page-title-create-task"
+                
+                EditTaskRoute _ ->
+                    "page-title-edit-task"
+                
+                SubmissionGradingRoute _ _ ->
+                    "page-title-grade"
+                
+                AdminRoute ->
+                    "page-title-admin"
+                
                 NotFoundRoute ->
-                    "404"
-
-                _ ->
-                    "Placeholder"
-
+                    "page-title-404"
         body =
             case model.route of
                 LoginRoute ->
@@ -272,7 +300,7 @@ view msgMapper sharedState model =
                 _ ->
                     tabPage sharedState model
     in
-    { title = "InfoMark - " ++ title
+    { title = (t "site-title" ) ++  " - " ++ (t title)
     , body =
         [ body
             |> Html.map msgMapper
