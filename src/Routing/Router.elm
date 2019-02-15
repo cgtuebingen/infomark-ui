@@ -266,6 +266,9 @@ view msgMapper sharedState model =
                 RegistrationRoute ->
                     noTabPage sharedState model
 
+                NotFoundRoute ->
+                    noTabPage sharedState model
+
                 _ ->
                     tabPage sharedState model
     in
@@ -468,6 +471,8 @@ pageView sharedState model =
                     , TC.ph3
                     , TC.ph4_l
                     ]
+                , style "height" "80vh"
+                , style "width" "100vw"
                 ]
                 [ h1
                     [ classes
