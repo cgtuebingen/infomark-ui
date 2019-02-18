@@ -1,9 +1,10 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
-  <meta charset="UTF-8">
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	
+
 	<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
 	<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
@@ -11,44 +12,117 @@
 	<meta name="msapplication-TileColor" content="#b91d47">
 	<meta name="theme-color" content="#ffffff">
 
-  <title>InfoMark</title>
+	<title>InfoMark</title>
 
-	<link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css"/>
+	<link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css" />
 	<style>
-		.dark-red{color: #A51E37}
-		.b--dark-red{border-color: #A51E37}
-		.bg-dark-red{background-color: #A51E37}
-		.hover-bg-dark-red:focus,.hover-bg-dark-red:hover{background-color:#A51E37}
-		.hover-dark-red:focus,.hover-dark-red:hover{color:#A51E37}
-		
-		.gold{color: #B4A069}
-		.b--gold{border-color: #B4A069}
-		.bg-gold{background-color: #B4A069}
-		.hover-bg-gold:focus,.hover-bg-gold:hover{background-color:#B4A069}
-		.hover-gold:focus,.hover-gold:hover{color:#B4A069}
+		.dark-red {
+			color: #A51E37
+		}
 
-		.dark-gray{color: #324148}
-		.b--dark-gray{border-color: #324148}
-		.bg-dark-gray{background-color: #324148}
-		.hover-bg-dark-gray:focus,.hover-bg-dark-gray:hover{background-color:#324148}
-		.hover-dark-gray:focus,.hover-dark-gray:hover{color:#324148}
+		.b--dark-red {
+			border-color: #A51E37
+		}
 
-		.red{color: #A94442}
-		.b--red{border-color: #A94442}
-		.bg-red{background-color: #A94442}
-		.hover-bg-red:focus,.hover-bg-red:hover{background-color:#A94442}
-		.hover-red:focus,.hover-red:hover{color:#A94442}
+		.bg-dark-red {
+			background-color: #A51E37
+		}
+
+		.hover-bg-dark-red:focus,
+		.hover-bg-dark-red:hover {
+			background-color: #A51E37
+		}
+
+		.hover-dark-red:focus,
+		.hover-dark-red:hover {
+			color: #A51E37
+		}
+
+		.gold {
+			color: #B4A069
+		}
+
+		.b--gold {
+			border-color: #B4A069
+		}
+
+		.bg-gold {
+			background-color: #B4A069
+		}
+
+		.hover-bg-gold:focus,
+		.hover-bg-gold:hover {
+			background-color: #B4A069
+		}
+
+		.hover-gold:focus,
+		.hover-gold:hover {
+			color: #B4A069
+		}
+
+		.dark-gray {
+			color: #324148
+		}
+
+		.b--dark-gray {
+			border-color: #324148
+		}
+
+		.bg-dark-gray {
+			background-color: #324148
+		}
+
+		.hover-bg-dark-gray:focus,
+		.hover-bg-dark-gray:hover {
+			background-color: #324148
+		}
+
+		.hover-dark-gray:focus,
+		.hover-dark-gray:hover {
+			color: #324148
+		}
+
+		.red {
+			color: #A94442
+		}
+
+		.b--red {
+			border-color: #A94442
+		}
+
+		.bg-red {
+			background-color: #A94442
+		}
+
+		.hover-bg-red:focus,
+		.hover-bg-red:hover {
+			background-color: #A94442
+		}
+
+		.hover-red:focus,
+		.hover-red:hover {
+			color: #A94442
+		}
+
+		.input-reset {
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			outline: 0 !important;
+		}
 	</style>
+	<link rel="stylesheet" href="elm-datepicker.css" />
 </head>
+
 <body>
 	<script src="elm.js"></script>
 	<div id="elm" />
-		<script type="text/javascript">
-			var flags = {
-				currentTime: Date.now()
-			};
-			
-			var app = Elm.Main.init({node: document.getElementById('elm'), flags: flags});
+	<script type="text/javascript">
+		var flags = {
+			currentTime: Date.now()
+		};
+
+		var app = Elm.Main.init({ node: document.getElementById('elm'), flags: flags });
 	</script>
 </body>
+
 </html>

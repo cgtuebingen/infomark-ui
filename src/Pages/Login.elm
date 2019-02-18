@@ -156,7 +156,7 @@ view sharedState model =
                 [ classes
                     [ TC.w3
                     , TC.dib
-                    , TC.mt4
+                    , TC.mv4
                     ]
                 ]
                 [ img [ src "/assets/Logo.svg" ] [] ]
@@ -185,7 +185,7 @@ view sharedState model =
                         [ text (t "page-title-login") ]
 
                     -- TODO: Replace with translation
-                    , div [ classes [ TC.mt3 ] ] <|
+                    , div [ classes [ TC.mt4 ] ] <|
                         inputElement "Email address" "Email" "email" Email model.email model.errors
                     , div [ classes [ TC.mt3 ] ] <|
                         inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
@@ -219,6 +219,7 @@ viewLoginButtonOrSpinner status model =
             button
                 [ Styles.buttonGreyStyle
                 , classes [ TC.mt4, TC.w_100 ]
+                , onClick Login
                 ]
                 [ text "Anmelden" ]
 
@@ -272,8 +273,8 @@ inputElement inputLabel inputPlaceholder fieldType field curVal errors =
         ]
     , input
         [ type_ fieldType
-        , Styles.inputStyle
-        , classes [ TC.w_100 ]
+        , Styles.lineInputStyle
+        , classes [ TC.w_100, TC.mb3 ]
         , placeholder inputPlaceholder
         , onInput <| SetField field
         , value curVal

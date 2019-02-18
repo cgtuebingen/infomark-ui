@@ -24,6 +24,7 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
+import Markdown as MD
 
 
 type alias Model =
@@ -51,76 +52,79 @@ init =
                 [ { id = 0
                   , name = "Informatik I"
                   , description =
-                        Just
-                            """
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-                commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-                velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-                occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-                mollit anim id est laborum.
-                """
+                        Just """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
+commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
+velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
+occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
+mollit anim id est laborum.
+"""
                   , begins_at = Time.millisToPosix 1549888135000
                   , ends_at = Time.millisToPosix 1560256135000
-                  , required_points = Just 250
+                  , required_percentage = Just 250
                   , sheets = Nothing
                   , materials = Nothing
                   }
                 , { id = 1
                   , name = "Informatik II"
                   , description =
-                        Just
-                            """
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-                commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-                velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-                occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-                mollit anim id est laborum.
-                """
+                        Just """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
+commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
+velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
+occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
+mollit anim id est laborum.
+"""
                   , begins_at = Time.millisToPosix 1554985735000
                   , ends_at = Time.millisToPosix 1570796935000
-                  , required_points = Nothing
+                  , required_percentage = Nothing
                   , sheets = Nothing
                   , materials = Nothing
                   }
                 , { id = 2
                   , name = "Informatik III"
                   , description =
-                        Just
-                            """
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-                commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-                velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-                occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-                mollit anim id est laborum.
-                """
+                        Just """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
+commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
+velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
+occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
+mollit anim id est laborum.
+
+- info
+- stuff
+
+## Lots to learn
+
+bla
+"""
                   , begins_at = Time.millisToPosix 1554985735000
                   , ends_at = Time.millisToPosix 1570796935000
-                  , required_points = Nothing
+                  , required_percentage = Nothing
                   , sheets = Nothing
                   , materials = Nothing
                   }
                 , { id = 1
                   , name = "ML"
                   , description =
-                        Just
-                            """
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-                commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-                velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-                occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-                mollit anim id est laborum.
-                """
+                        Just """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
+commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
+velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
+occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
+mollit anim id est laborum.
+"""
                   , begins_at = Time.millisToPosix 1528720135000
                   , ends_at = Time.millisToPosix 1541939335000
-                  , required_points = Nothing
+                  , required_percentage = Nothing
                   , sheets = Nothing
                   , materials = Nothing
                   }
@@ -311,7 +315,7 @@ viewRenderCourse sharedState course =
                 ]
             ]
         , div [ classes [ TC.measure ] ]
-            [ p [ Styles.textStyle ] [ text <| Maybe.withDefault "" course.description ] -- Normal paragraph
+            [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
             , button [ Styles.buttonGreyStyle, classes [ TC.w_100 ] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
             ]
         ]

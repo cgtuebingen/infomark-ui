@@ -180,7 +180,7 @@ view sharedState model =
                 [ classes
                     [ TC.w3
                     , TC.dib
-                    , TC.mt4
+                    , TC.mv4
                     ]
                 ]
                 [ img [ src "/assets/Logo.svg" ] [] ]
@@ -211,7 +211,7 @@ view sharedState model =
                     -- TODO: Replace with translation
                     , div [ classes [ TC.w_100 ] ]
                         -- GRID!
-                        [ div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+                        [ div [ classes [ TC.mt4, TC.cf, TC.ph2_ns ] ]
                             -- First Row (First name, Last Name)
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
                               -- First element
@@ -281,8 +281,8 @@ inputElement inputLabel inputPlaceholder fieldType field curVal errors =
         ]
     , input
         [ type_ fieldType
-        , Styles.inputStyle
-        , classes [ TC.w_100 ]
+        , Styles.lineInputStyle
+        , classes [ TC.w_100, TC.mb3 ]
         , placeholder inputPlaceholder
         , onInput <| SetField field
         , value curVal

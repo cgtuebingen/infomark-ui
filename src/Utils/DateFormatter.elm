@@ -1,9 +1,112 @@
-module Utils.DateFormatter exposing (dateAndTimeFormatter, fullDateFormatter, shortDateFormatter, timeFormatter)
+module Utils.DateFormatter exposing (dateToPosix, dateToShortFormatString, monthFormatter, dayFormatter, shortDayFormatter, dateAndTimeFormatter, fullDateFormatter, shortDateFormatter, timeFormatter)
 
 import Html exposing (..)
 import I18n
+import Iso8601
 import SharedState exposing (SharedState)
 import Time exposing (Posix)
+import Date exposing (Date)
+
+
+dayFormatter : SharedState -> Time.Weekday -> String
+dayFormatter sharedState day =
+    let
+        t =
+            I18n.get sharedState.translations
+    in
+    case day of
+        Time.Mon ->
+            t "day-mon"
+
+        Time.Tue ->
+            t "day-tue"
+
+        Time.Wed ->
+            t "day-wed"
+
+        Time.Thu ->
+            t "day-thu"
+
+        Time.Fri ->
+            t "day-fri"
+
+        Time.Sat ->
+            t "day-sat"
+
+        Time.Sun ->
+            t "day-sun"
+
+monthFormatter : SharedState -> Time.Month -> String
+monthFormatter sharedState month =
+    let
+        t =
+            I18n.get sharedState.translations
+    in
+    case month of
+            Time.Jan ->
+                t "month-jan"
+
+            Time.Feb ->
+                t "month-feb"
+
+            Time.Mar ->
+                t "month-mar"
+
+            Time.Apr ->
+                t "month-apr"
+
+            Time.May ->
+                t "month-may"
+
+            Time.Jun ->
+                t "month-jun"
+
+            Time.Jul ->
+                t "month-jul"
+
+            Time.Aug ->
+                t "month-aug"
+
+            Time.Sep ->
+                t "month-sep"
+
+            Time.Oct ->
+                t "month-oct"
+
+            Time.Nov ->
+                t "month-nov"
+
+            Time.Dec ->
+                t "month-dec"
+
+
+shortDayFormatter : SharedState -> Time.Weekday -> String
+shortDayFormatter sharedState day =
+    let
+        t =
+            I18n.get sharedState.translations
+    in
+    case day of
+        Time.Mon ->
+            t "day-mon-short"
+
+        Time.Tue ->
+            t "day-tue-short"
+
+        Time.Wed ->
+            t "day-wed-short"
+
+        Time.Thu ->
+            t "day-thu-short"
+
+        Time.Fri ->
+            t "day-fri-short"
+
+        Time.Sat ->
+            t "day-sat-short"
+
+        Time.Sun ->
+            t "day-sun-short"
 
 
 flip : (a -> b -> c) -> (b -> a -> c)
@@ -11,7 +114,25 @@ flip f b a =
     f a b
 
 
-timeFormatter : SharedState -> Posix -> Html msg
+dateToPosix : Date -> Result String Posix
+dateToPosix date =
+    case (Date.toIsoString date |> Iso8601.toTime) of
+        Err _ ->
+            Err "Failed to convert date to posix"
+
+        Ok time ->
+            Ok time
+
+dateToShortFormatString : SharedState -> Date -> String
+dateToShortFormatString sharedState date =
+    let
+        curTime = Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
+    in
+    Result.withDefault curTime (dateToPosix date) 
+        |> shortDateFormatter sharedState
+
+
+timeFormatter : SharedState -> Posix -> String
 timeFormatter sharedState time =
     let
         hour =
@@ -35,15 +156,12 @@ timeFormatter sharedState time =
                         |> flip Time.toSecond time
                     )
     in
-    text (hour ++ ":" ++ minute ++ ":" ++ second)
+    hour ++ ":" ++ minute ++ ":" ++ second
 
 
-shortDateFormatter : SharedState -> Posix -> Html msg
+shortDateFormatter : SharedState -> Posix -> String
 shortDateFormatter sharedState time =
     let
-        t =
-            I18n.get sharedState.translations
-
         day =
             String.padLeft 2 '0' <|
                 String.fromInt
@@ -55,43 +173,7 @@ shortDateFormatter sharedState time =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toMonth time
 
-        month =
-            case monthType of
-                Time.Jan ->
-                    t "month-jan"
-
-                Time.Feb ->
-                    t "month-feb"
-
-                Time.Mar ->
-                    t "month-mar"
-
-                Time.Apr ->
-                    t "month-apr"
-
-                Time.May ->
-                    t "month-may"
-
-                Time.Jun ->
-                    t "month-jun"
-
-                Time.Jul ->
-                    t "month-jul"
-
-                Time.Aug ->
-                    t "month-aug"
-
-                Time.Sep ->
-                    t "month-sep"
-
-                Time.Oct ->
-                    t "month-oct"
-
-                Time.Nov ->
-                    t "month-nov"
-
-                Time.Dec ->
-                    t "month-dec"
+        month = monthFormatter sharedState monthType
 
         year =
             String.fromInt
@@ -99,8 +181,7 @@ shortDateFormatter sharedState time =
                     |> flip Time.toYear time
                 )
     in
-    text (day ++ "/" ++ month ++ "/" ++ year)
-
+    day ++ "/" ++ month ++ "/" ++ year
 
 dateAndTimeFormatter : SharedState -> Posix -> Html msg
 dateAndTimeFormatter sharedState time =
@@ -112,44 +193,18 @@ dateAndTimeFormatter sharedState time =
             shortDateFormatter sharedState time
     in
     span []
-        [ dateFormat
-        , text " - "
-        , timeFormat
+        [ text (dateFormat ++ " - " ++ timeFormat)
         ]
 
 
 fullDateFormatter : SharedState -> Posix -> Html msg
 fullDateFormatter sharedState time =
     let
-        t =
-            I18n.get sharedState.translations
-
         weekDayType =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toWeekday time
 
-        weekday =
-            case weekDayType of
-                Time.Mon ->
-                    t "day-mon"
-
-                Time.Tue ->
-                    t "day-tue"
-
-                Time.Wed ->
-                    t "day-wed"
-
-                Time.Thu ->
-                    t "day-thu"
-
-                Time.Fri ->
-                    t "day-fri"
-
-                Time.Sat ->
-                    t "day-sat"
-
-                Time.Sun ->
-                    t "day-sun"
+        weekday = dayFormatter sharedState weekDayType
 
         day =
             String.padLeft 2 '0' <|
@@ -162,43 +217,7 @@ fullDateFormatter sharedState time =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toMonth time
 
-        month =
-            case monthType of
-                Time.Jan ->
-                    t "month-jan"
-
-                Time.Feb ->
-                    t "month-feb"
-
-                Time.Mar ->
-                    t "month-mar"
-
-                Time.Apr ->
-                    t "month-apr"
-
-                Time.May ->
-                    t "month-may"
-
-                Time.Jun ->
-                    t "month-jun"
-
-                Time.Jul ->
-                    t "month-jul"
-
-                Time.Aug ->
-                    t "month-aug"
-
-                Time.Sep ->
-                    t "month-sep"
-
-                Time.Oct ->
-                    t "month-oct"
-
-                Time.Nov ->
-                    t "month-nov"
-
-                Time.Dec ->
-                    t "month-dec"
+        month = monthFormatter sharedState monthType
 
         year =
             String.fromInt

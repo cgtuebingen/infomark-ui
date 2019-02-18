@@ -17,7 +17,7 @@ type alias Course =
     , description : Maybe String
     , begins_at : Posix
     , ends_at : Posix
-    , required_points : Maybe Int
+    , required_percentage : Maybe Int
     , sheets : Maybe (List Sheet)
     , materials : Maybe (List Material)
     }
@@ -43,7 +43,7 @@ encoder model =
         , ( "description", maybe Encode.string model.description )
         , ( "begins_at", Iso8601.encode model.begins_at )
         , ( "ends_at", Iso8601.encode model.ends_at )
-        , ( "required_points", maybe Encode.int model.required_points )
+        , ( "required_points", maybe Encode.int model.required_percentage )
         , ( "sheets", maybe (Encode.list Sheet.encoder) model.sheets )
         , ( "materials", maybe (Encode.list Material.encoder) model.materials )
         ]

@@ -36,5 +36,12 @@
     "day-thu": "Thursday",
     "day-fri": "Friday",
     "day-sat": "Saturday",
-    "day-sun": "Sunday"
+    "day-sun": "Sunday",
+    "day-mon-short": "Mon.",
+    "day-tue-short": "Tue.",
+    "day-wed-short": "Wed.",
+    "day-thu-short": "Thu.",
+    "day-fri-short": "Fru.",
+    "day-sat-short": "Sat.",
+    "day-sun-short": "Sun."
 }
