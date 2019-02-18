@@ -10,6 +10,7 @@
 module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
 
 import Api.Data.Course exposing (Course)
+import Api.Data.AccountEnrollment exposing (AccountEnrollment, CourseRole(..))
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -29,6 +30,7 @@ import Markdown as MD
 
 type alias Model =
     { courseProgress : WebData (List Course)
+    , accountEnrollmentsProgress : WebData (List AccountEnrollment)
     , enrollProgress : WebData String
     , disenrollProgress : WebData String
     , showArchive : Bool
@@ -37,6 +39,7 @@ type alias Model =
 
 type Msg
     = CourseResponse (WebData (List Course))
+    | AccountEnrollmentResponse (WebData (List AccountEnrollment))
     | Enroll Course
     | Disenroll Course
     | EnrollResponse (WebData String)
@@ -110,7 +113,7 @@ bla
                   , sheets = Nothing
                   , materials = Nothing
                   }
-                , { id = 1
+                , { id = 3
                   , name = "ML"
                   , description =
                         Just """
@@ -129,6 +132,18 @@ mollit anim id est laborum.
                   , materials = Nothing
                   }
                 ]
+      , accountEnrollmentsProgress = 
+        RemoteData.Success 
+            [ 
+                { course_id = 0
+                , role = Tutor }
+            ,
+                { course_id = 3
+                , role = Admin }
+            ,
+                { course_id = 1
+                , role = Student }
+            ]
       , enrollProgress = NotAsked
       , disenrollProgress = NotAsked
       , showArchive = False
@@ -143,6 +158,9 @@ update sharedState msg model =
         CourseResponse response ->
             ( { model | courseProgress = response }, Cmd.none, NoUpdate )
 
+        AccountEnrollmentResponse response ->
+            ( { model | accountEnrollmentsProgress = response }, Cmd.none, NoUpdate )
+
         Enroll course ->
             ( model, Cmd.none, NoUpdate )
 
@@ -156,7 +174,7 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         ToggleArchive ->
             ( { model | showArchive = not model.showArchive }, Cmd.none, NoUpdate )
@@ -168,8 +186,8 @@ view sharedState model =
         translate =
             I18n.get sharedState.translations
     in
-    case model.courseProgress of
-        RemoteData.Success courses ->
+    case (model.courseProgress, model.accountEnrollmentsProgress) of
+        (Success courses, Success enrollments) ->
             let
                 currentTime =
                     Maybe.withDefault
@@ -184,7 +202,9 @@ view sharedState model =
                                 Time.posixToMillis course.ends_at
                                     |> (<) (Time.posixToMillis currentTime)
                             )
-                        |> List.map (\course -> viewRenderCourse sharedState course)
+                        |> List.map (\course -> 
+                            viewRenderCourse sharedState course <| 
+                                findEnrollmentForCourse course enrollments)
 
                 oldCourses =
                     courses
@@ -193,7 +213,9 @@ view sharedState model =
                                 Time.posixToMillis course.ends_at
                                     |> (>) (Time.posixToMillis currentTime)
                             )
-                        |> List.map (\course -> viewRenderCourse sharedState course)
+                        |> List.map (\course -> 
+                            viewRenderCourse sharedState course <|
+                                findEnrollmentForCourse course enrollments)
 
                 displayCourseOrNot =
                     if model.showArchive then
@@ -248,7 +270,7 @@ view sharedState model =
                     content
                 ]
 
-        _ ->
+        (_, _) ->
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100 ] ] []
 
 
@@ -302,8 +324,13 @@ viewCoursesHeader lbl toggable creatable model =
         ]
 
 
-viewRenderCourse : SharedState -> Course -> Html Msg
-viewRenderCourse sharedState course =
+viewRenderCourse : SharedState -> Course -> Maybe AccountEnrollment -> Html Msg
+viewRenderCourse sharedState course enrollment =
+    let
+        (buttonText, buttonMsg) = case enrollment of
+            Nothing -> ("Enroll", Enroll course)
+            Just _ -> ("Show", NavigateTo <| CourseDetailRoute course.id)
+    in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
             [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
@@ -316,6 +343,16 @@ viewRenderCourse sharedState course =
             ]
         , div [ classes [ TC.measure ] ]
             [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
-            , button [ Styles.buttonGreyStyle, classes [ TC.w_100 ] ] [ text "Enroll" ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
+            , button 
+                [ Styles.buttonGreyStyle
+                , classes [ TC.w_100 ]
+                , onClick buttonMsg
+                ] [ text buttonText ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
             ]
         ]
+
+findEnrollmentForCourse : Course -> List AccountEnrollment -> Maybe AccountEnrollment
+findEnrollmentForCourse course enrollments =
+    enrollments 
+        |> List.filter (\enrollment -> enrollment.course_id == course.id )
+        |> List.head

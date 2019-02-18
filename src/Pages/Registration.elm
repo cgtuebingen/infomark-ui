@@ -84,7 +84,7 @@ modelValidator =
             , ifNotInt .semester (\value -> ( Semester, value ++ " ist keine gültige Zahl." ))
             ]
         , Validate.firstError
-            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." )
+            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
             , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
             , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
             ]

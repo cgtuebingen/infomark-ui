@@ -33,18 +33,9 @@ url paths queryParams =
         |> Endpoint
 
 
-
--- ENDPOINTS
--- GET and DELETE
-
-
 sessions : Endpoint
 sessions =
     url [ "auth", "sessions" ] []
-
-
-
--- POST
 
 
 requestPasswordReset : Endpoint
@@ -52,17 +43,9 @@ requestPasswordReset =
     url [ "auth", "request_password_reset" ] []
 
 
-
--- POST
-
-
 passwordResetSet : Endpoint
 passwordResetSet =
     url [ "auth", "update_password" ] []
-
-
-
--- POST
 
 
 confirmEmail : Endpoint
@@ -70,22 +53,19 @@ confirmEmail =
     url [ "auth", "confirm_email" ] []
 
 
-
--- GET, PATCH and POST
-
-
 account : Endpoint
 account =
     url [ "account" ] []
 
 
-
--- GET and POST
-
-
 accountAvatar : Endpoint
 accountAvatar =
     url [ "account", "avatar" ] []
+
+
+accountEnrollment : Endpoint
+accountEnrollment =
+    url [ "account", "enrollments" ] []
 
 
 users : Endpoint
@@ -106,3 +86,13 @@ courses =
 course : Int -> Endpoint
 course id =
     url [ "courses", String.fromInt id ] []
+
+
+courseEnrollment : Int -> List QueryParameter -> Endpoint
+courseEnrollment id params =
+    url [ "courses", String.fromInt id, "enrollments" ] params --offset, limit, roles
+
+
+courseEnrollmentUserDetail : Int -> Int -> Endpoint
+courseEnrollmentUserDetail courseId userId =
+    url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
