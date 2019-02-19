@@ -459,6 +459,7 @@ viewUserSearchResult model userEnrollment =
                                     , TC.pv3
                                     , TC.grow
                                     , TC.pointer
+                                    , TC.shadow_5
                                     ]
                                 , Styles.textStyle
                                 ]
