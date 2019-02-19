@@ -10,7 +10,8 @@
 module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
 
 import Api.Data.Course exposing (Course)
-import Api.Data.AccountEnrollment exposing (AccountEnrollment, CourseRole(..))
+import Api.Data.AccountEnrollment exposing (AccountEnrollment)
+import Api.Data.CourseRole exposing (CourseRole(..))
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)

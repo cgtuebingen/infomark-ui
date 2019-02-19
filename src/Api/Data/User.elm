@@ -29,7 +29,7 @@ decoder =
         |> optional "avatar_url" (Decode.nullable Decode.string) Nothing
         |> required "email" Decode.string
         |> optional "student_number" (Decode.nullable Decode.string) Nothing
-        |> optional "semester" (Decode.nullable Decode.string) Nothing
+        |> optional "semester" (Decode.nullable Decode.int) Nothing
         |> optional "subject" (Decode.nullable Decode.string) Nothing
         |> optional "language" (Decode.nullable Decode.string) Nothing
 

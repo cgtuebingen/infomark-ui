@@ -31,6 +31,10 @@
 module Pages.CourseDetail exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.Course exposing (Course)
+import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
+import Api.Data.User as User exposing (User)
+import Api.Request.UserEnrollments as UserEnrollments
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -44,23 +48,26 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
-import Api.Data.Course as Course
 import Markdown as MD
 import Utils.DateFormatter as DF
 
 
 type Msg
     = NavigateTo Route
+    | CourseResponse (WebData Course)
+    | EnrollmentResponse (WebData (List UserEnrollment))
 
 
 type alias Model =
-    { course : WebData Course
+    { courseProgress : WebData Course
+    , enrollmentProgress : WebData (List UserEnrollment)
     }
 
 
 init : Int -> ( Model, Cmd Msg )
 init id =
-    ( { course = 
+    ( 
+    { courseProgress = 
         RemoteData.Success
             { id = 0
             , name = "Informatik I"
@@ -88,7 +95,50 @@ bla
             , required_percentage = Just 250
             , sheets = Nothing
             , materials = Nothing
-            } 
+            }
+    , enrollmentProgress = RemoteData.Success
+        [ { role = Admin
+          , user = 
+                { id = 0
+                , firstname = "root"
+                , lastname = "root"
+                , avatarUrl = Nothing
+                , email = "root@root.com"
+                , studentNumber = Nothing
+                , semester = Nothing
+                , subject = Nothing
+                , language = Just "en"
+                }
+          }
+        , { role = Tutor
+          , user =
+                { id = 1
+                , firstname = "Max"
+                , lastname = "Mustermann"
+                , avatarUrl = Nothing
+                , email = "max.mustermann@uni-tuebingen.de"
+                , studentNumber = Nothing
+                , semester = Nothing
+                , subject = Nothing
+                , language = Just "de"
+                }
+          }
+        , { role = Tutor
+          , user =
+                { id = 2
+                , firstname = "Peter"
+                , lastname = "Pan"
+                , avatarUrl = Just "assets/Logo.png"
+                , email = "peter.pan@student.uni-tuebingen.de"
+                , studentNumber = Just "124567"
+                , semester = Just 2
+                , subject = Just "Informatik"
+                , language = Just "de"
+                }
+          }
+        ]
+    
+       
     }
     , Cmd.none )
 
@@ -99,40 +149,117 @@ update sharedState msg model =
         NavigateTo route ->
             ( model, Cmd.none, NoUpdate )
 
+        EnrollmentResponse response ->
+            ( { model | enrollmentProgress = response }, Cmd.none, NoUpdate )
+
+        CourseResponse response ->
+            ( { model | courseProgress = response }, Cmd.none, NoUpdate )
+
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    case model.course of 
-        RemoteData.Success course ->
-            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-                [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph5, TC.ph0_l, TC.center, TC.mw9_ns] ]
-                    [ article [ classes [ TC.cf, TC.ph3, TC.ph5_ns, TC.pv4] ]
-                        [ header [ classes [  TC.fn, TC.fl_ns, TC.w_50_ns, TC.pr4_ns ] ]
-                            [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
-                            , dl [ Styles.dateStyle ]
-                                [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
-                                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
-                                , dt [ classes [ TC.black, TC.fw6 ] ] [ text " Ende " ]
-                                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
-                                ]
-                            ] 
-                        , div 
-                            [ classes 
-                                [ TC.fn
-                                , TC.fl_ns
-                                , TC.w_50_ns
-                                , TC.lh_copy
-                                , TC.measure
-                                , TC.mt4
-                                , TC.mt0_ns
-                                ]
-                            ] 
-                            [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description
-                            ]
-                        ]
+    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0, TC.w_100 ] ]
+        [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph0_l, TC.ph3_m, TC.ph2, TC.center, TC.mw9_ns] ]
+            <| (viewCourseInfo sharedState model) ++ (viewTeam sharedState model)
+        ]
 
+    
+viewCourseInfo : SharedState -> Model -> List (Html Msg)
+viewCourseInfo sharedState model =
+    case model.courseProgress of 
+        RemoteData.Success course ->
+            [ article [ classes [ TC.cf, TC.ph3, TC.ph5_ns, TC.pt4] ]
+                [ header [ classes [  TC.fn, TC.fl_ns, TC.w_50_ns, TC.pr4_ns ] ]
+                    [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
+                    , dl [ Styles.dateStyle ]
+                        [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
+                        , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
+                        , dt [ classes [ TC.black, TC.fw6 ] ] [ text " Ende " ]
+                        , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
+                        ]
+                    ] 
+                , div 
+                    [ classes 
+                        [ TC.fn
+                        , TC.fl_ns
+                        , TC.w_50_ns
+                        , TC.lh_copy
+                        , TC.measure_wide
+                        , TC.mt4
+                        , TC.mt0_ns
+                        ]
+                    ] 
+                    [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description
                     ]
                 ]
 
+            ]
+                
+
         _ ->
-            div [] [] -- TODO loading, error etc.
+            [ text "" ] -- TODO loading, error etc.
+
+
+viewTeam : SharedState -> Model -> List (Html Msg)
+viewTeam sharedState model =
+    case model.enrollmentProgress of
+        RemoteData.Success enrollments ->
+            let 
+                sortedTeam = List.sortWith compareRoleName enrollments
+            in
+            [ div [classes [TC.ph3, TC.ph5_ns]] 
+                [ h1 [ Styles.headerStyle, classes [TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3] ] [ text "Team" ] 
+                , div [ classes [TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_between] ] <| 
+                    List.map viewTeamMember sortedTeam 
+                ]
+            ]
+
+
+        _ -> [ text "Loading" ]
+
+viewTeamMember : UserEnrollment -> Html Msg
+viewTeamMember userEnrollment =
+    let
+        user = userEnrollment.user
+        avatar = case user.avatarUrl of
+            Just avatarUrl -> avatarUrl
+            Nothing -> "assets/defaultAvatar.png"
+    in
+    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph0_l ] ] 
+        [ img 
+            [ src avatar
+            , classes 
+                [ TC.br_100
+                , TC.ba
+                , TC.b__black_10
+                , TC.shadow_5_ns
+                , TC.h3_ns
+                , TC.h2
+                , TC.w3_ns
+                , TC.w2
+                ]
+            ] []
+        , div [ classes [TC.flex_auto, TC.pl3] ]
+            [ h1 [ Styles.listHeadingStyle, classes [TC.mv0] ] [ text (user.firstname ++ " " ++ user.lastname) ]
+            , h2 [ Styles.textStyle, classes [TC.mv0] ] [ text user.email ] -- TODO make clickable
+            ]
+        ]
+
+
+getTeam : Course -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+getTeam course msg =
+    UserEnrollments.courseEnrollmentGetTeam course.id msg
+
+
+compareRoleName : UserEnrollment -> UserEnrollment -> Order
+compareRoleName userA userB =
+    case (userA.role, userB.role) of
+        (Admin, Admin) -> compare userA.user.lastname userB.user.lastname
+        (Admin, Tutor) -> LT
+        (Tutor, Admin) -> GT
+        (Tutor, Tutor) -> compare userA.user.lastname userB.user.lastname
+        (Tutor, _) -> LT
+        (_, Tutor) -> GT
+        (_, _) -> compare userA.user.lastname userB.user.lastname
+  
