@@ -22,6 +22,7 @@ type alias Course =
     , materials : Maybe (List Material)
     }
 
+
 decoder : Decoder Course
 decoder =
     Decode.succeed Course

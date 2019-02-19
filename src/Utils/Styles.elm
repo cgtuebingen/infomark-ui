@@ -7,9 +7,8 @@ module Utils.Styles exposing
     , dateStyle
     , headerStyle
     , inputStyle
-    , textAreaReset
-    , lineInputStyle
     , labelStyle
+    , lineInputStyle
     , linkBlackStyle
     , linkGoldStyle
     , linkGreenStyle
@@ -20,22 +19,26 @@ module Utils.Styles exposing
     , spinnerGoldStyle
     , spinnerGreyStyle
     , spinnerRedStyle
+    , textAreaReset
     , textStyle
     )
 
 import Color exposing (Color)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Spinner
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Html exposing (..)
-import Html.Attributes exposing (..)
+
 
 textAreaReset : List (Html.Attribute msg)
-textAreaReset = 
+textAreaReset =
     [ style "resize" "none"
-   -- , style "border" "none"
+
+    -- , style "border" "none"
     , style "outline" "none"
     ]
+
 
 linkStyle =
     [ TC.f5
@@ -168,8 +171,9 @@ inputStyle =
         , TC.f5
         ]
 
+
 lineInputStyle : Html.Attribute msg
-lineInputStyle = 
+lineInputStyle =
     classes
         [ TC.bb
         , TC.bw2
@@ -183,6 +187,7 @@ lineInputStyle =
         , TC.black_80
         , TC.f5
         ]
+
 
 headerStyle =
     classes

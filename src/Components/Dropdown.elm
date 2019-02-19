@@ -1,7 +1,7 @@
-module Components.Dropdown exposing (Config, State, ToggleEvent(..), drawer, dropdown, toggle)
-{-
-Taken from https://github.com/circuithub/elm-dropdown/blob/master/src/Dropdown.elm
--}
+module Components.Dropdown exposing
+    ( State, Config, ToggleEvent(..)
+    , dropdown, toggle, drawer
+    )
 
 {-| Flexible dropdown component which serves as a foundation for custom dropdowns, select–inputs, popovers, and more.
 
@@ -62,6 +62,10 @@ Basic example of usage:
 
 -}
 
+{-
+   Taken from https://github.com/circuithub/elm-dropdown/blob/master/src/Dropdown.elm
+-}
+
 import Html exposing (Html, button, div, s, text)
 import Html.Attributes exposing (attribute, id, property, style, tabindex)
 import Html.Events exposing (custom, keyCode, on, onClick, onFocus, onMouseEnter, onMouseOut)
@@ -105,7 +109,8 @@ type ToggleEvent
     dropdown div
         []
         [ toggle button
-            [ class "myButton" ] [ text "More options" ]
+            [ class "myButton" ]
+            [ text "More options" ]
         , drawer div
             [ class "myDropdownDrawer" ]
             [ button [ onClick NewFile ] [ text "New" ]
@@ -201,6 +206,7 @@ drawer element givenAttributes children isOpen config =
         attributes =
             if isOpen then
                 config.drawerVisibleAttribute :: [ vVisible, pAbsolute ] ++ givenAttributes
+
             else
                 [ vHidden, pAbsolute ] ++ givenAttributes
     in
@@ -251,6 +257,7 @@ isChildOfSelf : DomElement -> JD.Decoder Bool
 isChildOfSelf cfg =
     if cfg.isDropdown then
         JD.succeed True
+
     else
         case cfg.parentElement of
             Nothing ->

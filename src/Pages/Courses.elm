@@ -9,8 +9,8 @@
 
 module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
 
-import Api.Data.Course exposing (Course)
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
+import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole exposing (CourseRole(..))
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
@@ -18,6 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import I18n
+import Markdown as MD
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -26,7 +27,6 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Markdown as MD
 
 
 type alias Model =
@@ -133,18 +133,18 @@ mollit anim id est laborum.
                   , materials = Nothing
                   }
                 ]
-      , accountEnrollmentsProgress = 
-        RemoteData.Success 
-            [ 
-                { course_id = 0
-                , role = Tutor }
-            ,
-                { course_id = 3
-                , role = Admin }
-            ,
-                { course_id = 1
-                , role = Student }
-            ]
+      , accountEnrollmentsProgress =
+            RemoteData.Success
+                [ { course_id = 0
+                  , role = Tutor
+                  }
+                , { course_id = 3
+                  , role = Admin
+                  }
+                , { course_id = 1
+                  , role = Student
+                  }
+                ]
       , enrollProgress = NotAsked
       , disenrollProgress = NotAsked
       , showArchive = False
@@ -187,8 +187,8 @@ view sharedState model =
         translate =
             I18n.get sharedState.translations
     in
-    case (model.courseProgress, model.accountEnrollmentsProgress) of
-        (Success courses, Success enrollments) ->
+    case ( model.courseProgress, model.accountEnrollmentsProgress ) of
+        ( Success courses, Success enrollments ) ->
             let
                 currentTime =
                     Maybe.withDefault
@@ -203,9 +203,11 @@ view sharedState model =
                                 Time.posixToMillis course.ends_at
                                     |> (<) (Time.posixToMillis currentTime)
                             )
-                        |> List.map (\course -> 
-                            viewRenderCourse sharedState course <| 
-                                findEnrollmentForCourse course enrollments)
+                        |> List.map
+                            (\course ->
+                                viewRenderCourse sharedState course <|
+                                    findEnrollmentForCourse course enrollments
+                            )
 
                 oldCourses =
                     courses
@@ -214,9 +216,11 @@ view sharedState model =
                                 Time.posixToMillis course.ends_at
                                     |> (>) (Time.posixToMillis currentTime)
                             )
-                        |> List.map (\course -> 
-                            viewRenderCourse sharedState course <|
-                                findEnrollmentForCourse course enrollments)
+                        |> List.map
+                            (\course ->
+                                viewRenderCourse sharedState course <|
+                                    findEnrollmentForCourse course enrollments
+                            )
 
                 displayCourseOrNot =
                     if model.showArchive then
@@ -271,7 +275,7 @@ view sharedState model =
                     content
                 ]
 
-        (_, _) ->
+        ( _, _ ) ->
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100 ] ] []
 
 
@@ -328,9 +332,13 @@ viewCoursesHeader lbl toggable creatable model =
 viewRenderCourse : SharedState -> Course -> Maybe AccountEnrollment -> Html Msg
 viewRenderCourse sharedState course enrollment =
     let
-        (buttonText, buttonMsg) = case enrollment of
-            Nothing -> ("Enroll", Enroll course)
-            Just _ -> ("Show", NavigateTo <| CourseDetailRoute course.id)
+        ( buttonText, buttonMsg ) =
+            case enrollment of
+                Nothing ->
+                    ( "Enroll", Enroll course )
+
+                Just _ ->
+                    ( "Show", NavigateTo <| CourseDetailRoute course.id )
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
@@ -344,16 +352,20 @@ viewRenderCourse sharedState course enrollment =
             ]
         , div [ classes [ TC.measure ] ]
             [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
-            , button 
+            , button
                 [ Styles.buttonGreyStyle
                 , classes [ TC.w_100 ]
                 , onClick buttonMsg
-                ] [ text buttonText ] -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
+                ]
+                [ text buttonText ]
+
+            -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
             ]
         ]
 
+
 findEnrollmentForCourse : Course -> List AccountEnrollment -> Maybe AccountEnrollment
 findEnrollmentForCourse course enrollments =
-    enrollments 
-        |> List.filter (\enrollment -> enrollment.course_id == course.id )
+    enrollments
+        |> List.filter (\enrollment -> enrollment.course_id == course.id)
         |> List.head

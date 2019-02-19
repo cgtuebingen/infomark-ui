@@ -1,4 +1,4 @@
-module Api.Endpoint exposing (..)
+module Api.Endpoint exposing (Endpoint(..), account, accountAvatar, accountEnrollment, basePath, confirmEmail, course, courseEnrollment, courseEnrollmentUserDetail, courses, passwordResetSet, requestPasswordReset, sessions, unwrap, url, user, users)
 
 import Api.Data.Course exposing (Course)
 import Http
@@ -90,7 +90,11 @@ course id =
 
 courseEnrollment : Int -> List QueryParameter -> Endpoint
 courseEnrollment id params =
-    url [ "courses", String.fromInt id, "enrollments" ] params --offset, limit, roles
+    url [ "courses", String.fromInt id, "enrollments" ] params
+
+
+
+--offset, limit, roles
 
 
 courseEnrollmentUserDetail : Int -> Int -> Endpoint

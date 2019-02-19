@@ -1,10 +1,11 @@
 module Api.Data.AccountEnrollment exposing (AccountEnrollment, decoder, encoder)
 
+import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
-import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+
 
 type alias AccountEnrollment =
     { course_id : Int
@@ -23,5 +24,5 @@ encoder : AccountEnrollment -> Encode.Value
 encoder model =
     Encode.object
         [ ( "course_id", Encode.int model.course_id )
-        , ( "role", CourseRole.encoder model.role)
+        , ( "role", CourseRole.encoder model.role )
         ]

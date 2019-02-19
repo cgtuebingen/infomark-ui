@@ -259,33 +259,34 @@ view msgMapper sharedState model =
 
                 EditCourseRoute _ ->
                     "page-title-edit-course"
-                
+
                 CourseDetailRoute _ ->
                     "page-title-course"
-                
+
                 CreateSheetRoute ->
                     "page-title-create-sheet"
-                    
+
                 EditSheetRoute _ ->
                     "page-title-edit-sheet"
-                
+
                 SheetDetailRoute _ ->
                     "page-title-sheet"
-                
+
                 CreateTaskRoute ->
                     "page-title-create-task"
-                
+
                 EditTaskRoute _ ->
                     "page-title-edit-task"
-                
+
                 SubmissionGradingRoute _ _ ->
                     "page-title-grade"
-                
+
                 AdminRoute ->
                     "page-title-admin"
-                
+
                 NotFoundRoute ->
                     "page-title-404"
+
         body =
             case model.route of
                 LoginRoute ->
@@ -300,7 +301,7 @@ view msgMapper sharedState model =
                 _ ->
                     tabPage sharedState model
     in
-    { title = (t "site-title" ) ++  " - " ++ (t title)
+    { title = t "site-title" ++ " - " ++ t title
     , body =
         [ body
             |> Html.map msgMapper
@@ -311,7 +312,7 @@ view msgMapper sharedState model =
 navView : SharedState -> Model -> Html Msg
 navView sharedState model =
     let
-        t = 
+        t =
             I18n.get sharedState.translations
     in
     nav

@@ -1,11 +1,11 @@
-module Utils.DateFormatter exposing (dateToPosix, dateToShortFormatString, monthFormatter, dayFormatter, shortDayFormatter, dateAndTimeFormatter, fullDateFormatter, shortDateFormatter, timeFormatter)
+module Utils.DateFormatter exposing (dateAndTimeFormatter, dateToPosix, dateToShortFormatString, dayFormatter, fullDateFormatter, monthFormatter, shortDateFormatter, shortDayFormatter, timeFormatter)
 
+import Date exposing (Date)
 import Html exposing (..)
 import I18n
 import Iso8601
 import SharedState exposing (SharedState)
 import Time exposing (Posix)
-import Date exposing (Date)
 
 
 dayFormatter : SharedState -> Time.Weekday -> String
@@ -36,6 +36,7 @@ dayFormatter sharedState day =
         Time.Sun ->
             t "day-sun"
 
+
 monthFormatter : SharedState -> Time.Month -> String
 monthFormatter sharedState month =
     let
@@ -43,41 +44,41 @@ monthFormatter sharedState month =
             I18n.get sharedState.translations
     in
     case month of
-            Time.Jan ->
-                t "month-jan"
+        Time.Jan ->
+            t "month-jan"
 
-            Time.Feb ->
-                t "month-feb"
+        Time.Feb ->
+            t "month-feb"
 
-            Time.Mar ->
-                t "month-mar"
+        Time.Mar ->
+            t "month-mar"
 
-            Time.Apr ->
-                t "month-apr"
+        Time.Apr ->
+            t "month-apr"
 
-            Time.May ->
-                t "month-may"
+        Time.May ->
+            t "month-may"
 
-            Time.Jun ->
-                t "month-jun"
+        Time.Jun ->
+            t "month-jun"
 
-            Time.Jul ->
-                t "month-jul"
+        Time.Jul ->
+            t "month-jul"
 
-            Time.Aug ->
-                t "month-aug"
+        Time.Aug ->
+            t "month-aug"
 
-            Time.Sep ->
-                t "month-sep"
+        Time.Sep ->
+            t "month-sep"
 
-            Time.Oct ->
-                t "month-oct"
+        Time.Oct ->
+            t "month-oct"
 
-            Time.Nov ->
-                t "month-nov"
+        Time.Nov ->
+            t "month-nov"
 
-            Time.Dec ->
-                t "month-dec"
+        Time.Dec ->
+            t "month-dec"
 
 
 shortDayFormatter : SharedState -> Time.Weekday -> String
@@ -116,19 +117,21 @@ flip f b a =
 
 dateToPosix : Date -> Result String Posix
 dateToPosix date =
-    case (Date.toIsoString date |> Iso8601.toTime) of
+    case Date.toIsoString date |> Iso8601.toTime of
         Err _ ->
             Err "Failed to convert date to posix"
 
         Ok time ->
             Ok time
 
+
 dateToShortFormatString : SharedState -> Date -> String
 dateToShortFormatString sharedState date =
     let
-        curTime = Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
+        curTime =
+            Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
     in
-    Result.withDefault curTime (dateToPosix date) 
+    Result.withDefault curTime (dateToPosix date)
         |> shortDateFormatter sharedState
 
 
@@ -173,7 +176,8 @@ shortDateFormatter sharedState time =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toMonth time
 
-        month = monthFormatter sharedState monthType
+        month =
+            monthFormatter sharedState monthType
 
         year =
             String.fromInt
@@ -182,6 +186,7 @@ shortDateFormatter sharedState time =
                 )
     in
     day ++ "/" ++ month ++ "/" ++ year
+
 
 dateAndTimeFormatter : SharedState -> Posix -> Html msg
 dateAndTimeFormatter sharedState time =
@@ -204,7 +209,8 @@ fullDateFormatter sharedState time =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toWeekday time
 
-        weekday = dayFormatter sharedState weekDayType
+        weekday =
+            dayFormatter sharedState weekDayType
 
         day =
             String.padLeft 2 '0' <|
@@ -217,7 +223,8 @@ fullDateFormatter sharedState time =
             Maybe.withDefault Time.utc sharedState.timezone
                 |> flip Time.toMonth time
 
-        month = monthFormatter sharedState monthType
+        month =
+            monthFormatter sharedState monthType
 
         year =
             String.fromInt
