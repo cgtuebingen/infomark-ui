@@ -26,6 +26,7 @@
             "justinmimbs/date": "3.1.2",
             "jzxhuang/http-extras": "1.0.2",
             "krisajenkins/remotedata": "6.0.1",
+            "pablen/toasty": "1.2.0",
             "rtfeldman/elm-css": "16.0.0",
             "rtfeldman/elm-iso8601-date-strings": "1.1.2",
             "rtfeldman/elm-validate": "4.0.1",
@@ -37,6 +38,7 @@
             "elm/bytes": "1.0.7",
             "elm/file": "1.0.2",
             "elm/parser": "1.1.0",
+            "elm/random": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/list-extra": "8.1.0",
             "folkertdev/elm-deque": "3.0.0",
@@ -55,8 +57,6 @@
         "direct": {
             "elm-explorations/test": "1.2.1"
         },
-        "indirect": {
-            "elm/random": "1.0.0"
-        }
+        "indirect": {}
     }
 }

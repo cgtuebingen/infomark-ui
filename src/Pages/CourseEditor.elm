@@ -119,7 +119,7 @@ update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
