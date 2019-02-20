@@ -31,6 +31,7 @@ module Pages.CourseDetail exposing (Model, Msg(..), init, update, view)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+import Api.Data.Group as Group exposing (Group)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Request.UserEnrollments as UserEnrollments
@@ -235,7 +236,7 @@ view sharedState model =
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0, TC.w_100 ] ]
                 [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph0_l, TC.ph3_m, TC.ph2, TC.center, TC.mw9_ns ] ] <|
                     viewCourseInfo sharedState model
-                        ++ viewTeamOrSearch role sharedState model
+                        ++ viewDetermineTeamOrSearch role sharedState model
                 ]
 
         ( _, _ ) ->
@@ -280,8 +281,8 @@ viewCourseInfo sharedState model =
 -- TODO loading, error etc.
 
 
-viewTeamOrSearch : CourseRole -> SharedState -> Model -> List (Html Msg)
-viewTeamOrSearch courseRole sharedState model =
+viewDetermineTeamOrSearch : CourseRole -> SharedState -> Model -> List (Html Msg)
+viewDetermineTeamOrSearch courseRole sharedState model =
     case courseRole of
         Admin ->
             viewMemberSearch sharedState model
@@ -474,6 +475,12 @@ viewUserSearchResult model userEnrollment =
                 roleDropdownConfig
             ]
         ]
+
+
+viewDetermineGroupDisplay : SharedState -> Model -> List (Html Msg)
+viewDetermineGroupDisplay sharedState model =
+    [ div [] []
+    ]
 
 
 getTeam : Course -> (WebData (List UserEnrollment) -> msg) -> Cmd msg

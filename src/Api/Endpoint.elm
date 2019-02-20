@@ -1,4 +1,4 @@
-module Api.Endpoint exposing (Endpoint(..), account, accountAvatar, accountEnrollment, basePath, confirmEmail, course, courseEnrollment, courseEnrollmentUserDetail, courses, passwordResetSet, requestPasswordReset, sessions, unwrap, url, user, users)
+module Api.Endpoint exposing (Endpoint(..), account, accountAvatar, accountEnrollment, basePath, confirmEmail, course, courseEnrollment, courseEnrollmentUserDetail, courseGroup, courseGroupBids, courseGroups, courses, groups, groupsEnrollment, passwordResetSet, requestPasswordReset, sessions, unwrap, url, user, users)
 
 import Api.Data.Course exposing (Course)
 import Http
@@ -93,6 +93,21 @@ courseEnrollment id params =
     url [ "courses", String.fromInt id, "enrollments" ] params
 
 
+courseGroups : Int -> Endpoint
+courseGroups id =
+    url [ "courses", String.fromInt id, "groups" ] []
+
+
+courseGroup : Int -> Endpoint
+courseGroup id =
+    url [ "courses", String.fromInt id, "group" ] []
+
+
+courseGroupBids : Int -> Endpoint
+courseGroupBids id =
+    url [ "courses", String.fromInt id, "bids" ] []
+
+
 
 --offset, limit, roles
 
@@ -100,3 +115,13 @@ courseEnrollment id params =
 courseEnrollmentUserDetail : Int -> Int -> Endpoint
 courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
+
+
+groups : Int -> Endpoint
+groups id =
+    url [ "groups", String.fromInt id ] []
+
+
+groupsEnrollment : Int -> Endpoint
+groupsEnrollment id =
+    url [ "groups", String.fromInt id, "enrollments" ] []
