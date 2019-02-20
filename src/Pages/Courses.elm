@@ -12,6 +12,8 @@ module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHe
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole exposing (CourseRole(..))
+import Api.Request.Courses as CoursesRequests
+import Api.Request.Account as AccountRequests
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -30,8 +32,8 @@ import Utils.Styles as Styles
 
 
 type alias Model =
-    { courseProgress : WebData (List Course)
-    , accountEnrollmentsProgress : WebData (List AccountEnrollment)
+    { courseRequest : WebData (List Course)
+    , accountEnrollmentsRequest : WebData (List AccountEnrollment)
     , enrollProgress : WebData String
     , disenrollProgress : WebData String
     , showArchive : Bool
@@ -39,8 +41,8 @@ type alias Model =
 
 
 type Msg
-    = CourseResponse (WebData (List Course))
-    | AccountEnrollmentResponse (WebData (List AccountEnrollment))
+    = CoursesResponse (WebData (List Course))
+    | AccountEnrollmentsResponse (WebData (List AccountEnrollment))
     | Enroll Course
     | Disenroll Course
     | EnrollResponse (WebData String)
@@ -51,116 +53,27 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( { courseProgress =
-            RemoteData.Success
-                [ { id = 0
-                  , name = "Informatik I"
-                  , description =
-                        Just """
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-mollit anim id est laborum.
-"""
-                  , begins_at = Time.millisToPosix 1549888135000
-                  , ends_at = Time.millisToPosix 1560256135000
-                  , required_percentage = Just 250
-                  , sheets = Nothing
-                  , materials = Nothing
-                  }
-                , { id = 1
-                  , name = "Informatik II"
-                  , description =
-                        Just """
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-mollit anim id est laborum.
-"""
-                  , begins_at = Time.millisToPosix 1554985735000
-                  , ends_at = Time.millisToPosix 1570796935000
-                  , required_percentage = Nothing
-                  , sheets = Nothing
-                  , materials = Nothing
-                  }
-                , { id = 2
-                  , name = "Informatik III"
-                  , description =
-                        Just """
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-mollit anim id est laborum.
-
-- info
-- stuff
-
-## Lots to learn
-
-bla
-"""
-                  , begins_at = Time.millisToPosix 1554985735000
-                  , ends_at = Time.millisToPosix 1570796935000
-                  , required_percentage = Nothing
-                  , sheets = Nothing
-                  , materials = Nothing
-                  }
-                , { id = 3
-                  , name = "ML"
-                  , description =
-                        Just """
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-mollit anim id est laborum.
-"""
-                  , begins_at = Time.millisToPosix 1528720135000
-                  , ends_at = Time.millisToPosix 1541939335000
-                  , required_percentage = Nothing
-                  , sheets = Nothing
-                  , materials = Nothing
-                  }
-                ]
-      , accountEnrollmentsProgress =
-            RemoteData.Success
-                [ { course_id = 0
-                  , role = Tutor
-                  }
-                , { course_id = 3
-                  , role = Admin
-                  }
-                , { course_id = 1
-                  , role = Student
-                  }
-                ]
+    ( { courseRequest = Loading
+      , accountEnrollmentsRequest = Loading
       , enrollProgress = NotAsked
       , disenrollProgress = NotAsked
       , showArchive = False
       }
-    , Cmd.none
+    , Cmd.batch 
+        [ AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
+        , CoursesRequests.coursesGet CoursesResponse
+        ]
     )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
-        CourseResponse response ->
-            ( { model | courseProgress = response }, Cmd.none, NoUpdate )
+        CoursesResponse response ->
+            ( { model | courseRequest = response }, Cmd.none, NoUpdate )
 
-        AccountEnrollmentResponse response ->
-            ( { model | accountEnrollmentsProgress = response }, Cmd.none, NoUpdate )
+        AccountEnrollmentsResponse response ->
+            ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
 
         Enroll course ->
             ( model, Cmd.none, NoUpdate )
@@ -187,7 +100,7 @@ view sharedState model =
         translate =
             I18n.get sharedState.translations
     in
-    case ( model.courseProgress, model.accountEnrollmentsProgress ) of
+    case ( model.courseRequest, model.accountEnrollmentsRequest ) of
         ( Success courses, Success enrollments ) ->
             let
                 currentTime =

@@ -21,6 +21,8 @@ import Time
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
+import Toasty
+import Components.Toasty
 
 
 type alias Model =
@@ -29,6 +31,7 @@ type alias Model =
     , loginProgress : WebData Role
     , errors : List Error
     , spinner : Spinner.Model
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -39,6 +42,7 @@ init =
       , loginProgress = NotAsked
       , errors = []
       , spinner = Spinner.init
+      , toasties = Toasty.initialState
       }
     , Cmd.none
     )
@@ -46,37 +50,11 @@ init =
 
 type Msg
     = NavigateTo Route
-    | Login
-    | SpinnerMsg Spinner.Msg
     | SetField Field String
-    | LoginResponse (WebData Role) -- TODO: more like Tokens. Save tokens to shared state
-
-
-type Field
-    = Email
-    | Password
-
-
-setField : Model -> Field -> String -> Model
-setField model field value =
-    case field of
-        Email ->
-            { model | email = value }
-
-        Password ->
-            { model | plain_password = value }
-
-
-type alias Error =
-    ( Field, String )
-
-
-modelValidator : Validator Error Model
-modelValidator =
-    Validate.all
-        [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
-        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
-        ]
+    | Login
+    | LoginResponse (WebData Role)
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
+    | SpinnerMsg Spinner.Msg
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -87,13 +65,6 @@ update sharedState msg model =
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
-
-        SpinnerMsg spinmsg ->
-            let
-                spinnerModel =
-                    Spinner.update spinmsg model.spinner
-            in
-            ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
 
         Login ->
             case validate modelValidator model of
@@ -109,13 +80,38 @@ update sharedState msg model =
 
         -- TODO: Start the web request here.
         LoginResponse (RemoteData.Failure err) ->
-            ( { model | loginProgress = RemoteData.Failure err }, Cmd.none, NoUpdate )
+            let
+                errorString = case err of
+                    Http.BadStatus 400 ->
+                        "Wrong Password or Username!"
+                    
+                    _ ->
+                        "Something went wrong"
+                    
+                (newModel, newCmd) = 
+                    ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
+                        |> addToast (Components.Toasty.Error "Error" errorString)
+            in
+            ( newModel, newCmd, NoUpdate )
 
         LoginResponse (RemoteData.Success role) ->
             ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRole <| Just role )
 
         LoginResponse _ ->
             ( model, Cmd.none, NoUpdate )
+
+        SpinnerMsg spinmsg ->
+            let
+                spinnerModel =
+                    Spinner.update spinmsg model.spinner
+            in
+            ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
+
+        ToastyMsg subMsg ->
+            let
+                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+            in
+            ( newModel, newCmd, NoUpdate)
 
 
 type alias LoginBody =
@@ -140,7 +136,7 @@ view sharedState model =
             , TC.w_100
             ]
         ]
-        [ parseWebDataForLoginView model.loginProgress
+        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
         , div
             [ classes
                 [ TC.v_mid
@@ -224,25 +220,6 @@ viewLoginButtonOrSpinner status model =
                 [ text "Anmelden" ]
 
 
-
--- TODO: Replace with translation
-
-
-parseWebDataForLoginView : WebData a -> Html Msg
-parseWebDataForLoginView data =
-    case data of
-        RemoteData.Failure (Http.BadStatus 400) ->
-            viewLoginError "Wrong E-Mail and/or Password."
-
-        -- TODO replace with translation
-        RemoteData.Failure _ ->
-            viewLoginError "Something went wrong"
-
-        -- TODO replace with HELPFUL translation
-        _ ->
-            text ""
-
-
 viewLoginError : String -> Html Msg
 viewLoginError error =
     div
@@ -290,3 +267,35 @@ viewFormErrors field errors =
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
         |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
         |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
+
+
+type Field
+    = Email
+    | Password
+
+
+setField : Model -> Field -> String -> Model
+setField model field value =
+    case field of
+        Email ->
+            { model | email = value }
+
+        Password ->
+            { model | plain_password = value }
+
+
+type alias Error =
+    ( Field, String )
+
+
+modelValidator : Validator Error Model
+modelValidator =
+    Validate.all
+        [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
+        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
+        ]
+
+
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )

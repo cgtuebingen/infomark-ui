@@ -32,9 +32,14 @@ import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollme
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
+import Api.Data.GroupBid as GroupBid exposing (GroupBid)
+import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
-import Api.Request.UserEnrollments as UserEnrollments
+import Api.Request.Account as AccountRequests
+import Api.Request.Courses as CoursesRequests
+import Api.Request.Groups as GroupsRequests
+import Api.Request.UserEnrollments as UserEnrollmentsRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.Dropdown as Dropdown exposing (ToggleEvent(..), drawer, dropdown, toggle)
 import Html exposing (..)
@@ -53,134 +58,107 @@ import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 
 
+type Field
+    = EnrollmentSearchField
+    | GroupSearchField
+
+
 type Msg
     = NavigateTo Route
-    | CourseResponse (WebData Course)
-    | EnrollmentResponse (WebData (List UserEnrollment))
-    | CourseRoleResponse (WebData (List AccountEnrollment))
-    | SetSearchEmail String
-    | SearchForMail
-    | SearchResponse (WebData UserEnrollment)
+    | CourseResponse (WebData Course) -- Get basic information about the course
+    | CourseRoleResponse (WebData (List AccountEnrollment)) -- Used to determine the course role
+    | EnrollmentsResponse (WebData (List UserEnrollment)) -- List all enrollments in the course. Only used for students and tutors
+    | SearchUserForEnrollmentResponse (WebData UserEnrollment) -- Search for a specific user to change the enrollment
+    | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
+    | GroupsListResponse (WebData (List Group)) -- List all groups. Only visible for unenrolled students/tutors and admins
+    | GroupDisplayResponse (WebData Group) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
+    | GroupBidResponse (WebData GroupBid) -- Response for a group bid (only students)
+    | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
+    | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
+    | SetField Field String
+    | SearchUserForEnrollment
+    | SearchUserForGroup
     | ChangeEnrollment UserEnrollment
-    | EnrollmentChangedResponse (WebData ()) -- TODO set correct return
-    | ToggleDropdown Bool
+    | ChangeGroup Int GroupEnrollmentChange
+    | ToggleRoleDropdown Bool
 
 
 type alias Model =
     { courseId : Int
     , courseRole : Maybe CourseRole
-    , courseProgress : WebData Course
-    , teamListProgress : WebData (List UserEnrollment)
-    , roleProgress : WebData (List AccountEnrollment)
-    , searchInput : String
-    , searchProgress : WebData UserEnrollment
+    , courseRequest : WebData Course
+    , courseRoleRequest : WebData (List AccountEnrollment)
+    , enrollmentsRequest : WebData (List UserEnrollment)
+    , searchUserForEnrollmentRequest : WebData UserEnrollment
+    , enrollmentChangedRequest : WebData ()
+    , groupsRequest : WebData (List Group)
+    , groupRequest : WebData Group
+    , groupBidRequest : WebData GroupBid
+    , searchUserForGroupRequest : WebData UserEnrollment
+    , groupChangedRequest : WebData GroupEnrollmentChange
+    , searchEnrollmentInput : String
+    , searchGroupInput : String
     , roleDropdown : Dropdown.State
-    , enrollmentChangeProgress : WebData ()
+    , groupDropdown : Dropdown.State
     }
 
 
 init : Int -> ( Model, Cmd Msg )
 init id =
-    ( { courseProgress =
-            RemoteData.Success
-                { id = 0
-                , name = "Informatik I"
-                , description =
-                    Just """
-# Lorem Ipsum!
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim 
-veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea 
-commodo consequat. Duis aute irure dolor in reprehenderit in voluptate 
-velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt 
-mollit anim id est laborum.
-
-- info
-- stuff
-
-## Lots to learn
-
-bla
-"""
-                , begins_at = Time.millisToPosix 1549888135000
-                , ends_at = Time.millisToPosix 1560256135000
-                , required_percentage = Just 250
-                , sheets = Nothing
-                , materials = Nothing
-                }
-      , teamListProgress =
-            RemoteData.Success
-                [ { role = Admin
-                  , user =
-                        { id = 0
-                        , firstname = "root"
-                        , lastname = "root"
-                        , avatarUrl = Nothing
-                        , email = "root@root.com"
-                        , studentNumber = Nothing
-                        , semester = Nothing
-                        , subject = Nothing
-                        , language = Just "en"
-                        }
-                  }
-                , { role = Tutor
-                  , user =
-                        { id = 1
-                        , firstname = "Max"
-                        , lastname = "Mustermann"
-                        , avatarUrl = Nothing
-                        , email = "max.mustermann@uni-tuebingen.de"
-                        , studentNumber = Nothing
-                        , semester = Nothing
-                        , subject = Nothing
-                        , language = Just "de"
-                        }
-                  }
-                , { role = Tutor
-                  , user =
-                        { id = 2
-                        , firstname = "Peter"
-                        , lastname = "Pan"
-                        , avatarUrl = Just "assets/Logo.png"
-                        , email = "peter.pan@student.uni-tuebingen.de"
-                        , studentNumber = Just "124567"
-                        , semester = Just 2
-                        , subject = Just "Informatik"
-                        , language = Just "de"
-                        }
-                  }
-                ]
-      , courseRole = Just Admin
-      , courseId = id
-      , roleProgress =
-            RemoteData.Success
-                [ { course_id = 0
-                  , role = Admin
-                  }
-                ]
-      , searchProgress =
-            Success
-                { role = Tutor
-                , user =
-                    { id = 2
-                    , firstname = "Peter"
-                    , lastname = "Pan"
-                    , avatarUrl = Just "assets/Logo.png"
-                    , email = "peter.pan@student.uni-tuebingen.de"
-                    , studentNumber = Just "124567"
-                    , semester = Just 2
-                    , subject = Just "Informatik"
-                    , language = Just "de"
-                    }
-                }
-      , enrollmentChangeProgress = NotAsked
-      , roleDropdown = False
-      , searchInput = ""
+    ( 
+        { courseId = id
+        , courseRole = Nothing
+        , courseRequest = Loading
+        , courseRoleRequest = Loading
+        , enrollmentsRequest = NotAsked
+        , searchUserForEnrollmentRequest = NotAsked
+        , enrollmentChangedRequest = NotAsked
+        , groupsRequest = NotAsked
+        , groupRequest = NotAsked
+        , groupBidRequest = NotAsked
+        , searchUserForGroupRequest = NotAsked
+        , groupChangedRequest = NotAsked
+        , searchEnrollmentInput = ""
+        , searchGroupInput = ""
+        , roleDropdown = False
+        , groupDropdown = False
       }
-    , Cmd.none
+    , Cmd.batch 
+        [ AccountRequests.accountEnrollmentGet CourseRoleResponse
+        , CoursesRequests.courseGet id CourseResponse
+        ]
     )
+
+
+determineInitialRoleRequests : Model -> CourseRole -> (Model, Cmd Msg)
+determineInitialRoleRequests model role =
+    case role of
+        Admin -> 
+            ( model
+            , Cmd.none
+            )
+
+        Tutor ->
+            ( { model 
+                | enrollmentsRequest = Loading
+                , groupRequest = Loading
+              }
+            , Cmd.batch
+                [ UserEnrollmentsRequests.courseEnrollmentGetTeam model.courseId EnrollmentsResponse
+                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
+                ]
+            )
+
+        Student ->
+            ( { model 
+                | enrollmentsRequest = Loading
+                , groupRequest = Loading
+              }
+            , Cmd.batch
+                [ UserEnrollmentsRequests.courseEnrollmentGetTeam model.courseId EnrollmentsResponse
+                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse 
+                ]
+            )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -189,40 +167,24 @@ update sharedState msg model =
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
-        EnrollmentResponse response ->
-            ( { model | teamListProgress = response }, Cmd.none, NoUpdate )
-
         CourseResponse response ->
-            ( { model | courseProgress = response }, Cmd.none, NoUpdate )
+            ( { model | courseRequest = response }, Cmd.none, NoUpdate )
 
         CourseRoleResponse (Success roles) ->
             case determineRole model.courseId roles of
-                Just role ->
-                    ( { model | courseRole = Just role, roleProgress = Success roles }, Cmd.none, NoUpdate )
+                Just role -> -- We received the users course role.
+                    let -- Determine what commands need to be send depending on the role
+                        updatedModel = { model | courseRole = Just role, courseRoleRequest = Success roles }
+                        (newModel, newCmds) = determineInitialRoleRequests updatedModel role
+                    in
+                    ( newModel, newCmds, NoUpdate ) -- Execute the changes
 
-                Nothing ->
+                Nothing -> -- Whoops. The user is not enrolled in the course. Navigate back to the courses page
                     ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), NoUpdate )
 
-        CourseRoleResponse response ->
-            ( { model | roleProgress = response }, Cmd.none, NoUpdate )
+        _ ->
+            ( model, Cmd.none, NoUpdate)
 
-        SetSearchEmail val ->
-            ( { model | searchInput = val }, Cmd.none, NoUpdate )
-
-        SearchForMail ->
-            ( model, Cmd.none, NoUpdate )
-
-        SearchResponse response ->
-            ( { model | searchProgress = response }, Cmd.none, NoUpdate )
-
-        ChangeEnrollment userEnrollment ->
-            ( { model | roleDropdown = False }, Cmd.none, NoUpdate )
-
-        ToggleDropdown newState ->
-            ( { model | roleDropdown = newState }, Cmd.none, NoUpdate )
-
-        EnrollmentChangedResponse response ->
-            ( { model | enrollmentChangeProgress = response }, Cmd.none, NoUpdate )
 
 
 
@@ -231,7 +193,7 @@ update sharedState msg model =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    case ( model.roleProgress, model.courseRole ) of
+    case ( model.courseRoleRequest, model.courseRole ) of
         ( Success _, Just role ) ->
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0, TC.w_100 ] ]
                 [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph0_l, TC.ph3_m, TC.ph2, TC.center, TC.mw9_ns ] ] <|
@@ -245,7 +207,7 @@ view sharedState model =
 
 viewCourseInfo : SharedState -> Model -> List (Html Msg)
 viewCourseInfo sharedState model =
-    case model.courseProgress of
+    case model.courseRequest of
         RemoteData.Success course ->
             [ article [ classes [ TC.cf, TC.ph3, TC.ph5_ns, TC.pt4 ] ]
                 [ header [ classes [ TC.fn, TC.fl_ns, TC.w_50_ns, TC.pr4_ns ] ]
@@ -293,7 +255,7 @@ viewDetermineTeamOrSearch courseRole sharedState model =
 
 viewTeam : SharedState -> Model -> List (Html Msg)
 viewTeam sharedState model =
-    case model.teamListProgress of
+    case model.enrollmentsRequest of
         RemoteData.Success enrollments ->
             let
                 sortedTeam =
@@ -350,7 +312,7 @@ viewMemberSearch : SharedState -> Model -> List (Html Msg)
 viewMemberSearch sharedState model =
     let
         displaySearchResults =
-            case model.searchProgress of
+            case model.searchUserForEnrollmentRequest of
                 Success userEnrollment ->
                     viewUserSearchResult model userEnrollment
 
@@ -368,7 +330,7 @@ viewMemberSearch sharedState model =
                 [ Styles.lineInputStyle
                 , type_ "email"
                 , placeholder "E-Mail"
-                , onInput SetSearchEmail
+                , onInput <| SetField EnrollmentSearchField
                 , classes [ TC.measure, TC.w_90 ]
                 ]
                 []
@@ -477,15 +439,20 @@ viewUserSearchResult model userEnrollment =
         ]
 
 
-viewDetermineGroupDisplay : SharedState -> Model -> List (Html Msg)
-viewDetermineGroupDisplay sharedState model =
-    [ div [] []
+viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> List (Html Msg)
+viewDetermineGroupDisplay courseRole sharedState model =
+    [ div [] [] -- Check Role
+        -- If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
+        -- If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
+        -- If Student -> Check if own group is set
+                -- Not set: Display bidding screen
+                -- If set: Display own group. With members. Option to send email to other members and tutor
     ]
 
 
 getTeam : Course -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
 getTeam course msg =
-    UserEnrollments.courseEnrollmentGetTeam course.id msg
+    UserEnrollmentsRequests.courseEnrollmentGetTeam course.id msg
 
 
 compareRoleName : UserEnrollment -> UserEnrollment -> Order
@@ -526,4 +493,4 @@ roleDropdownConfig =
         "roleDropdown"
         OnClick
         (class "visible")
-        ToggleDropdown
+        ToggleRoleDropdown

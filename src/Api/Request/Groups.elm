@@ -14,14 +14,14 @@ import RemoteData exposing (RemoteData(..), WebData)
 
 
 groupsGet : Int -> (WebData Group -> msg) -> Cmd msg
-groupsGet id =
+groupsGet id msg =
     get (unwrap <| groups id)
         msg
         Group.decoder
 
 
 groupsPatch : Int -> Group -> (WebData String -> msg) -> Cmd msg
-groupsPatch id group =
+groupsPatch id group msg =
     patch (unwrap <| groups id)
         (Http.jsonBody (Group.encoder group))
         msg
@@ -29,14 +29,14 @@ groupsPatch id group =
 
 
 groupsDelete : Int -> (WebData String -> msg) -> Cmd msg
-groupsDelete id =
+groupsDelete id msg =
     delete (unwrap <| groups id)
         msg
         Decode.string
 
 
 groupsEnrollmentPatch : Int -> GroupEnrollmentChange -> (WebData String -> msg) -> Cmd msg
-groupsEnrollmentPatch id groupEnrollment =
+groupsEnrollmentPatch id groupEnrollment msg =
     patch (unwrap <| groupsEnrollment id)
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
@@ -44,7 +44,7 @@ groupsEnrollmentPatch id groupEnrollment =
 
 
 groupsEnrollmentPost : Int -> GroupEnrollmentChange -> (WebData Group -> msg) -> Cmd msg
-groupsEnrollmentPost id groupEnrollment =
+groupsEnrollmentPost id groupEnrollment msg =
     post (unwrap <| groupsEnrollment id)
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
