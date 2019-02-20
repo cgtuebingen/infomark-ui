@@ -1,10 +1,26 @@
-module Api.Request.Courses exposing (courseDelete, courseGet, courseGroupsGet, courseGroupsPost, courseOwnGroupGet, coursePatch, coursesGet, coursesPost)
+module Api.Request.Courses exposing 
+    ( courseDelete
+    , courseGet
+    , coursesEnrollmentGet
+    , coursesEnrollmentGetAll
+    , coursesEnrollmentPost
+    , coursesEnrollmentDelete
+    , courseGroupsGet
+    , courseGroupsPost
+    , courseOwnGroupGet
+    , coursePatch
+    , coursesGet
+    , coursesPost)
 
-import Api.Data.Course as Course exposing (Course)
+
 import Api.Data.Error as Error exposing (Error)
+import Api.Data.Course as Course exposing (Course)
+import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+import Api.Data.User as User exposing (User)
+import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
-import Api.Endpoint exposing (course, courseGroup, courseGroupBids, courseGroups, courses, unwrap)
+import Api.Endpoint exposing (course, courseEnrollment, courseEnrollmentUserDetail, courseGroup, courseGroupBids, courseGroups, courses, unwrap)
 import Api.Helper exposing (..)
 import Decoders
 import Dict
@@ -12,6 +28,7 @@ import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
+import Url.Builder exposing (QueryParameter)
 
 
 coursesPost : Course -> (WebData Course -> msg) -> Cmd msg
@@ -48,6 +65,48 @@ coursePatch id courseUp msg =
 courseDelete : Int -> (WebData String -> msg) -> Cmd msg
 courseDelete id msg =
     delete (unwrap <| course id)
+        msg
+        Decode.string
+
+
+coursesEnrollmentGet : Int -> List QueryParameter -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+coursesEnrollmentGet courseId params msg =
+    get (unwrap <| courseEnrollment courseId params)
+        msg
+    <|
+        Decode.list UserEnrollment.decoder
+
+
+coursesEnrollmentGetAll : Int -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+coursesEnrollmentGetAll courseId msg =
+    coursesEnrollmentGet courseId [] msg
+
+
+coursesEnrollmentGetTeam : Int -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+coursesEnrollmentGetTeam courseId msg =
+    let
+        roles =
+            String.join "," <|
+                List.map String.fromInt <|
+                    List.map CourseRole.roleToInt [ Admin, Tutor ]
+
+        params =
+            [ Url.Builder.string "roles" roles ]
+    in
+    coursesEnrollmentGet courseId params msg
+
+
+coursesEnrollmentPost : Int -> (WebData UserEnrollment -> msg) -> Cmd msg
+coursesEnrollmentPost courseId msg =
+    post (unwrap <| courseEnrollment courseId [])
+        Http.emptyBody
+        msg
+        UserEnrollment.decoder
+
+
+coursesEnrollmentDelete : Int -> (WebData String -> msg) -> Cmd msg
+coursesEnrollmentDelete courseId msg =
+    delete (unwrap <| courseEnrollment courseId [])
         msg
         Decode.string
 

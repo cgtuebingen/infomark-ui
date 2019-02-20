@@ -10,6 +10,7 @@
 module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
 
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
+import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole exposing (CourseRole(..))
 import Api.Request.Courses as CoursesRequests
@@ -27,16 +28,20 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
+import Task
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
+import Toasty
+import Components.Toasty
 
 
 type alias Model =
     { courseRequest : WebData (List Course)
     , accountEnrollmentsRequest : WebData (List AccountEnrollment)
-    , enrollProgress : WebData String
+    , enrollProgress : WebData UserEnrollment
     , disenrollProgress : WebData String
     , showArchive : Bool
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -45,9 +50,10 @@ type Msg
     | AccountEnrollmentsResponse (WebData (List AccountEnrollment))
     | Enroll Course
     | Disenroll Course
-    | EnrollResponse (WebData String)
+    | EnrollResponse (WebData UserEnrollment)
     | DisenrollResponse (WebData String)
     | ToggleArchive
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | NavigateTo Route
 
 
@@ -58,6 +64,7 @@ init =
       , enrollProgress = NotAsked
       , disenrollProgress = NotAsked
       , showArchive = False
+      , toasties = Toasty.initialState
       }
     , Cmd.batch 
         [ AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
@@ -66,32 +73,117 @@ init =
     )
 
 
+
+
+
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         CoursesResponse response ->
-            ( { model | courseRequest = response }, Cmd.none, NoUpdate )
+            updateHandleCourses sharedState model response
 
         AccountEnrollmentsResponse response ->
-            ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
+            updateHandleAccountEnrollments sharedState model response
 
         Enroll course ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, CoursesRequests.coursesEnrollmentPost course.id EnrollResponse, NoUpdate )
 
         Disenroll course ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, CoursesRequests.coursesEnrollmentDelete course.id DisenrollResponse, NoUpdate )
 
         EnrollResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            updateHandleEnroll model response
 
         DisenrollResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            updateHandleDisenroll model response
 
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         ToggleArchive ->
             ( { model | showArchive = not model.showArchive }, Cmd.none, NoUpdate )
+
+        ToastyMsg subMsg ->
+            let
+                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+            in
+            ( newModel, newCmd, NoUpdate)
+
+
+updateHandleCourses : SharedState -> Model -> WebData (List Course) -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleCourses sharedState model response =
+    case response of
+        RemoteData.Success _ ->
+            ( { model | courseRequest = response }, Cmd.none, NoUpdate )
+        
+        RemoteData.Failure _ -> -- Differentiate between errors
+            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+
+        _ ->
+            ( { model | courseRequest = response }, Cmd.none, NoUpdate )
+
+
+updateHandleAccountEnrollments : SharedState -> Model -> WebData (List AccountEnrollment) -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleAccountEnrollments sharedState model response =
+    case response of
+        RemoteData.Success _ ->
+            ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
+
+        RemoteData.Failure _ ->
+            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+
+        _ ->
+            ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
+
+
+updateHandleEnroll : Model -> WebData UserEnrollment -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleEnroll model response =
+    case response of
+        RemoteData.Success _ ->
+            let 
+                (newModel, newCmd) =
+                    ( { model | enrollProgress = response }
+                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse 
+                    ) |> addToast  (Components.Toasty.Success "Success" "You are now enrolled")
+
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        RemoteData.Failure _ ->
+            let
+                (newModel, newCmd) =
+                    ( { model | enrollProgress = response }, Cmd.none )
+                        |> addToast  (Components.Toasty.Error "Error" "Failed to enroll")
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        _ ->
+            ( { model | enrollProgress = response }, Cmd.none, NoUpdate )
+
+
+updateHandleDisenroll : Model -> WebData String -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleDisenroll model response =
+    case response of
+        RemoteData.Success _ ->
+            let 
+                (newModel, newCmd) =
+                    ( { model | disenrollProgress = response }
+                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse 
+                    ) |> addToast  (Components.Toasty.Success "Success" "You are now disenrolled")
+
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        RemoteData.Failure _ ->
+            let
+                (newModel, newCmd) =
+                    ( { model | disenrollProgress = response }, Cmd.none )
+                        |> addToast  (Components.Toasty.Error "Error" "Failed to disenroll")
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        _ ->
+            ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
@@ -175,7 +267,8 @@ view sharedState model =
                         cTemp
             in
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-                [ div
+                [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+                , div
                     [ classes
                         [ TC.w_75_l
                         , TC.w_100
@@ -282,3 +375,8 @@ findEnrollmentForCourse course enrollments =
     enrollments
         |> List.filter (\enrollment -> enrollment.course_id == course.id)
         |> List.head
+
+
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
