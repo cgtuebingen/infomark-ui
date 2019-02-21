@@ -55,6 +55,7 @@ type Msg
     | ToggleArchive
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | NavigateTo Route
+    | ForceExpire
 
 
 init : ( Model, Cmd Msg )
@@ -108,6 +109,9 @@ update sharedState msg model =
                 (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
             ( newModel, newCmd, NoUpdate)
+
+        ForceExpire ->
+            ( model, Cmd.none, RefreshLogin )
 
 
 updateHandleCourses : SharedState -> Model -> WebData (List Course) -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -331,6 +335,7 @@ viewCoursesHeader lbl toggable creatable model =
             ]
         ]
         [ h1 [ Styles.headerStyle ] [ text lbl ]
+        , button [onClick ForceExpire] [ text "Force Expire"]
         , toggle
         , create
         ]

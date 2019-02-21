@@ -12,6 +12,7 @@ type alias SharedState =
     , timezone : Maybe Zone
     , translations : Translations
     , selectedLanguage : Language
+    , userMail : Maybe String
     , role : Maybe Role
     }
 
@@ -22,6 +23,9 @@ type SharedStateUpdate
     | UpdateTimezone Zone
     | UpdateLanguage Language Translations
     | UpdateRole (Maybe Role)
+    | UpdateMail String
+    | UpdateRoleAndMail Role String
+    | RefreshLogin
 
 
 update : SharedState -> SharedStateUpdate -> SharedState
@@ -39,5 +43,14 @@ update sharedState sharedStateUpdate =
         UpdateRole role ->
             { sharedState | role = role }
 
+        UpdateMail mail ->
+            { sharedState | userMail = Just mail }
+
+        UpdateRoleAndMail role mail ->
+            { sharedState | userMail = Just mail, role = Just role }
+
         NoUpdate ->
+            sharedState
+
+        RefreshLogin ->
             sharedState

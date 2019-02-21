@@ -92,7 +92,7 @@ update sharedState msg model =
                     ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
                         |> addToast (Components.Toasty.Error "Error" errorString)
             in
-            ( newModel, newCmd, NoUpdate )
+            ( newModel, newCmd, UpdateMail model.email )
 
         LoginResponse (RemoteData.Success role) ->
             ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRole <| Just role )

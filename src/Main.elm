@@ -183,6 +183,7 @@ updateTranslations model webData =
                             , translations = translations
                             , selectedLanguage = German
                             , role = Nothing
+                            , userMail = Nothing
                             }
 
                         ( initRouterModel, routerCmd ) =
