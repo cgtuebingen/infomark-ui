@@ -1,4 +1,4 @@
-module EmailHelper exposing (check_university_mail)
+module Utils.EmailHelper exposing (isInvalid, check_university_mail)
 
 import Regex
 import Validate exposing (Validator, ifTrue)

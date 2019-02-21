@@ -1,8 +1,9 @@
-module Api.Helper exposing (delete, get, patch, post)
+module Api.Helper exposing (delete, get, patch, post, postImage)
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
+import File exposing (File)
 
 
 get : String -> (WebData a -> msg) -> Decoder a -> Cmd msg
@@ -28,6 +29,28 @@ post url body msg decoder =
         , expect = Http.expectJson (RemoteData.fromResult >> msg) decoder
         , timeout = Nothing
         , tracker = Nothing
+        }
+
+
+{-| Uploads an single image. You can subscribe to the tracker "image_upload" using 
+
+    type Msg
+        = GotProgress Http.Progress
+    
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        Http.track "image_upload" GotProgress
+-}
+postImage : String -> File -> (WebData () -> msg) -> Cmd msg
+postImage url file msg =
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = url
+        , body = Http.fileBody file
+        , expect = Http.expectWhatever (RemoteData.fromResult >> msg)
+        , timeout = Nothing
+        , tracker = Just "image_upload"
         }
 
 

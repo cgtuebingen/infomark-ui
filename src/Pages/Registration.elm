@@ -10,9 +10,14 @@ import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Types exposing (Language(..), Translations)
+import Types exposing (Language(..), Translations, languageToBackendString)
 import Utils.Styles as Styles
+import Utils.EmailHelper as UniMailChecker
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
+import Api.Data.UserAccount exposing (UserAccount)
+import Api.Request.Account exposing (accountPost)
+import Toasty
+import Components.Toasty
 
 
 type alias Model =
@@ -24,85 +29,38 @@ type alias Model =
     , studentNumber : String
     , semester : String
     , subject : String
-    , registrationProgress : WebData String
+    , registrationProgress : WebData UserAccount
     , errors : List Error
+    , universityMailWarningShown : Bool
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
-type Field
-    = Email
-    | Password
-    | PasswordRepeat
-    | FirstName
-    | LastName
-    | StudentNumber
-    | Semester
-    | Subject
-
-
-setField : Model -> Field -> String -> Model
-setField model field value =
-    case field of
-        Email ->
-            { model | email = value }
-
-        Password ->
-            { model | password = value }
-
-        PasswordRepeat ->
-            { model | passwordRepeat = value }
-
-        FirstName ->
-            { model | firstName = value }
-
-        LastName ->
-            { model | lastName = value }
-
-        StudentNumber ->
-            { model | studentNumber = value }
-
-        Semester ->
-            { model | semester = value }
-
-        Subject ->
-            { model | subject = value }
-
-
-type alias Error =
-    ( Field, String )
-
-
-modelValidator : Validator Error Model
-modelValidator =
-    Validate.all
-        [ Validate.firstError
-            [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
-            , ifInvalidEmail .email (\value -> ( Email, "Die eingegebene E-Mail Addresse " ++ value ++ " ist nicht gültig." ))
-            ]
-        , Validate.firstError
-            [ ifBlank .semester ( Semester, "Bitte gib dein Semester ein." )
-            , ifNotInt .semester (\value -> ( Semester, value ++ " ist keine gültige Zahl." ))
-            ]
-        , Validate.firstError
-            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
-            , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
-            , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
-            ]
-        , ifBlank .firstName ( FirstName, "Bitte gib deinen Vornamen ein." )
-        , ifBlank .lastName ( LastName, "Bitte gib deinen Nachnamen ein." )
-        , Validate.firstError
-            [ ifBlank .studentNumber ( StudentNumber, "Bitte gib deine Martrikelnummer ein." )
-            , ifNotInt .studentNumber (\value -> ( StudentNumber, value ++ " ist keine gültige Zahl." ))
-            ]
-        , ifBlank .subject ( Subject, "Bitte gib dein Fach ein." )
-        ]
-
+modelToBody : SharedState -> Model -> UserAccount
+modelToBody sharedState model =
+    { user = 
+        { id = 0
+        , firstname = model.firstName
+        , lastname = model.lastName
+        , avatarUrl = Nothing
+        , email = model.email
+        , studentNumber = Just model.studentNumber
+        , semester = String.toInt model.semester
+        , subject = Just <| model.subject
+        , language = Just <| languageToBackendString sharedState.selectedLanguage
+        }
+    , account = 
+        { email = model.email
+        , plain_password = model.password 
+        }
+    }
 
 type Msg
     = NavigateTo Route
     | Register
     | SetField Field String
-    | RegistrationResponse (WebData String)
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
+    | RegistrationResponse (WebData UserAccount)
 
 
 init : ( Model, Cmd Msg )
@@ -117,6 +75,8 @@ init =
       , subject = ""
       , registrationProgress = NotAsked
       , errors = []
+      , universityMailWarningShown = False
+      , toasties = Toasty.initialState
       }
     , Cmd.none
     )
@@ -132,17 +92,60 @@ update sharedState msg model =
             ( setField model field value, Cmd.none, NoUpdate )
 
         Register ->
-            case validate modelValidator model of
-                Err errors ->
-                    ( { model | errors = errors }, Cmd.none, NoUpdate )
+            updateHandleRegister sharedState model <| validate modelValidator model
 
-                Ok _ ->
-                    ( { model | registrationProgress = Loading, errors = [] }, Cmd.none, NoUpdate )
+        RegistrationResponse response -> 
+            updateHandleRegistrationResponse sharedState model response
 
-        -- TODO: Start the web request here.
-        RegistrationResponse response ->
-            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+        ToastyMsg subMsg ->
+            let
+                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+            in
+            ( newModel, newCmd, NoUpdate)
 
+
+updateHandleRegister : SharedState -> Model -> Result (List Error) success -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleRegister sharedState model validationResult =
+    case validate modelValidator model of
+        Err errors ->
+            ( { model | errors = errors }, Cmd.none, NoUpdate )
+        
+        Ok _ ->
+            case (UniMailChecker.isInvalid model.email, model.universityMailWarningShown) of
+                (True, False) -> -- Show a warning
+                    let
+                        (newModel, newCmd) = 
+                            ( { model | errors = [], universityMailWarningShown = True}, Cmd.none )
+                                |> addToast 
+                                    ( Components.Toasty.Warning "Warning"
+                                     "To receive emails and perform an automatic validation, you need to provide a university email address. Do you still want to register with this email knowing this?"
+                                    )
+                    in
+                    ( newModel, newCmd, NoUpdate )
+
+                (_, _) -> -- In all other cases continue with registration
+                     ( { model | registrationProgress = Loading, errors = [] }
+                    , accountPost (modelToBody sharedState model) RegistrationResponse
+                    , NoUpdate )
+
+
+updateHandleRegistrationResponse : SharedState -> Model -> WebData UserAccount -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleRegistrationResponse sharedState model response =
+    case response of
+        Success _ ->
+            ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate ) -- TODO show waiting for validation
+
+        Failure err ->
+            let
+                (newModel, newCmd) =
+                    ( { model | registrationProgress = response}, Cmd.none )
+                        |> addToast 
+                            ( Components.Toasty.Error "Error" "Failed to register" )
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        _ ->
+            ( { model | registrationProgress = response }, Cmd.none, NoUpdate )
 
 
 -- TODO: Update the shared state
@@ -165,7 +168,8 @@ view sharedState model =
             , TC.w_100
             ]
         ]
-        [ div
+        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        , div
             [ classes
                 [ TC.v_mid
                 , TC.dtc
@@ -298,3 +302,77 @@ viewFormErrors field errors =
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
         |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
         |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
+
+
+type Field
+    = Email
+    | Password
+    | PasswordRepeat
+    | FirstName
+    | LastName
+    | StudentNumber
+    | Semester
+    | Subject
+
+
+setField : Model -> Field -> String -> Model
+setField model field value =
+    case field of
+        Email ->
+            { model | email = value }
+
+        Password ->
+            { model | password = value }
+
+        PasswordRepeat ->
+            { model | passwordRepeat = value }
+
+        FirstName ->
+            { model | firstName = value }
+
+        LastName ->
+            { model | lastName = value }
+
+        StudentNumber ->
+            { model | studentNumber = value }
+
+        Semester ->
+            { model | semester = value }
+
+        Subject ->
+            { model | subject = value }
+
+
+type alias Error =
+    ( Field, String )
+
+
+modelValidator : Validator Error Model
+modelValidator =
+    Validate.all
+        [ Validate.firstError
+            [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
+            , ifInvalidEmail .email (\value -> ( Email, "Die eingegebene E-Mail Addresse " ++ value ++ " ist nicht gültig." ))
+            ]
+        , Validate.firstError
+            [ ifBlank .semester ( Semester, "Bitte gib dein Semester ein." )
+            , ifNotInt .semester (\value -> ( Semester, value ++ " ist keine gültige Zahl." ))
+            ]
+        , Validate.firstError
+            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
+            , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
+            , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
+            ]
+        , ifBlank .firstName ( FirstName, "Bitte gib deinen Vornamen ein." )
+        , ifBlank .lastName ( LastName, "Bitte gib deinen Nachnamen ein." )
+        , Validate.firstError
+            [ ifBlank .studentNumber ( StudentNumber, "Bitte gib deine Martrikelnummer ein." )
+            , ifNotInt .studentNumber (\value -> ( StudentNumber, value ++ " ist keine gültige Zahl." ))
+            ]
+        , ifBlank .subject ( Subject, "Bitte gib dein Fach ein." )
+        ]
+
+
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )

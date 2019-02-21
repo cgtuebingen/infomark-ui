@@ -11,7 +11,9 @@
             "avh4/elm-color": "1.0.0",
             "damienklinnert/elm-spinner": "3.0.2",
             "elm/browser": "1.0.1",
+            "elm/bytes": "1.0.8",
             "elm/core": "1.0.2",
+            "elm/file": "1.0.4",
             "elm/html": "1.0.0",
             "elm/http": "2.0.0",
             "elm/json": "1.1.2",
@@ -35,8 +37,6 @@
         },
         "indirect": {
             "Skinney/murmur3": "2.0.8",
-            "elm/bytes": "1.0.7",
-            "elm/file": "1.0.2",
             "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
             "elm/virtual-dom": "1.0.2",

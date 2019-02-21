@@ -312,6 +312,7 @@ viewCoursesHeader lbl toggable creatable model =
                 button
                     [ Styles.buttonGreenStyle
                     , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
+                    , onClick <| NavigateTo CreateCourseRoute
                     ]
                     [ text "+" ]
 
@@ -336,7 +337,9 @@ viewCoursesHeader lbl toggable creatable model =
 
 
 viewRenderCourse : SharedState -> Course -> Maybe AccountEnrollment -> Html Msg
-viewRenderCourse sharedState course enrollment =
+viewRenderCourse sharedState course enrollment = 
+    -- TODO: Show Disenroll button
+    -- TODO: Show edit/delete button
     let
         ( buttonText, buttonMsg ) =
             case enrollment of

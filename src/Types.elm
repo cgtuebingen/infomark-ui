@@ -1,4 +1,4 @@
-module Types exposing (Language(..), Translations)
+module Types exposing (Language(..), Translations, languageToBackendString)
 
 import Dict exposing (Dict)
 import Iso8601
@@ -19,3 +19,10 @@ type alias Translations =
 decodeTranslations : Decoder Translations
 decodeTranslations =
     dict string
+
+
+languageToBackendString : Language -> String
+languageToBackendString lang =
+    case lang of
+        English -> "en"
+        German -> "de"
