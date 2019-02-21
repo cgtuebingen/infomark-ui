@@ -24,9 +24,8 @@ sessionPost account msg =
         Role.decoder
 
 
-sessionDelete : (WebData String -> msg) -> Cmd msg
+sessionDelete : (WebData () -> msg) -> Cmd msg
 sessionDelete msg =
-    delete (unwrap sessions)
+    deleteExpectNothing (unwrap sessions)
         msg
-        Decode.string
         

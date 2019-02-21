@@ -31,6 +31,7 @@ import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Utils.Styles as Styles
 import Utils.Utils as Utils
+import Api.Request.Auth as AuthRequest
 
 
 type alias Model =
@@ -60,6 +61,7 @@ type Msg
     | NavigateTo Route
     | SelectedLanguage Language
     | Logout
+    | LogoutCompleted (WebData ())
     | HandleTranslationsResponse (WebData Translations)
     | SpinnerMsg Spinner.Msg
     | LoginMsg Login.Msg
@@ -126,7 +128,13 @@ update sharedState msg model =
                     ( model, Cmd.none, NoUpdate )
 
         ( Logout, _ ) ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, AuthRequest.sessionDelete LogoutCompleted, NoUpdate )
+
+        ( LogoutCompleted (Success _), _ ) -> -- Go back to login
+            ( model, Browser.Navigation.pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate)
+
+        ( LogoutCompleted _, _) -> -- Failure, Not asked or Loading
+            ( model, Cmd.none, NoUpdate)
 
         -- TODO send logout message
         ( SpinnerMsg spinnerMsg, LoginModel login ) ->
