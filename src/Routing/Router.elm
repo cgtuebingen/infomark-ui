@@ -31,6 +31,7 @@ import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Utils.Styles as Styles
 import Utils.Utils as Utils
+import Components.Dialog as Dialog
 import Api.Request.Auth as AuthRequest
 
 
@@ -38,6 +39,7 @@ type alias Model =
     { currentModel : CurrentModel
     , route : Route
     , selectedLanguage : Language
+    , loginDialogState : Dialog.State
     }
 
 
@@ -60,6 +62,7 @@ type Msg
     = UrlChange Url
     | NavigateTo Route
     | SelectedLanguage Language
+    | LoginDialogShown Bool
     | Logout
     | LogoutCompleted (WebData ())
     | HandleTranslationsResponse (WebData Translations)
@@ -75,6 +78,7 @@ type Msg
     | SheetEditorMsg SheetEditor.Msg
     | SubmissionGradingEditorMsg SubmissionGradingEditor.Msg
     | TaskEditorMsg TaskEditor.Msg
+    | NoOp
 
 
 init : Url -> Language -> ( Model, Cmd Msg )
@@ -86,6 +90,7 @@ init url lang =
     ( { currentModel = NotFound
       , route = currentRoute
       , selectedLanguage = lang
+      , loginDialogState = False 
       }
     , Utils.perform <| UrlChange url
     )
@@ -120,7 +125,7 @@ update sharedState msg model =
             )
 
         ( HandleTranslationsResponse webData, _ ) ->
-            case Debug.log "TranslationReceived" webData of
+            case webData of
                 Success translations ->
                     ( model, Cmd.none, UpdateLanguage model.selectedLanguage translations )
 
@@ -184,6 +189,9 @@ update sharedState msg model =
         ( AdminMsg adminMsg, AdminModel admin ) ->
             Admin.update sharedState adminMsg admin
                 |> updateWith AdminModel AdminMsg model
+
+        ( LoginDialogShown state, _) ->
+            ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
         ( _, _ ) ->
             -- Message arrived for wrong page. Ignore that
@@ -422,6 +430,7 @@ footerView sharedState model =
             ]
             [ button [ Styles.linkGreyStyle, onClick <| SelectedLanguage German ] [ text "Deutsch" ]
             , button [ Styles.linkGreyStyle, onClick <| SelectedLanguage English ] [ text "English" ]
+            , button [ Styles.linkGreyStyle, onClick <| LoginDialogShown True ] [ text "Dialog" ]
             , a [ Styles.linkGreyStyle ] [ text "Terms of Use" ]
             ]
         ]
@@ -437,10 +446,59 @@ tabPage sharedState model =
             , TC.helvetica
             ]
         ]
-        [ navView sharedState model
+        [ loginDialog sharedState model
+        , navView sharedState model
         , pageView sharedState model
         , footerView sharedState model
         ]
+
+
+loginDialog : SharedState -> Model -> Html Msg
+loginDialog sharedState model =
+    Dialog.modalDialog div 
+        [ classes
+            [ TC.fixed
+            , TC.top_0
+            , TC.right_0
+            , TC.bottom_0
+            , TC.left_0
+            , TC.bg_black_30
+            , TC.justify_center
+            , TC.items_center
+            ]
+        ]
+        ( Dialog.dialog div
+            [ classes
+                [ TC.bg_white
+                , TC.black
+                , TC.ba
+                , TC.bw1
+                , TC.b__black_60
+                , TC.shadow_5
+                , TC.w_100
+                , TC.measure_wide
+                , TC.ph5
+                , TC.pv4
+                ]
+            ]
+            [ div 
+                [ classes [TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black] ] 
+                [ h1 [] [text "Dialog"] ]
+            , div
+                [ classes [ TC.w_100, TC.mt4 ]]
+                [ p [] [text "This is an amazing dialog"]
+                , button 
+                    [ classes 
+                        [ TC.fr ]
+                    , Styles.buttonGreyStyle
+                    , onClick <| LoginDialogShown False 
+                    ] [text "Confirm"]
+                ]
+            ]
+        )
+        model.loginDialogState
+        loginDialogConfig
+        
 
 
 noTabPage : SharedState -> Model -> Html Msg
@@ -561,3 +619,13 @@ initWith toModel toMsg model sharedStateUpdate ( subModel, subCmd ) =
     , Cmd.map toMsg subCmd
     , sharedStateUpdate
     )
+
+
+loginDialogConfig : Dialog.Config Msg
+loginDialogConfig =
+    Dialog.Config
+        (classes [ TC.flex ])
+        (classes [ TC.dn])
+        LoginDialogShown
+        False
+        NoOp

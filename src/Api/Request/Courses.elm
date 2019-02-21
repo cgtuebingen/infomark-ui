@@ -54,19 +54,17 @@ courseGet id msg =
         Course.decoder
 
 
-coursePatch : Int -> Course -> (WebData String -> msg) -> Cmd msg
+coursePatch : Int -> Course -> (WebData () -> msg) -> Cmd msg
 coursePatch id courseUp msg =
-    patch (unwrap <| course id)
+    patchExpectNothing (unwrap <| course id)
         (Http.jsonBody (Course.encoder courseUp))
         msg
-        Decode.string
 
 
-courseDelete : Int -> (WebData String -> msg) -> Cmd msg
+courseDelete : Int -> (WebData () -> msg) -> Cmd msg
 courseDelete id msg =
-    delete (unwrap <| course id)
+    deleteExpectNothing (unwrap <| course id)
         msg
-        Decode.string
 
 
 coursesEnrollmentGet : Int -> List QueryParameter -> (WebData (List UserEnrollment) -> msg) -> Cmd msg

@@ -1,4 +1,4 @@
-module Api.Helper exposing (delete, deleteExpectNothing, get, patch, post, postImage)
+module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postImage)
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
@@ -67,6 +67,19 @@ patch url body msg decoder =
         }
 
 
+patchExpectNothing : String -> Http.Body -> (WebData () -> msg) -> Cmd msg
+patchExpectNothing url body msg =
+    Http.request
+        { method = "PATCH"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = Http.expectWhatever (RemoteData.fromResult >> msg)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 delete : String -> (WebData a -> msg) -> Decoder a -> Cmd msg
 delete url msg decoder =
     Http.request
@@ -78,6 +91,7 @@ delete url msg decoder =
         , timeout = Nothing
         , tracker = Nothing
         }
+
 
 deleteExpectNothing : String-> (WebData () -> msg) -> Cmd msg
 deleteExpectNothing url msg =

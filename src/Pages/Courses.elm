@@ -73,11 +73,11 @@ init =
     )
 
 
-
-
-
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
+    let
+        _ = Debug.log "MSG" msg
+    in
     case msg of
         CoursesResponse response ->
             updateHandleCourses sharedState model response
@@ -341,13 +341,23 @@ viewRenderCourse sharedState course enrollment =
     -- TODO: Show Disenroll button
     -- TODO: Show edit/delete button
     let
-        ( buttonText, buttonMsg ) =
+        showButtons =
             case enrollment of
                 Nothing ->
-                    ( "Enroll", Enroll course )
+                    [( "Enroll", Enroll course )]
 
                 Just _ ->
-                    ( "Show", NavigateTo <| CourseDetailRoute course.id )
+                    [ ( "Disenroll", Disenroll course ) -- TODO add a confirm dialog
+                    , ( "Show", NavigateTo <| CourseDetailRoute course.id )
+                    ]
+
+        buttonsHtml = List.map 
+            (\(buttonText, buttonMsg) -> button
+                [ Styles.buttonGreyStyle
+                , classes [ TC.w_100, TC.mt3 ]
+                , onClick buttonMsg
+                ]
+                [ text buttonText ]) showButtons
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
@@ -360,16 +370,8 @@ viewRenderCourse sharedState course enrollment =
                 ]
             ]
         , div [ classes [ TC.measure ] ]
-            [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
-            , button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.w_100 ]
-                , onClick buttonMsg
-                ]
-                [ text buttonText ]
-
-            -- TODO check if user is enrolled or not. Either show and execute enroll or disenroll
-            ]
+            <| [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
+            ] ++ buttonsHtml
         ]
 
 
