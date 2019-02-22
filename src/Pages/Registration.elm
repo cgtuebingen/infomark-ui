@@ -15,6 +15,7 @@ import Utils.Styles as Styles
 import Utils.EmailHelper as UniMailChecker
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
 import Api.Data.UserAccount exposing (UserAccount)
+import Api.Data.User exposing (User)
 import Api.Request.Account exposing (accountPost)
 import Toasty
 import Components.Toasty
@@ -29,7 +30,7 @@ type alias Model =
     , studentNumber : String
     , semester : String
     , subject : String
-    , registrationProgress : WebData UserAccount
+    , registrationProgress : WebData User
     , errors : List Error
     , universityMailWarningShown : Bool
     , toasties : Toasty.Stack Components.Toasty.Toast
@@ -60,7 +61,7 @@ type Msg
     | Register
     | SetField Field String
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
-    | RegistrationResponse (WebData UserAccount)
+    | RegistrationResponse (WebData User)
 
 
 init : ( Model, Cmd Msg )
@@ -129,7 +130,7 @@ updateHandleRegister sharedState model validationResult =
                     , NoUpdate )
 
 
-updateHandleRegistrationResponse : SharedState -> Model -> WebData UserAccount -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleRegistrationResponse : SharedState -> Model -> WebData User -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleRegistrationResponse sharedState model response =
     case response of
         Success _ ->

@@ -84,6 +84,9 @@ update sharedState msg model =
                 errorString = case err of
                     Http.BadStatus 400 ->
                         "Wrong Password or Username!"
+
+                    Http.BadStatus 422 ->
+                        "Your email is not confirmed!"
                     
                     _ ->
                         "Something went wrong"
