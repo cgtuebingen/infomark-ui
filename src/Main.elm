@@ -60,9 +60,6 @@ type Msg
 
 init : Flags -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    let
-        _ = Debug.log "Flags" flags
-    in
     ( { appState = 
             NotReady 
                 (Just (Time.millisToPosix flags.currentTime)) 

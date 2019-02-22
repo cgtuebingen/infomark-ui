@@ -39,9 +39,6 @@ update sharedState sharedStateUpdate =
             { sharedState | translations = translations, selectedLanguage = language }
 
         UpdateRoleAndMail role mail -> -- Received for a positive login
-            let
-                _ = Debug.log "Update Received" (role, mail)
-            in
             { sharedState | userMail = Just mail, role = Just role }
 
         NoUpdate ->

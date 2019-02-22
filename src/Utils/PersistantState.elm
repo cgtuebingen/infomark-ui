@@ -49,9 +49,6 @@ sharedStateUpdateToStorage sharedStateUpdate =
 storageToState : (Maybe State -> msg) -> Sub msg
 storageToState toMsg =
     onStoreChange (\value -> 
-        let
-            _ = Debug.log "Val" <| Decode.decodeValue stateDecoder value
-        in
         toMsg (decode value)
     )
 
