@@ -33,6 +33,7 @@ import Time
 import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
+import Utils.Utils exposing (handleLogoutErrors)
 
 
 type alias Model =
@@ -94,10 +95,10 @@ update sharedState msg model =
             ( model, CoursesRequests.coursesEnrollmentDelete course.id DisenrollResponse, NoUpdate )
 
         EnrollResponse response ->
-            updateHandleEnroll model response
+            updateHandleEnroll sharedState model response
 
         DisenrollResponse response ->
-            updateHandleDisenroll model response
+            updateHandleDisenroll sharedState model response
 
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
@@ -122,9 +123,12 @@ updateHandleCourses sharedState model response =
         RemoteData.Success _ ->
             ( { model | courseRequest = response }, Cmd.none, NoUpdate )
 
-        RemoteData.Failure _ ->
-            -- Differentiate between errors
-            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+        RemoteData.Failure err ->
+            handleLogoutErrors model sharedState
+                (\e -> -- Differentiate between errros
+                    ( { model | courseRequest = response }, Cmd.none, NoUpdate )
+                )
+                err
 
         _ ->
             ( { model | courseRequest = response }, Cmd.none, NoUpdate )
@@ -136,15 +140,19 @@ updateHandleAccountEnrollments sharedState model response =
         RemoteData.Success _ ->
             ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
 
-        RemoteData.Failure _ ->
-            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+        RemoteData.Failure err ->
+            handleLogoutErrors model sharedState
+                (\e -> -- Differentiate between errros
+                    ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
+                )
+                err
 
         _ ->
             ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
 
 
-updateHandleEnroll : Model -> WebData UserEnrollment -> ( Model, Cmd Msg, SharedStateUpdate )
-updateHandleEnroll model response =
+updateHandleEnroll : SharedState -> Model -> WebData UserEnrollment -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleEnroll sharedState model response =
     case response of
         RemoteData.Success _ ->
             let
@@ -156,20 +164,26 @@ updateHandleEnroll model response =
             in
             ( newModel, newCmd, NoUpdate )
 
-        RemoteData.Failure _ ->
-            let
-                ( newModel, newCmd ) =
-                    ( { model | enrollProgress = response }, Cmd.none )
-                        |> addToast (Components.Toasty.Error "Error" "Failed to enroll")
-            in
-            ( newModel, newCmd, NoUpdate )
+        RemoteData.Failure err ->
+            handleLogoutErrors model sharedState
+                (\e -> -- Differentiate between errros
+                    (let
+                        ( newModel, newCmd ) =
+                            ( { model | enrollProgress = response }, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to enroll")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                )
+                err
+            
 
         _ ->
             ( { model | enrollProgress = response }, Cmd.none, NoUpdate )
 
 
-updateHandleDisenroll : Model -> WebData String -> ( Model, Cmd Msg, SharedStateUpdate )
-updateHandleDisenroll model response =
+updateHandleDisenroll : SharedState -> Model -> WebData String -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleDisenroll sharedState model response =
     case response of
         RemoteData.Success _ ->
             let
@@ -181,13 +195,18 @@ updateHandleDisenroll model response =
             in
             ( newModel, newCmd, NoUpdate )
 
-        RemoteData.Failure _ ->
-            let
-                ( newModel, newCmd ) =
-                    ( { model | disenrollProgress = response }, Cmd.none )
-                        |> addToast (Components.Toasty.Error "Error" "Failed to disenroll")
-            in
-            ( newModel, newCmd, NoUpdate )
+        RemoteData.Failure err ->
+            handleLogoutErrors model sharedState
+                (\e -> -- Differentiate between errros
+                    (let
+                        ( newModel, newCmd ) =
+                            ( { model | disenrollProgress = response }, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to disenroll")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                )
+                err
 
         _ ->
             ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
