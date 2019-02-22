@@ -7,7 +7,7 @@ module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update
 
 import Api.Data.Course as Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
-import Browser.Navigation exposing (pushUrl)
+import Browser.Navigation exposing (pushUrl, back)
 import Date exposing (Date, day, month, weekday, year)
 import DatePicker exposing (DateEvent(..), defaultSettings)
 import Html exposing (..)
@@ -24,20 +24,27 @@ import Time exposing (Posix)
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
+import Toasty
+import Components.Toasty
+import Utils.Utils exposing (handleLogoutErrors)
 
 
 type Msg
     = NavigateTo Route
     | CourseGetResponse (WebData Course)
+    | CourseCreateResponse (WebData Course)
+    | CourseEditResponse (WebData ())
     | SetField Field String
     | BeginDatePicker DatePicker.Msg
     | EndDatePicker DatePicker.Msg
     | PointsRequiredToggle
     | CreateOrEdit
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
 
 
 type alias Model =
-    { courseName : String
+    { id : Int
+    , courseName : String
     , description : String
     , required_percentage : Maybe String
     , errors : List Error
@@ -47,6 +54,7 @@ type alias Model =
     , beginsAtDatepicker : DatePicker.DatePicker
     , endsAtDatepicker : DatePicker.DatePicker
     , createCourse : Bool
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -77,7 +85,8 @@ initModel =
         ( endDatePicker, endDatePickerFx ) =
             DatePicker.init
     in
-    ( { courseName = ""
+    ( { id = 0
+      , courseName = ""
       , description = ""
       , required_percentage = Nothing
       , errors = []
@@ -87,6 +96,7 @@ initModel =
       , beginsAtDate = Nothing
       , endsAtDate = Nothing
       , createCourse = True
+      , toasties = Toasty.initialState
       }
     , Cmd.batch
         [ Cmd.map BeginDatePicker beginDatePickerFx
@@ -112,7 +122,7 @@ initEdit id =
         ( model, cmd ) =
             initModel
     in
-    ( { model | getCourseResponse = Loading, createCourse = False }
+    ( { model | getCourseResponse = Loading, createCourse = False, id = id }
     , Cmd.batch
         [ cmd
         , CoursesRequest.courseGet id CourseGetResponse
@@ -161,7 +171,22 @@ update sharedState msg model =
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    ( { model | errors = [] }, Cmd.none, NoUpdate )
+                    let
+                        body = fillRequestFromModel model
+                    in
+                    ( { model | errors = [] }
+                    , case model.createCourse of
+                        True -> CoursesRequest.coursesPost body CourseCreateResponse
+
+                        False -> CoursesRequest.coursePatch model.id body CourseEditResponse
+
+                    , NoUpdate )
+
+        CourseCreateResponse response ->
+            updateHandleCreateOrEditResponse sharedState model response
+
+        CourseEditResponse response ->
+            updateHandleCreateOrEditResponse sharedState model response
 
         -- Start rest request
         BeginDatePicker subMsg ->
@@ -202,16 +227,55 @@ update sharedState msg model =
             , NoUpdate
             )
 
+        ToastyMsg subMsg ->
+            let
+                ( newModel, newCmd ) =
+                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
+            in
+            ( newModel, newCmd, NoUpdate )
 
 
---_ ->
---    (model, Cmd.none, NoUpdate)
+
+updateHandleCreateOrEditResponse : SharedState -> Model -> WebData ret -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleCreateOrEditResponse sharedState model response =
+    case response of
+        Success _ -> (model, back sharedState.navKey 1, NoUpdate)
+
+        Failure err ->
+            handleLogoutErrors model sharedState 
+                (\e -> 
+                    (let
+                        errorString =
+                            case e of
+                                Http.BadStatus 400 ->
+                                    "Bad Data. Something is off in the data."
+
+                                Http.BadStatus 403 ->
+                                    "You are not allowed to do this!"
+                                
+                                Http.BadBody message ->
+                                    "Bad return: " ++ message
+
+                                _ ->
+                                    "Something other went wrong"
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" errorString)
+                    in
+                    (newModel, newCmd, NoUpdate)
+                    )
+                )
+                err
+        
+        _ -> (model, Cmd.none, NoUpdate) -- TODO handle loading
+            
 
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-        [ div
+        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        , div
             [ classes
                 [ TC.mw8
                 , TC.ph4
@@ -306,7 +370,11 @@ viewForm sharedState model =
             , classes [ TC.mt4, TC.w_100 ]
             , onClick CreateOrEdit
             ]
-            [ text "Erstellen" ]
+            [ text <|
+                case model.createCourse of
+                    True -> "Erstellen"
+                    False -> "Bearbeiten"
+            ]
 
         -- TODO check if edit or create AND use translations
         ]
@@ -368,6 +436,11 @@ inputElement inputLabel inputPlaceholder fieldType field curVal errors =
     ]
 
 
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
+
+
 fillModelFromResponse : SharedState -> Course -> Model -> Model
 fillModelFromResponse sharedState course model =
     let
@@ -382,6 +455,27 @@ fillModelFromResponse sharedState course model =
         , required_percentage = Maybe.map String.fromInt course.required_percentage
     }
 
+fillRequestFromModel : Model -> Course
+fillRequestFromModel model =
+    let -- Ugly as sin. Should never happen because we validate the model before
+        defaultPosix = Time.millisToPosix 0
+        defaultDate = Date.fromPosix Time.utc defaultPosix
+        beginDate = Maybe.withDefault defaultDate model.beginsAtDate
+        endDate = Maybe.withDefault defaultDate model.endsAtDate
+        beginPosix = DF.dateToPosix beginDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+        endPosix = DF.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+
+        perc = Maybe.map String.toInt model.required_percentage |> Maybe.withDefault Nothing
+    in
+    { id = model.id
+    , name = model.courseName
+    , description = Just model.description
+    , begins_at = beginPosix
+    , ends_at = endPosix
+    , required_percentage = perc
+    , sheets = Nothing
+    , materials = Nothing
+    }
 
 type Field
     = Name
