@@ -21,6 +21,8 @@ module Utils.Styles exposing
     , spinnerRedStyle
     , textAreaReset
     , textStyle
+    , dialogOverlayStyle
+    , dialogContainerStyle
     )
 
 import Color exposing (Color)
@@ -226,6 +228,34 @@ dateStyle =
         , TC.tracked
         , TC.dark_gray
         , TC.lh_copy
+        ]
+
+
+dialogOverlayStyle =
+    classes
+        [ TC.fixed
+        , TC.top_0
+        , TC.right_0
+        , TC.bottom_0
+        , TC.left_0
+        , TC.bg_black_30
+        , TC.justify_center
+        , TC.items_center
+        ]
+
+
+dialogContainerStyle =
+    classes
+        [ TC.bg_white
+        , TC.black
+        , TC.ba
+        , TC.bw1
+        , TC.b__black_60
+        , TC.shadow_5
+        , TC.w_100
+        , TC.measure_wide
+        , TC.ph5
+        , TC.pv4
         ]
 
 

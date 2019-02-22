@@ -498,30 +498,10 @@ loginDialog sharedState model =
                 (inputElement "Password" "Password" "password" Password model.plain_password model.errors)
     in
     Dialog.modalDialog div 
-        [ classes
-            [ TC.fixed
-            , TC.top_0
-            , TC.right_0
-            , TC.bottom_0
-            , TC.left_0
-            , TC.bg_black_30
-            , TC.justify_center
-            , TC.items_center
-            ]
+        [ Styles.dialogOverlayStyle
         ]
         ( Dialog.dialog div
-            [ classes
-                [ TC.bg_white
-                , TC.black
-                , TC.ba
-                , TC.bw1
-                , TC.b__black_60
-                , TC.shadow_5
-                , TC.w_100
-                , TC.measure_wide
-                , TC.ph5
-                , TC.pv4
-                ]
+            [ Styles.dialogContainerStyle
             ]
             [ div 
                 [ classes [TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black] ] 
