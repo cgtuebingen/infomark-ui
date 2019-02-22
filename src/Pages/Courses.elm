@@ -39,8 +39,8 @@ import Utils.Utils exposing (handleLogoutErrors)
 type alias Model =
     { courseRequest : WebData (List Course)
     , accountEnrollmentsRequest : WebData (List AccountEnrollment)
-    , enrollProgress : WebData UserEnrollment
-    , disenrollProgress : WebData String
+    , enrollProgress : WebData ()
+    , disenrollProgress : WebData ()
     , showArchive : Bool
     , toasties : Toasty.Stack Components.Toasty.Toast
     }
@@ -51,8 +51,10 @@ type Msg
     | AccountEnrollmentsResponse (WebData (List AccountEnrollment))
     | Enroll Course
     | Disenroll Course
-    | EnrollResponse (WebData UserEnrollment)
-    | DisenrollResponse (WebData String)
+    | EnrollResponse (WebData ())
+    | DisenrollResponse (WebData ())
+    | Delete Course
+    | DeleteCourseResponse (WebData ())
     | ToggleArchive
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | NavigateTo Route
@@ -99,6 +101,12 @@ update sharedState msg model =
 
         DisenrollResponse response ->
             updateHandleDisenroll sharedState model response
+
+        Delete course ->
+            (model, CoursesRequests.courseDelete course.id DeleteCourseResponse, NoUpdate)
+
+        DeleteCourseResponse response ->
+            updateHandleDelete sharedState model response
 
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
@@ -151,7 +159,7 @@ updateHandleAccountEnrollments sharedState model response =
             ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
 
 
-updateHandleEnroll : SharedState -> Model -> WebData UserEnrollment -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleEnroll : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleEnroll sharedState model response =
     case response of
         RemoteData.Success _ ->
@@ -182,7 +190,7 @@ updateHandleEnroll sharedState model response =
             ( { model | enrollProgress = response }, Cmd.none, NoUpdate )
 
 
-updateHandleDisenroll : SharedState -> Model -> WebData String -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleDisenroll : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleDisenroll sharedState model response =
     case response of
         RemoteData.Success _ ->
@@ -211,6 +219,34 @@ updateHandleDisenroll sharedState model response =
         _ ->
             ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
 
+updateHandleDelete : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleDelete sharedState model response =
+    case response of
+        RemoteData.Success _ ->
+            let
+                ( newModel, newCmd ) =
+                    ( { model | disenrollProgress = response }
+                    , CoursesRequests.coursesGet CoursesResponse
+                    )
+                        |> addToast (Components.Toasty.Success "Success" "You've deleted the course") --TODO this should be that easy. Add a modal dialog
+            in
+            ( newModel, newCmd, NoUpdate )
+
+        RemoteData.Failure err ->
+            handleLogoutErrors model sharedState
+                (\e -> -- Differentiate between errros
+                    (let
+                        ( newModel, newCmd ) =
+                            ( { model | disenrollProgress = response }, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to delete")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                )
+                err
+
+        _ ->
+            ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -276,7 +312,12 @@ view sharedState model =
                     [ viewCoursesHeader "Aktuell" False userRole.root model
                     , div
                         [ classes
-                            [ TC.cf
+                            [ TC.flex
+                            , TC.flex_wrap
+                            , TC.flex_row
+                            , TC.justify_start
+                            , TC.content_start
+                            , TC.cf
                             ]
                         ]
                         currentCourses
@@ -389,10 +430,38 @@ viewRenderCourse sharedState course enrollment =
                         [ text buttonText ]
                 )
                 showButtons
+
+        showAdminButtons =
+            case sharedState.role of
+                Just ({ root }) ->
+                    if root then
+                        [ div []
+                            [ input 
+                                [ type_ "image"
+                                , src "assets/pencil.svg" 
+                                , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                                , onClick <| NavigateTo <| EditCourseRoute course.id
+                                ]
+                                []
+                            , input 
+                                [ type_ "image"
+                                , src "assets/delete.svg" 
+                                , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                                , onClick <| Delete course
+                                ]
+                                []
+                            ]
+                        ]
+                    else 
+                        []
+
+                _ -> []
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
-            [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
+            [ div[ classes [TC.flex, TC.w_100, TC.justify_between, TC.items_center ] ] <|
+                [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
+                ] ++ showAdminButtons
             , dl [ Styles.dateStyle ]
                 [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
                 , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]

@@ -94,19 +94,17 @@ coursesEnrollmentGetTeam courseId msg =
     coursesEnrollmentGet courseId params msg
 
 
-coursesEnrollmentPost : Int -> (WebData UserEnrollment -> msg) -> Cmd msg
+coursesEnrollmentPost : Int -> (WebData () -> msg) -> Cmd msg
 coursesEnrollmentPost courseId msg =
-    post (unwrap <| courseEnrollment courseId [])
+    postExpectNothing (unwrap <| courseEnrollment courseId [])
         Http.emptyBody
         msg
-        UserEnrollment.decoder
 
 
-coursesEnrollmentDelete : Int -> (WebData String -> msg) -> Cmd msg
+coursesEnrollmentDelete : Int -> (WebData () -> msg) -> Cmd msg
 coursesEnrollmentDelete courseId msg =
-    delete (unwrap <| courseEnrollment courseId [])
+    deleteExpectNothing (unwrap <| courseEnrollment courseId [])
         msg
-        Decode.string
 
 
 courseGroupsGet : Int -> (WebData (List Group) -> msg) -> Cmd msg

@@ -31,7 +31,7 @@ decoder =
         |> optional "description" (Decode.nullable Decode.string) Nothing
         |> required "begins_at" Iso8601.decoder
         |> required "ends_at" Iso8601.decoder
-        |> optional "required_points" (Decode.nullable Decode.int) Nothing
+        |> optional "required_percentage" (Decode.nullable Decode.int) Nothing
         |> optional "sheets" (Decode.nullable <| Decode.list Sheet.decoder) Nothing
         |> optional "materials" (Decode.nullable <| Decode.list Material.decoder) Nothing
 
@@ -44,7 +44,7 @@ encoder model =
         , ( "description", maybe Encode.string model.description )
         , ( "begins_at", Iso8601.encode model.begins_at )
         , ( "ends_at", Iso8601.encode model.ends_at )
-        , ( "required_points", maybe Encode.int model.required_percentage )
+        , ( "required_percentage", maybe Encode.int model.required_percentage )
         , ( "sheets", maybe (Encode.list Sheet.encoder) model.sheets )
         , ( "materials", maybe (Encode.list Material.encoder) model.materials )
         ]

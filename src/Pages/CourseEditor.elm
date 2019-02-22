@@ -355,6 +355,7 @@ viewForm sharedState model =
                     , rows 10
                     , placeholder "Beschreibung"
                     , onInput <| SetField Description
+                    , value model.description
                     ]
                 )
                 []
@@ -393,7 +394,6 @@ viewRequiredPercentage model =
         showElement =
             if model.required_percentage == Nothing then
                 text ""
-
             else
                 input
                     [ type_ "number"
@@ -446,6 +446,8 @@ fillModelFromResponse sharedState course model =
     let
         timezone =
             Maybe.withDefault Time.utc sharedState.timezone
+
+        _ = Debug.log "Course" course
     in
     { model
         | courseName = course.name

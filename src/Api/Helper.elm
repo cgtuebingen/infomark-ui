@@ -1,4 +1,4 @@
-module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postImage)
+module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postExpectNothing, postImage)
 
 import File exposing (File)
 import Http
@@ -31,6 +31,17 @@ post url body msg decoder =
         , tracker = Nothing
         }
 
+postExpectNothing : String -> Http.Body -> (WebData () -> msg) -> Cmd msg
+postExpectNothing url body msg =
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = Http.expectWhatever (RemoteData.fromResult >> msg)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 {-| Uploads an single image. You can subscribe to the tracker "image\_upload" using
 
