@@ -733,8 +733,8 @@ modelToLoginRequest sharedState model =
 loginDialogConfig : Dialog.Config Msg
 loginDialogConfig =
     Dialog.Config
-        (classes [ TC.flex ])
-        (classes [ TC.dn])
+        Styles.dialogVisibleStyle
+        Styles.dialogGoneStyle
         LoginDialogShown
         False
         NoOp

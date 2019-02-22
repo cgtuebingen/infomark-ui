@@ -4,6 +4,7 @@ import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
+import Http
 import I18n
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
@@ -19,6 +20,7 @@ import Api.Data.User exposing (User)
 import Api.Request.Account exposing (accountPost)
 import Toasty
 import Components.Toasty
+import Components.Dialog as Dialog
 
 
 type alias Model =
@@ -32,8 +34,8 @@ type alias Model =
     , subject : String
     , registrationProgress : WebData User
     , errors : List Error
-    , universityMailWarningShown : Bool
     , toasties : Toasty.Stack Components.Toasty.Toast
+    , noUniversityEmailDialogState : Dialog.State
     }
 
 
@@ -58,10 +60,12 @@ modelToBody sharedState model =
 
 type Msg
     = NavigateTo Route
-    | Register
+    | Register Bool
     | SetField Field String
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | RegistrationResponse (WebData User)
+    | NoUniversityMailWarningVisible Bool
+    | NoOp
 
 
 init : ( Model, Cmd Msg )
@@ -76,8 +80,8 @@ init =
       , subject = ""
       , registrationProgress = NotAsked
       , errors = []
-      , universityMailWarningShown = False
       , toasties = Toasty.initialState
+      , noUniversityEmailDialogState = False
       }
     , Cmd.none
     )
@@ -92,8 +96,8 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
-        Register ->
-            updateHandleRegister sharedState model <| validate modelValidator model
+        Register force ->
+            updateHandleRegister sharedState model force <| validate modelValidator model
 
         RegistrationResponse response -> 
             updateHandleRegistrationResponse sharedState model response
@@ -104,25 +108,23 @@ update sharedState msg model =
             in
             ( newModel, newCmd, NoUpdate)
 
+        NoUniversityMailWarningVisible state ->
+            ( { model | noUniversityEmailDialogState = state }, Cmd.none, NoUpdate )
 
-updateHandleRegister : SharedState -> Model -> Result (List Error) success -> ( Model, Cmd Msg, SharedStateUpdate )
-updateHandleRegister sharedState model validationResult =
+        NoOp ->
+            ( model, Cmd.none, NoUpdate )
+
+
+updateHandleRegister : SharedState -> Model -> Bool -> Result (List Error) success -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleRegister sharedState model force validationResult =
     case validate modelValidator model of
         Err errors ->
             ( { model | errors = errors }, Cmd.none, NoUpdate )
         
         Ok _ ->
-            case (UniMailChecker.isInvalid model.email, model.universityMailWarningShown) of
+            case (UniMailChecker.isInvalid model.email, force) of
                 (True, False) -> -- Show a warning
-                    let
-                        (newModel, newCmd) = 
-                            ( { model | errors = [], universityMailWarningShown = True}, Cmd.none )
-                                |> addToast 
-                                    ( Components.Toasty.Warning "Warning"
-                                     "To receive emails and perform an automatic validation, you need to provide a university email address. Do you still want to register with this email knowing this?"
-                                    )
-                    in
-                    ( newModel, newCmd, NoUpdate )
+                    ( { model | noUniversityEmailDialogState = True }, Cmd.none, NoUpdate )
 
                 (_, _) -> -- In all other cases continue with registration
                      ( { model | registrationProgress = Loading, errors = [] }
@@ -134,7 +136,13 @@ updateHandleRegistrationResponse : SharedState -> Model -> WebData User -> ( Mod
 updateHandleRegistrationResponse sharedState model response =
     case response of
         Success _ ->
-            ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate ) -- TODO show waiting for validation
+            ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+
+        Failure (Http.BadBody error)  ->
+            let
+                _ = Debug.log "Bad response:" error
+            in
+            ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         Failure err ->
             let
@@ -169,7 +177,8 @@ view sharedState model =
             , TC.w_100
             ]
         ]
-        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        [ noUniEmailDialog sharedState model
+        , Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
         , div
             [ classes
                 [ TC.v_mid
@@ -196,7 +205,7 @@ view sharedState model =
                     , TC.pa4
                     , TC.black_40
                     ]
-                , onSubmit Register
+                , onSubmit <| Register False
                 ]
                 [ fieldset
                     [ classes
@@ -274,6 +283,41 @@ view sharedState model =
                 ]
             ]
         ]
+
+
+noUniEmailDialog : SharedState -> Model -> Html Msg
+noUniEmailDialog sharedState model =
+    Dialog.modalDialog div 
+        [ Styles.dialogOverlayStyle
+        ]
+        ( Dialog.dialog div
+            [ Styles.dialogContainerStyle
+            ]
+            [ div 
+                [ classes [TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black] ] 
+                [ h1 [] [text "No University E-Mail"] ]
+            , div
+                [ classes [ TC.w_100, TC.mt4 ]]
+                [ p [Styles.textStyle] [ text "The provided E-Mail is no university E-Mail address. We can not send you any E-Mails. This includes the confirmation E-Mail. To confirm your E-Mail and use the course system you need to ask a tutor."]
+                , div [ classes [ TC.fr, TC.mt3 ] ]
+                        [ button 
+                            [ classes 
+                                [ ]
+                            , Styles.buttonRedStyle
+                            , onClick <| Register True
+                            ] [ text "Register anyway" ]
+                        , button 
+                            [ classes 
+                                [ TC.ml3 ]
+                            , Styles.buttonGreenStyle
+                            , onClick <| NoUniversityMailWarningVisible False
+                            ] [ text "Change E-Mail"]    
+                        ]
+                ]
+            ]
+        )
+        model.noUniversityEmailDialogState
+        noUniversityMailDialogConfig
 
 
 inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
@@ -377,3 +421,13 @@ modelValidator =
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
+
+
+noUniversityMailDialogConfig : Dialog.Config Msg
+noUniversityMailDialogConfig =
+    Dialog.Config
+        Styles.dialogVisibleStyle
+        Styles.dialogGoneStyle
+        NoUniversityMailWarningVisible
+        True
+        NoOp

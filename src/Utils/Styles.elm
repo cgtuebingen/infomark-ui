@@ -23,6 +23,8 @@ module Utils.Styles exposing
     , textStyle
     , dialogOverlayStyle
     , dialogContainerStyle
+    , dialogVisibleStyle
+    , dialogGoneStyle
     )
 
 import Color exposing (Color)
@@ -257,6 +259,12 @@ dialogContainerStyle =
         , TC.ph5
         , TC.pv4
         ]
+
+dialogVisibleStyle =
+    classes [TC.flex]
+
+dialogGoneStyle =
+    classes [TC.dn]
 
 
 spinnerStyle =
