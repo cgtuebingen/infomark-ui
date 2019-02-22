@@ -26,20 +26,20 @@ accountGet msg =
     get (unwrap account) msg User.decoder
 
 
-accountPost : UserAccount -> (WebData UserAccount -> msg) -> Cmd msg
+accountPost : UserAccount -> (WebData User -> msg) -> Cmd msg
 accountPost accountNew msg =
     post (unwrap account)
         (Http.jsonBody <| UserAccount.encoder accountNew)
         msg
-        UserAccount.decoder
+        User.decoder
 
 
-accountPatch : Account -> (WebData UserAccount -> msg) -> Cmd msg
+accountPatch : Account -> (WebData User -> msg) -> Cmd msg
 accountPatch accountUpdate msg =
     patch (unwrap account)
         (Http.jsonBody <| Account.encoder accountUpdate)
         msg
-        UserAccount.decoder
+        User.decoder
 
 
 accountEnrollmentGet : (WebData (List AccountEnrollment) -> msg) -> Cmd msg

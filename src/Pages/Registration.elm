@@ -46,8 +46,8 @@ modelToBody sharedState model =
         , email = model.email
         , studentNumber = Just model.studentNumber
         , semester = String.toInt model.semester
-        , subject = Just <| model.subject
         , language = Just <| languageToBackendString sharedState.selectedLanguage
+        , subject = Just model.subject
         }
     , account = 
         { email = model.email

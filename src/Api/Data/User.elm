@@ -45,5 +45,5 @@ encoder model =
         , ( "student_number", maybe Encode.string model.studentNumber )
         , ( "semester", maybe Encode.int model.semester )
         , ( "subject", maybe Encode.string model.subject )
-        , ( "language", maybe Encode.string model.subject )
+        , ( "language", maybe Encode.string model.language )
         ]

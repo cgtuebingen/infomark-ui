@@ -661,7 +661,6 @@ getTranslations language =
 updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate ) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
     let
-        _ = Debug.log "updateWith" (subModel, subCmd, subSharedStateUpdate )
         (newModel, newSharedState) = 
             if subSharedStateUpdate == RefreshLogin then -- Intercept the request if a login is needed again
                 ({ model | loginDialogState = True }, NoUpdate)
