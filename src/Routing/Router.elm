@@ -1,4 +1,4 @@
-module Routing.Router exposing (CurrentModel(..), Model, Msg(..), footerView, getTranslations, init, initWith, navView, navigateTo, noTabPage, pageView, tabPage, update, updateWith, view)
+port module Routing.Router exposing (CurrentModel(..), Model, Msg(..), footerView, getTranslations, init, initWith, navView, navigateTo, noTabPage, pageView, tabPage, update, updateWith, view)
 
 --(Model, Msg(..), init, pageView, update, updateHome, updateSettings, view)
 
@@ -36,6 +36,7 @@ import Components.Dialog as Dialog
 import Api.Data.Role exposing (Role)
 import Api.Data.Account exposing (Account)
 import Api.Request.Auth as AuthRequests
+import Utils.PersistantState as PersistantState
 
 
 type alias Model =
@@ -43,7 +44,6 @@ type alias Model =
     , route : Route
     , selectedLanguage : Language
     , loginDialogState : Dialog.State
-    , email : String -- Only used for the modal refresh login dialog
     , plain_password : String -- Only used for the modal refresh login dialog
     , errors : List Error
     }
@@ -70,6 +70,7 @@ type Msg
     | SelectedLanguage Language
     | LoginDialogShown Bool
     | SetField Field String
+    | PersistanceUpdate (Maybe PersistantState.State)
     | Login
     | LoginResponse (WebData Role)
     | Logout
@@ -100,7 +101,6 @@ init url lang =
       , route = currentRoute
       , selectedLanguage = lang
       , loginDialogState = False
-      , email = ""
       , plain_password = ""
       , errors = []
       }
@@ -144,8 +144,16 @@ update sharedState msg model =
                 _ ->
                     ( model, Cmd.none, NoUpdate )
 
+        ( PersistanceUpdate state, _ ) ->
+            ( model, Cmd.none, PersistantState.stateMsgToSharedStateUpdate state )
+
         ( Logout, _ ) ->
-            ( model, AuthRequests.sessionDelete LogoutCompleted, NoUpdate )
+            ( { model | loginDialogState = False }
+            , Cmd.batch 
+                [ AuthRequests.sessionDelete LogoutCompleted
+                , PersistantState.logout
+                ]
+            , NoUpdate )
 
         ( LogoutCompleted (Success _), _ ) -> -- Go back to login
             ( model, Browser.Navigation.pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate)
@@ -211,20 +219,27 @@ update sharedState msg model =
             ( newModel, Cmd.none, NoUpdate )
 
         ( Login, _ ) ->
+            let
+                request = modelToLoginRequest sharedState model
+            in
             case validate modelValidator model of
                 Err errors ->
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    ( model
-                    , AuthRequests.sessionPost (modelToLoginRequest sharedState model) LoginResponse
-                    , NoUpdate)
+                    case request of
+                        Just body ->
+                            ( model
+                            , AuthRequests.sessionPost body LoginResponse
+                            , NoUpdate)
+                        Nothing ->
+                            update sharedState Logout model
 
         ( LoginResponse (Failure err), _ ) -> -- Failure. Show Toast
-            ( model, Cmd.none, NoUpdate )
+            ( { model | plain_password = "" }, Cmd.none, NoUpdate )
 
         ( LoginResponse (Success role), _ ) -> -- Success. Hide the dialog again
-            ( {model | loginDialogState = False }, Cmd.none, UpdateRoleAndMail role model.email )
+            ( { model | plain_password = "", loginDialogState = False }, Cmd.none, NoUpdate )
 
         ( _, _ ) ->
             -- Message arrived for wrong page. Ignore that
@@ -487,16 +502,6 @@ tabPage sharedState model =
 
 loginDialog : SharedState -> Model -> Html Msg
 loginDialog sharedState model =
-    let
-        inputs = case sharedState.userMail of
-            Just mail -> -- We already got the mail. Only let the user 
-                         -- enter the password
-                inputElement "Password" "Password" "password" Password model.plain_password model.errors
-
-            Nothing -> -- We lost the mail. Ask the user again
-                (inputElement "Email" "Email" "email" Email model.email model.errors) ++
-                (inputElement "Password" "Password" "password" Password model.plain_password model.errors)
-    in
     Dialog.modalDialog div 
         [ Styles.dialogOverlayStyle
         ]
@@ -510,7 +515,8 @@ loginDialog sharedState model =
                 [ classes [ TC.w_100, TC.mt4 ]]
                 [ Html.form 
                     [] 
-                    (inputs ++
+                    (inputElement "Password" "Password" "password" Password model.plain_password model.errors
+                    ++
                     [ div [ classes [ TC.fr, TC.mt3 ] ]
                         [ button 
                             [ classes 
@@ -522,7 +528,7 @@ loginDialog sharedState model =
                             [ classes 
                                 [ TC.ml3 ]
                             , Styles.buttonGreenStyle
-                            , onClick Login -- TODO perform the login
+                            , onClick Login
                             ] [ text "Login Again" ]
                         ]
                     ])
@@ -641,14 +647,19 @@ getTranslations language =
 updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate ) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
     let
-        (newModel, newSharedState) = 
-            if subSharedStateUpdate == RefreshLogin then -- Intercept the request if a login is needed again
-                ({ model | loginDialogState = True }, NoUpdate)
-            else
-                (model, subSharedStateUpdate) 
+        (newModel, newCmd, newSharedState) =
+            case subSharedStateUpdate of
+                RefreshLogin ->  -- Intercept the request if a login is needed again
+                    ({ model | loginDialogState = True }, Cmd.none, NoUpdate)
+
+                _ -> 
+                    (model, (PersistantState.sharedStateUpdateToStorage subSharedStateUpdate), subSharedStateUpdate) 
     in
     ( { newModel | currentModel = toModel subModel }
-    , Cmd.map toMsg subCmd
+    , Cmd.batch 
+        [ newCmd
+        , Cmd.map toMsg subCmd
+        ]
     , newSharedState
     )
 
@@ -662,16 +673,12 @@ initWith toModel toMsg model sharedStateUpdate ( subModel, subCmd ) =
 
 
 type Field
-    = Email
-    | Password
+    = Password
 
 
 setField : Model -> Field -> String -> Model
 setField model field value =
     case field of
-        Email ->
-            { model | email = value }
-
         Password ->
             { model | plain_password = value }
 
@@ -704,8 +711,7 @@ inputElement inputLabel inputPlaceholder fieldType field curVal errors =
 modelValidator : Validator Error Model
 modelValidator =
     Validate.all
-        [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
-        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
+        [ ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
         ]
 
 
@@ -717,18 +723,16 @@ viewFormErrors field errors =
         |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
-modelToLoginRequest : SharedState -> Model -> Account
+modelToLoginRequest : SharedState -> Model -> Maybe Account
 modelToLoginRequest sharedState model =
     case sharedState.userMail of
         Just mail ->
-            { email = mail
-            , plain_password = model.plain_password 
-            }
+            Just
+                { email = mail
+                , plain_password = model.plain_password 
+                }
 
-        Nothing ->
-            { email = model.email
-            , plain_password = model.plain_password 
-            }
+        Nothing -> Nothing
 
 loginDialogConfig : Dialog.Config Msg
 loginDialogConfig =

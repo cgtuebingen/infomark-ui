@@ -22,8 +22,6 @@ type SharedStateUpdate
     | UpdateTime Posix
     | UpdateTimezone Zone
     | UpdateLanguage Language Translations
-    | UpdateRole (Maybe Role)
-    | UpdateMail String
     | UpdateRoleAndMail Role String
     | RefreshLogin
 
@@ -40,13 +38,10 @@ update sharedState sharedStateUpdate =
         UpdateLanguage language translations ->
             { sharedState | translations = translations, selectedLanguage = language }
 
-        UpdateRole role ->
-            { sharedState | role = role }
-
-        UpdateMail mail ->
-            { sharedState | userMail = Just mail }
-
-        UpdateRoleAndMail role mail ->
+        UpdateRoleAndMail role mail -> -- Received for a positive login
+            let
+                _ = Debug.log "Update Received" (role, mail)
+            in
             { sharedState | userMail = Just mail, role = Just role }
 
         NoUpdate ->

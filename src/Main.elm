@@ -13,6 +13,8 @@ import Task
 import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
+import Utils.PersistantState as PersistantState
+import Json.Decode as Decode
 
 
 main : Program Flags Model Msg
@@ -35,11 +37,12 @@ type alias Model =
 
 
 type alias Flags =
-    { currentTime : Int }
+    { currentTime : Int
+    , storage : Decode.Value }
 
 
 type AppState
-    = NotReady (Maybe Posix) (Maybe Zone)
+    = NotReady (Maybe Posix) (Maybe Zone) (Maybe PersistantState.State)
     | Ready SharedState Router.Model
     | FailedToInitialize
 
@@ -52,11 +55,19 @@ type Msg
     | HandleTranslationsResponse (WebData Translations)
     | RouterMsg Router.Msg
     | AdjustTimeZone Zone
+    | PersistanceUpdate (Maybe PersistantState.State)
 
 
 init : Flags -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    ( { appState = NotReady (Just (Time.millisToPosix flags.currentTime)) (Just Time.utc)
+    let
+        _ = Debug.log "Flags" flags
+    in
+    ( { appState = 
+            NotReady 
+                (Just (Time.millisToPosix flags.currentTime)) 
+                (Just Time.utc)
+                (PersistantState.decode flags.storage)
       , url = url
       , navKey = navKey
       }
@@ -99,12 +110,15 @@ update msg model =
                 External url ->
                     ( model, Browser.Navigation.load url )
 
+        PersistanceUpdate state ->
+            updateRouter model <| Router.PersistanceUpdate state
+
 
 updateTime : Model -> Posix -> ( Model, Cmd Msg )
 updateTime model time =
     case model.appState of
-        NotReady _ zone ->
-            ( { model | appState = NotReady (Just time) zone }
+        NotReady _ zone state ->
+            ( { model | appState = NotReady (Just time) zone state }
             , Cmd.none
             )
 
@@ -120,8 +134,8 @@ updateTime model time =
 updateTimeZone : Model -> Zone -> ( Model, Cmd Msg )
 updateTimeZone model zone =
     case model.appState of
-        NotReady time _ ->
-            ( { model | appState = NotReady time (Just zone) }
+        NotReady time _ state ->
+            ( { model | appState = NotReady time (Just zone) state }
             , Cmd.none
             )
 
@@ -173,17 +187,21 @@ updateTranslations model webData =
         --   b) update the current running application.
         Success translations ->
             case model.appState of
-                NotReady time zone ->
+                NotReady time zone state ->
                     -- We don't have a ready app, let's create one now
                     let
+                        (role, mail) = case state of
+                            Just (PersistantState.State r m) -> (Just r, Just m)
+                            Nothing -> (Nothing, Nothing)
+
                         initSharedState =
                             { navKey = model.navKey
                             , currentTime = time
                             , timezone = zone
                             , translations = translations
                             , selectedLanguage = German
-                            , role = Nothing
-                            , userMail = Nothing
+                            , role = role
+                            , userMail = mail
                             }
 
                         ( initRouterModel, routerCmd ) =
@@ -216,6 +234,7 @@ subscriptions model =
     Sub.batch
         [ Time.every 1000 TimeChange
         , Sub.map SpinnerMsg Spinner.subscription
+        , PersistantState.storageToState PersistanceUpdate
         ]
 
 
@@ -225,7 +244,7 @@ view model =
         Ready sharedState routerModel ->
             Router.view RouterMsg sharedState routerModel
 
-        NotReady _ _ ->
+        NotReady _ _ _ ->
             { title = "Loading"
             , body = [ text "Loading" ]
             }
