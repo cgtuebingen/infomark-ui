@@ -5,6 +5,7 @@ import Browser.Navigation
 import Decoders
 import Html exposing (..)
 import Http
+import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Router as Router
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -14,7 +15,6 @@ import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Utils.PersistantState as PersistantState
-import Json.Decode as Decode
 
 
 main : Program Flags Model Msg
@@ -38,7 +38,8 @@ type alias Model =
 
 type alias Flags =
     { currentTime : Int
-    , storage : Decode.Value }
+    , storage : Decode.Value
+    }
 
 
 type AppState
@@ -60,9 +61,9 @@ type Msg
 
 init : Flags -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    ( { appState = 
-            NotReady 
-                (Just (Time.millisToPosix flags.currentTime)) 
+    ( { appState =
+            NotReady
+                (Just (Time.millisToPosix flags.currentTime))
                 (Just Time.utc)
                 (PersistantState.decode flags.storage)
       , url = url
@@ -187,9 +188,13 @@ updateTranslations model webData =
                 NotReady time zone state ->
                     -- We don't have a ready app, let's create one now
                     let
-                        (role, mail) = case state of
-                            Just (PersistantState.State r m) -> (Just r, Just m)
-                            Nothing -> (Nothing, Nothing)
+                        ( role, mail ) =
+                            case state of
+                                Just (PersistantState.State r m) ->
+                                    ( Just r, Just m )
+
+                                Nothing ->
+                                    ( Nothing, Nothing )
 
                         initSharedState =
                             { navKey = model.navKey

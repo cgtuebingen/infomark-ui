@@ -1,9 +1,9 @@
 module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postImage)
 
+import File exposing (File)
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
-import File exposing (File)
 
 
 get : String -> (WebData a -> msg) -> Decoder a -> Cmd msg
@@ -32,14 +32,15 @@ post url body msg decoder =
         }
 
 
-{-| Uploads an single image. You can subscribe to the tracker "image_upload" using 
+{-| Uploads an single image. You can subscribe to the tracker "image\_upload" using
 
     type Msg
         = GotProgress Http.Progress
-    
+
     subscriptions : Model -> Sub Msg
     subscriptions model =
         Http.track "image_upload" GotProgress
+
 -}
 postImage : String -> File -> (WebData () -> msg) -> Cmd msg
 postImage url file msg =
@@ -93,7 +94,7 @@ delete url msg decoder =
         }
 
 
-deleteExpectNothing : String-> (WebData () -> msg) -> Cmd msg
+deleteExpectNothing : String -> (WebData () -> msg) -> Cmd msg
 deleteExpectNothing url msg =
     Http.request
         { method = "DELETE"

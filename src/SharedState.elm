@@ -38,7 +38,8 @@ update sharedState sharedStateUpdate =
         UpdateLanguage language translations ->
             { sharedState | translations = translations, selectedLanguage = language }
 
-        UpdateRoleAndMail role mail -> -- Received for a positive login
+        UpdateRoleAndMail role mail ->
+            -- Received for a positive login
             { sharedState | userMail = Just mail, role = Just role }
 
         NoUpdate ->

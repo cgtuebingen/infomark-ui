@@ -1,23 +1,23 @@
-module Api.Request.Account exposing 
-    ( accountGet
-    , accountPost
-    , accountPatch
-    , accountAvatarPost
+module Api.Request.Account exposing
+    ( accountAvatarPost
     , accountEnrollmentGet
+    , accountGet
+    , accountPatch
+    , accountPost
     )
 
+import Api.Data.Account as Account exposing (Account)
+import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
-import Api.Data.Account as Account exposing (Account)
 import Api.Data.UserAccount as UserAccount exposing (UserAccount)
-import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Endpoint exposing (account, accountAvatar, accountEnrollment, unwrap)
 import Api.Helper exposing (..)
 import Decoders
 import Dict
+import File exposing (File)
 import Http
 import Json.Decode as Decode
-import File exposing (File)
 import RemoteData exposing (RemoteData(..), WebData)
 
 

@@ -4,6 +4,7 @@ import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.Toasty
 import Decoders
 import Dict
 import Html exposing (..)
@@ -18,11 +19,10 @@ import Spinner
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
+import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
-import Toasty
-import Components.Toasty
 
 
 type alias Model =
@@ -81,17 +81,18 @@ update sharedState msg model =
         -- TODO: Start the web request here.
         LoginResponse (RemoteData.Failure err) ->
             let
-                errorString = case err of
-                    Http.BadStatus 400 ->
-                        "Wrong Password or Username!"
+                errorString =
+                    case err of
+                        Http.BadStatus 400 ->
+                            "Wrong Password or Username!"
 
-                    Http.BadStatus 422 ->
-                        "Your email is not confirmed!"
-                    
-                    _ ->
-                        "Something went wrong"
-                    
-                (newModel, newCmd) = 
+                        Http.BadStatus 422 ->
+                            "Your email is not confirmed!"
+
+                        _ ->
+                            "Something went wrong"
+
+                ( newModel, newCmd ) =
                     ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
                         |> addToast (Components.Toasty.Error "Error" errorString)
             in
@@ -112,9 +113,10 @@ update sharedState msg model =
 
         ToastyMsg subMsg ->
             let
-                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+                ( newModel, newCmd ) =
+                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
-            ( newModel, newCmd, NoUpdate)
+            ( newModel, newCmd, NoUpdate )
 
 
 type alias LoginBody =

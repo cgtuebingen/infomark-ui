@@ -105,41 +105,40 @@ type alias Model =
 
 init : Int -> ( Model, Cmd Msg )
 init id =
-    ( 
-        { courseId = id
-        , courseRole = Nothing
-        , courseRequest = Loading
-        , courseRoleRequest = Loading
-        , enrollmentsRequest = NotAsked
-        , searchUserForEnrollmentRequest = NotAsked
-        , enrollmentChangedRequest = NotAsked
-        , groupsRequest = NotAsked
-        , groupRequest = NotAsked
-        , groupBidRequest = NotAsked
-        , searchUserForGroupRequest = NotAsked
-        , groupChangedRequest = NotAsked
-        , searchEnrollmentInput = ""
-        , searchGroupInput = ""
-        , roleDropdown = False
-        , groupDropdown = False
+    ( { courseId = id
+      , courseRole = Nothing
+      , courseRequest = Loading
+      , courseRoleRequest = Loading
+      , enrollmentsRequest = NotAsked
+      , searchUserForEnrollmentRequest = NotAsked
+      , enrollmentChangedRequest = NotAsked
+      , groupsRequest = NotAsked
+      , groupRequest = NotAsked
+      , groupBidRequest = NotAsked
+      , searchUserForGroupRequest = NotAsked
+      , groupChangedRequest = NotAsked
+      , searchEnrollmentInput = ""
+      , searchGroupInput = ""
+      , roleDropdown = False
+      , groupDropdown = False
       }
-    , Cmd.batch 
+    , Cmd.batch
         [ AccountRequests.accountEnrollmentGet CourseRoleResponse
         , CoursesRequests.courseGet id CourseResponse
         ]
     )
 
 
-determineInitialRoleRequests : Model -> CourseRole -> (Model, Cmd Msg)
+determineInitialRoleRequests : Model -> CourseRole -> ( Model, Cmd Msg )
 determineInitialRoleRequests model role =
     case role of
-        Admin -> 
+        Admin ->
             ( model
             , Cmd.none
             )
 
         Tutor ->
-            ( { model 
+            ( { model
                 | enrollmentsRequest = Loading
                 , groupRequest = Loading
               }
@@ -150,13 +149,13 @@ determineInitialRoleRequests model role =
             )
 
         Student ->
-            ( { model 
+            ( { model
                 | enrollmentsRequest = Loading
                 , groupRequest = Loading
               }
             , Cmd.batch
                 [ UserEnrollmentsRequests.courseEnrollmentGetTeam model.courseId EnrollmentsResponse
-                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse 
+                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
                 ]
             )
 
@@ -172,19 +171,25 @@ update sharedState msg model =
 
         CourseRoleResponse (Success roles) ->
             case determineRole model.courseId roles of
-                Just role -> -- We received the users course role.
-                    let -- Determine what commands need to be send depending on the role
-                        updatedModel = { model | courseRole = Just role, courseRoleRequest = Success roles }
-                        (newModel, newCmds) = determineInitialRoleRequests updatedModel role
-                    in
-                    ( newModel, newCmds, NoUpdate ) -- Execute the changes
+                Just role ->
+                    -- We received the users course role.
+                    let
+                        -- Determine what commands need to be send depending on the role
+                        updatedModel =
+                            { model | courseRole = Just role, courseRoleRequest = Success roles }
 
-                Nothing -> -- Whoops. The user is not enrolled in the course. Navigate back to the courses page
+                        ( newModel, newCmds ) =
+                            determineInitialRoleRequests updatedModel role
+                    in
+                    ( newModel, newCmds, NoUpdate )
+
+                -- Execute the changes
+                Nothing ->
+                    -- Whoops. The user is not enrolled in the course. Navigate back to the courses page
                     ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), NoUpdate )
 
         _ ->
-            ( model, Cmd.none, NoUpdate)
-
+            ( model, Cmd.none, NoUpdate )
 
 
 
@@ -442,11 +447,12 @@ viewUserSearchResult model userEnrollment =
 viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> List (Html Msg)
 viewDetermineGroupDisplay courseRole sharedState model =
     [ div [] [] -- Check Role
-        -- If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
-        -- If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
-        -- If Student -> Check if own group is set
-                -- Not set: Display bidding screen
-                -- If set: Display own group. With members. Option to send email to other members and tutor
+
+    -- If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
+    -- If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
+    -- If Student -> Check if own group is set
+    -- Not set: Display bidding screen
+    -- If set: Display own group. With members. Option to send email to other members and tutor
     ]
 
 

@@ -2,8 +2,12 @@ port module Routing.Router exposing (CurrentModel(..), Model, Msg(..), footerVie
 
 --(Model, Msg(..), init, pageView, update, updateHome, updateSettings, view)
 
+import Api.Data.Account exposing (Account)
+import Api.Data.Role exposing (Role)
+import Api.Request.Auth as AuthRequests
 import Browser
 import Browser.Navigation exposing (Key)
+import Components.Dialog as Dialog
 import Decoders
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -29,14 +33,10 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
+import Utils.PersistantState as PersistantState
 import Utils.Styles as Styles
 import Utils.Utils as Utils
 import Validate exposing (Validator, ifBlank, validate)
-import Components.Dialog as Dialog
-import Api.Data.Role exposing (Role)
-import Api.Data.Account exposing (Account)
-import Api.Request.Auth as AuthRequests
-import Utils.PersistantState as PersistantState
 
 
 type alias Model =
@@ -149,17 +149,20 @@ update sharedState msg model =
 
         ( Logout, _ ) ->
             ( { model | loginDialogState = False }
-            , Cmd.batch 
+            , Cmd.batch
                 [ AuthRequests.sessionDelete LogoutCompleted
                 , PersistantState.logout
                 ]
-            , NoUpdate )
+            , NoUpdate
+            )
 
-        ( LogoutCompleted (Success _), _ ) -> -- Go back to login
-            ( model, Browser.Navigation.pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate)
+        ( LogoutCompleted (Success _), _ ) ->
+            -- Go back to login
+            ( model, Browser.Navigation.pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
-        ( LogoutCompleted _, _) -> -- Failure, Not asked or Loading
-            ( model, Cmd.none, NoUpdate)
+        ( LogoutCompleted _, _ ) ->
+            -- Failure, Not asked or Loading
+            ( model, Cmd.none, NoUpdate )
 
         ( SpinnerMsg spinnerMsg, LoginModel login ) ->
             Login.update sharedState (Login.SpinnerMsg spinnerMsg) login
@@ -209,18 +212,20 @@ update sharedState msg model =
             Admin.update sharedState adminMsg admin
                 |> updateWith AdminModel AdminMsg model
 
-        ( LoginDialogShown state, _) ->
+        ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
         ( SetField field val, _ ) ->
             let
-                newModel = setField model field val
+                newModel =
+                    setField model field val
             in
             ( newModel, Cmd.none, NoUpdate )
 
         ( Login, _ ) ->
             let
-                request = modelToLoginRequest sharedState model
+                request =
+                    modelToLoginRequest sharedState model
             in
             case validate modelValidator model of
                 Err errors ->
@@ -231,14 +236,18 @@ update sharedState msg model =
                         Just body ->
                             ( model
                             , AuthRequests.sessionPost body LoginResponse
-                            , NoUpdate)
+                            , NoUpdate
+                            )
+
                         Nothing ->
                             update sharedState Logout model
 
-        ( LoginResponse (Failure err), _ ) -> -- Failure. Show Toast
+        ( LoginResponse (Failure err), _ ) ->
+            -- Failure. Show Toast
             ( { model | plain_password = "" }, Cmd.none, NoUpdate )
 
-        ( LoginResponse (Success role), _ ) -> -- Success. Hide the dialog again
+        ( LoginResponse (Success role), _ ) ->
+            -- Success. Hide the dialog again
             ( { model | plain_password = "", loginDialogState = False }, Cmd.none, NoUpdate )
 
         ( _, _ ) ->
@@ -502,43 +511,44 @@ tabPage sharedState model =
 
 loginDialog : SharedState -> Model -> Html Msg
 loginDialog sharedState model =
-    Dialog.modalDialog div 
+    Dialog.modalDialog div
         [ Styles.dialogOverlayStyle
         ]
-        ( Dialog.dialog div
+        (Dialog.dialog div
             [ Styles.dialogContainerStyle
             ]
-            [ div 
-                [ classes [TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black] ] 
-                [ h1 [] [text "Are you still there?"] ]
+            [ div
+                [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
+                [ h1 [] [ text "Are you still there?" ] ]
             , div
-                [ classes [ TC.w_100, TC.mt4 ]]
-                [ Html.form 
-                    [] 
+                [ classes [ TC.w_100, TC.mt4 ] ]
+                [ Html.form
+                    []
                     (inputElement "Password" "Password" "password" Password model.plain_password model.errors
-                    ++
-                    [ div [ classes [ TC.fr, TC.mt3 ] ]
-                        [ button 
-                            [ classes 
-                                []
-                            , Styles.buttonRedStyle
-                            , onClick <| Logout
-                            ] [ text "Nah. I'm away"]    
-                        , button 
-                            [ classes 
-                                [ TC.ml3 ]
-                            , Styles.buttonGreenStyle
-                            , onClick Login
-                            ] [ text "Login Again" ]
-                        ]
-                    ])
+                        ++ [ div [ classes [ TC.fr, TC.mt3 ] ]
+                                [ button
+                                    [ classes
+                                        []
+                                    , Styles.buttonRedStyle
+                                    , onClick <| Logout
+                                    ]
+                                    [ text "Nah. I'm away" ]
+                                , button
+                                    [ classes
+                                        [ TC.ml3 ]
+                                    , Styles.buttonGreenStyle
+                                    , onClick Login
+                                    ]
+                                    [ text "Login Again" ]
+                                ]
+                           ]
+                    )
                 ]
-                
             ]
         )
         model.loginDialogState
         loginDialogConfig
-        
+
 
 noTabPage : SharedState -> Model -> Html Msg
 noTabPage sharedState model =
@@ -647,16 +657,17 @@ getTranslations language =
 updateWith : (subModel -> CurrentModel) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg, SharedStateUpdate ) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
     let
-        (newModel, newCmd, newSharedState) =
+        ( newModel, newCmd, newSharedState ) =
             case subSharedStateUpdate of
-                RefreshLogin ->  -- Intercept the request if a login is needed again
-                    ({ model | loginDialogState = True }, Cmd.none, NoUpdate)
+                RefreshLogin ->
+                    -- Intercept the request if a login is needed again
+                    ( { model | loginDialogState = True }, Cmd.none, NoUpdate )
 
-                _ -> 
-                    (model, (PersistantState.sharedStateUpdateToStorage subSharedStateUpdate), subSharedStateUpdate) 
+                _ ->
+                    ( model, PersistantState.sharedStateUpdateToStorage subSharedStateUpdate, subSharedStateUpdate )
     in
     ( { newModel | currentModel = toModel subModel }
-    , Cmd.batch 
+    , Cmd.batch
         [ newCmd
         , Cmd.map toMsg subCmd
         ]
@@ -729,10 +740,12 @@ modelToLoginRequest sharedState model =
         Just mail ->
             Just
                 { email = mail
-                , plain_password = model.plain_password 
+                , plain_password = model.plain_password
                 }
 
-        Nothing -> Nothing
+        Nothing ->
+            Nothing
+
 
 loginDialogConfig : Dialog.Config Msg
 loginDialogConfig =

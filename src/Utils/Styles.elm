@@ -5,6 +5,10 @@ module Utils.Styles exposing
     , buttonGreyStyle
     , buttonRedStyle
     , dateStyle
+    , dialogContainerStyle
+    , dialogGoneStyle
+    , dialogOverlayStyle
+    , dialogVisibleStyle
     , headerStyle
     , inputStyle
     , labelStyle
@@ -21,10 +25,6 @@ module Utils.Styles exposing
     , spinnerRedStyle
     , textAreaReset
     , textStyle
-    , dialogOverlayStyle
-    , dialogContainerStyle
-    , dialogVisibleStyle
-    , dialogGoneStyle
     )
 
 import Color exposing (Color)
@@ -260,11 +260,13 @@ dialogContainerStyle =
         , TC.pv4
         ]
 
+
 dialogVisibleStyle =
-    classes [TC.flex]
+    classes [ TC.flex ]
+
 
 dialogGoneStyle =
-    classes [TC.dn]
+    classes [ TC.dn ]
 
 
 spinnerStyle =

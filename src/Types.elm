@@ -24,5 +24,8 @@ decodeTranslations =
 languageToBackendString : Language -> String
 languageToBackendString lang =
     case lang of
-        English -> "en"
-        German -> "de"
+        English ->
+            "en"
+
+        German ->
+            "de"

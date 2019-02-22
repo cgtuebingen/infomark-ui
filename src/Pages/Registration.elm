@@ -1,6 +1,11 @@
 module Pages.Registration exposing (Error, Field(..), Model, Msg(..), init, inputElement, modelValidator, setField, update, view, viewFormErrors)
 
+import Api.Data.User exposing (User)
+import Api.Data.UserAccount exposing (UserAccount)
+import Api.Request.Account exposing (accountPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.Dialog as Dialog
+import Components.Toasty
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -11,16 +16,11 @@ import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Types exposing (Language(..), Translations, languageToBackendString)
-import Utils.Styles as Styles
-import Utils.EmailHelper as UniMailChecker
-import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
-import Api.Data.UserAccount exposing (UserAccount)
-import Api.Data.User exposing (User)
-import Api.Request.Account exposing (accountPost)
 import Toasty
-import Components.Toasty
-import Components.Dialog as Dialog
+import Types exposing (Language(..), Translations, languageToBackendString)
+import Utils.EmailHelper as UniMailChecker
+import Utils.Styles as Styles
+import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
 
 
 type alias Model =
@@ -41,7 +41,7 @@ type alias Model =
 
 modelToBody : SharedState -> Model -> UserAccount
 modelToBody sharedState model =
-    { user = 
+    { user =
         { id = 0
         , firstname = model.firstName
         , lastname = model.lastName
@@ -52,11 +52,12 @@ modelToBody sharedState model =
         , language = Just <| languageToBackendString sharedState.selectedLanguage
         , subject = Just model.subject
         }
-    , account = 
+    , account =
         { email = model.email
-        , plain_password = model.password 
+        , plain_password = model.password
         }
     }
+
 
 type Msg
     = NavigateTo Route
@@ -99,14 +100,15 @@ update sharedState msg model =
         Register force ->
             updateHandleRegister sharedState model force <| validate modelValidator model
 
-        RegistrationResponse response -> 
+        RegistrationResponse response ->
             updateHandleRegistrationResponse sharedState model response
 
         ToastyMsg subMsg ->
             let
-                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+                ( newModel, newCmd ) =
+                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
-            ( newModel, newCmd, NoUpdate)
+            ( newModel, newCmd, NoUpdate )
 
         NoUniversityMailWarningVisible state ->
             ( { model | noUniversityEmailDialogState = state }, Cmd.none, NoUpdate )
@@ -120,16 +122,19 @@ updateHandleRegister sharedState model force validationResult =
     case validate modelValidator model of
         Err errors ->
             ( { model | errors = errors }, Cmd.none, NoUpdate )
-        
+
         Ok _ ->
-            case (UniMailChecker.isInvalid model.email, force) of
-                (True, False) -> -- Show a warning
+            case ( UniMailChecker.isInvalid model.email, force ) of
+                ( True, False ) ->
+                    -- Show a warning
                     ( { model | noUniversityEmailDialogState = True }, Cmd.none, NoUpdate )
 
-                (_, _) -> -- In all other cases continue with registration
-                     ( { model | registrationProgress = Loading, errors = [] }
+                ( _, _ ) ->
+                    -- In all other cases continue with registration
+                    ( { model | registrationProgress = Loading, errors = [] }
                     , accountPost (modelToBody sharedState model) RegistrationResponse
-                    , NoUpdate )
+                    , NoUpdate
+                    )
 
 
 updateHandleRegistrationResponse : SharedState -> Model -> WebData User -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -138,23 +143,25 @@ updateHandleRegistrationResponse sharedState model response =
         Success _ ->
             ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
-        Failure (Http.BadBody error)  ->
+        Failure (Http.BadBody error) ->
             let
-                _ = Debug.log "Bad response:" error
+                _ =
+                    Debug.log "Bad response:" error
             in
             ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         Failure err ->
             let
-                (newModel, newCmd) =
-                    ( { model | registrationProgress = response}, Cmd.none )
-                        |> addToast 
-                            ( Components.Toasty.Error "Error" "Failed to register" )
+                ( newModel, newCmd ) =
+                    ( { model | registrationProgress = response }, Cmd.none )
+                        |> addToast
+                            (Components.Toasty.Error "Error" "Failed to register")
             in
             ( newModel, newCmd, NoUpdate )
 
         _ ->
             ( { model | registrationProgress = response }, Cmd.none, NoUpdate )
+
 
 
 -- TODO: Update the shared state
@@ -287,32 +294,34 @@ view sharedState model =
 
 noUniEmailDialog : SharedState -> Model -> Html Msg
 noUniEmailDialog sharedState model =
-    Dialog.modalDialog div 
+    Dialog.modalDialog div
         [ Styles.dialogOverlayStyle
         ]
-        ( Dialog.dialog div
+        (Dialog.dialog div
             [ Styles.dialogContainerStyle
             ]
-            [ div 
-                [ classes [TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black] ] 
-                [ h1 [] [text "No University E-Mail"] ]
+            [ div
+                [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
+                [ h1 [] [ text "No University E-Mail" ] ]
             , div
-                [ classes [ TC.w_100, TC.mt4 ]]
-                [ p [Styles.textStyle] [ text "The provided E-Mail is no university E-Mail address. We can not send you any E-Mails. This includes the confirmation E-Mail. To confirm your E-Mail and use the course system you need to ask a tutor."]
+                [ classes [ TC.w_100, TC.mt4 ] ]
+                [ p [ Styles.textStyle ] [ text "The provided E-Mail is no university E-Mail address. We can not send you any E-Mails. This includes the confirmation E-Mail. To confirm your E-Mail and use the course system you need to ask a tutor." ]
                 , div [ classes [ TC.fr, TC.mt3 ] ]
-                        [ button 
-                            [ classes 
-                                [ ]
-                            , Styles.buttonRedStyle
-                            , onClick <| Register True
-                            ] [ text "Register anyway" ]
-                        , button 
-                            [ classes 
-                                [ TC.ml3 ]
-                            , Styles.buttonGreenStyle
-                            , onClick <| NoUniversityMailWarningVisible False
-                            ] [ text "Change E-Mail"]    
+                    [ button
+                        [ classes
+                            []
+                        , Styles.buttonRedStyle
+                        , onClick <| Register True
                         ]
+                        [ text "Register anyway" ]
+                    , button
+                        [ classes
+                            [ TC.ml3 ]
+                        , Styles.buttonGreenStyle
+                        , onClick <| NoUniversityMailWarningVisible False
+                        ]
+                        [ text "Change E-Mail" ]
+                    ]
                 ]
             ]
         )

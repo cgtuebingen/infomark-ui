@@ -10,12 +10,13 @@
 module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
 
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
-import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole exposing (CourseRole(..))
-import Api.Request.Courses as CoursesRequests
+import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
+import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.Toasty
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -27,12 +28,11 @@ import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Time
 import Task
+import Time
+import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Toasty
-import Components.Toasty
 
 
 type alias Model =
@@ -67,7 +67,7 @@ init =
       , showArchive = False
       , toasties = Toasty.initialState
       }
-    , Cmd.batch 
+    , Cmd.batch
         [ AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
         , CoursesRequests.coursesGet CoursesResponse
         ]
@@ -77,7 +77,8 @@ init =
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     let
-        _ = Debug.log "MSG" msg
+        _ =
+            Debug.log "MSG" msg
     in
     case msg of
         CoursesResponse response ->
@@ -106,9 +107,10 @@ update sharedState msg model =
 
         ToastyMsg subMsg ->
             let
-                (newModel, newCmd) = Toasty.update Components.Toasty.config ToastyMsg subMsg model
+                ( newModel, newCmd ) =
+                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
-            ( newModel, newCmd, NoUpdate)
+            ( newModel, newCmd, NoUpdate )
 
         ForceExpire ->
             ( model, Cmd.none, RefreshLogin )
@@ -119,8 +121,9 @@ updateHandleCourses sharedState model response =
     case response of
         RemoteData.Success _ ->
             ( { model | courseRequest = response }, Cmd.none, NoUpdate )
-        
-        RemoteData.Failure _ -> -- Differentiate between errors
+
+        RemoteData.Failure _ ->
+            -- Differentiate between errors
             ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         _ ->
@@ -144,20 +147,20 @@ updateHandleEnroll : Model -> WebData UserEnrollment -> ( Model, Cmd Msg, Shared
 updateHandleEnroll model response =
     case response of
         RemoteData.Success _ ->
-            let 
-                (newModel, newCmd) =
+            let
+                ( newModel, newCmd ) =
                     ( { model | enrollProgress = response }
-                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse 
-                    ) |> addToast  (Components.Toasty.Success "Success" "You are now enrolled")
-
+                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
+                    )
+                        |> addToast (Components.Toasty.Success "Success" "You are now enrolled")
             in
             ( newModel, newCmd, NoUpdate )
 
         RemoteData.Failure _ ->
             let
-                (newModel, newCmd) =
+                ( newModel, newCmd ) =
                     ( { model | enrollProgress = response }, Cmd.none )
-                        |> addToast  (Components.Toasty.Error "Error" "Failed to enroll")
+                        |> addToast (Components.Toasty.Error "Error" "Failed to enroll")
             in
             ( newModel, newCmd, NoUpdate )
 
@@ -169,20 +172,20 @@ updateHandleDisenroll : Model -> WebData String -> ( Model, Cmd Msg, SharedState
 updateHandleDisenroll model response =
     case response of
         RemoteData.Success _ ->
-            let 
-                (newModel, newCmd) =
+            let
+                ( newModel, newCmd ) =
                     ( { model | disenrollProgress = response }
-                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse 
-                    ) |> addToast  (Components.Toasty.Success "Success" "You are now disenrolled")
-
+                    , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
+                    )
+                        |> addToast (Components.Toasty.Success "Success" "You are now disenrolled")
             in
             ( newModel, newCmd, NoUpdate )
 
         RemoteData.Failure _ ->
             let
-                (newModel, newCmd) =
+                ( newModel, newCmd ) =
                     ( { model | disenrollProgress = response }, Cmd.none )
-                        |> addToast  (Components.Toasty.Error "Error" "Failed to disenroll")
+                        |> addToast (Components.Toasty.Error "Error" "Failed to disenroll")
             in
             ( newModel, newCmd, NoUpdate )
 
@@ -335,34 +338,38 @@ viewCoursesHeader lbl toggable creatable model =
             ]
         ]
         [ h1 [ Styles.headerStyle ] [ text lbl ]
-        , button [onClick ForceExpire] [ text "Force Expire"]
+        , button [ onClick ForceExpire ] [ text "Force Expire" ]
         , toggle
         , create
         ]
 
 
 viewRenderCourse : SharedState -> Course -> Maybe AccountEnrollment -> Html Msg
-viewRenderCourse sharedState course enrollment = 
+viewRenderCourse sharedState course enrollment =
     -- TODO: Show Disenroll button
     -- TODO: Show edit/delete button
     let
         showButtons =
             case enrollment of
                 Nothing ->
-                    [( "Enroll", Enroll course )]
+                    [ ( "Enroll", Enroll course ) ]
 
                 Just _ ->
                     [ ( "Disenroll", Disenroll course ) -- TODO add a confirm dialog
                     , ( "Show", NavigateTo <| CourseDetailRoute course.id )
                     ]
 
-        buttonsHtml = List.map 
-            (\(buttonText, buttonMsg) -> button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.w_100, TC.mt3 ]
-                , onClick buttonMsg
-                ]
-                [ text buttonText ]) showButtons
+        buttonsHtml =
+            List.map
+                (\( buttonText, buttonMsg ) ->
+                    button
+                        [ Styles.buttonGreyStyle
+                        , classes [ TC.w_100, TC.mt3 ]
+                        , onClick buttonMsg
+                        ]
+                        [ text buttonText ]
+                )
+                showButtons
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
@@ -374,9 +381,10 @@ viewRenderCourse sharedState course enrollment =
                 , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
                 ]
             ]
-        , div [ classes [ TC.measure ] ]
-            <| [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
-            ] ++ buttonsHtml
+        , div [ classes [ TC.measure ] ] <|
+            [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
+            ]
+                ++ buttonsHtml
         ]
 
 

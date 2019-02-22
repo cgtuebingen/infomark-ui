@@ -28,4 +28,3 @@ sessionDelete : (WebData () -> msg) -> Cmd msg
 sessionDelete msg =
     deleteExpectNothing (unwrap sessions)
         msg
-        

@@ -2,9 +2,9 @@ module Components.Toasty exposing (Toast(..), config, view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Toasty
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
+import Toasty
 
 
 {-| This theme defines toasts of three variants: "Success", "Warning" and "Error".
@@ -31,7 +31,7 @@ config =
 
 containerAttrs : List (Html.Attribute msg)
 containerAttrs =
-    [ classes 
+    [ classes
         [ TC.fixed
         , TC.top_0
         , TC.right_0
@@ -85,26 +85,34 @@ view toast =
             genericToast toastyFailure title message
 
 
-toastySuccess = classes [ TC.bg_dark_green, TC.white ]
-toastyFailure = classes [ TC.bg_red, TC.white ]
-toastyWarning = classes [ TC.bg_orange, TC.black ]
+toastySuccess =
+    classes [ TC.bg_dark_green, TC.white ]
+
+
+toastyFailure =
+    classes [ TC.bg_red, TC.white ]
+
+
+toastyWarning =
+    classes [ TC.bg_orange, TC.black ]
 
 
 genericToast : Html.Attribute msg -> String -> String -> Html msg
 genericToast variantStyle title message =
     div
-        [ classes 
+        [ classes
             [ TC.pa3
             , TC.br3
             , TC.pointer
             , TC.shadow_5
             , TC.f6
             ]
-        , variantStyle ]
-        [ h1 [ classes [TC.f5, TC.ma0] ] [ text title ]
+        , variantStyle
+        ]
+        [ h1 [ classes [ TC.f5, TC.ma0 ] ] [ text title ]
         , if String.isEmpty message then
             text ""
 
           else
-            p [ classes [TC.f6, TC.mt2, TC.mt0] ] [ text message ]
+            p [ classes [ TC.f6, TC.mt2, TC.mt0 ] ] [ text message ]
         ]
