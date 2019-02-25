@@ -25,6 +25,7 @@ import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
 import Pages.TaskEditor as TaskEditor
+import Pages.ProfileEditor as ProfileEditor
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -61,6 +62,7 @@ type CurrentModel
     | SheetEditorModel SheetEditor.Model
     | SubmissionGradingEditorModel SubmissionGradingEditor.Model
     | TaskEditorModel TaskEditor.Model
+    | ProfileEditorModel ProfileEditor.Model
     | NotFound
 
 
@@ -88,6 +90,7 @@ type Msg
     | SheetEditorMsg SheetEditor.Msg
     | SubmissionGradingEditorMsg SubmissionGradingEditor.Msg
     | TaskEditorMsg TaskEditor.Msg
+    | ProfileEditorMsg ProfileEditor.Msg
     | NoOp
 
 
@@ -212,6 +215,10 @@ update sharedState msg model =
             Admin.update sharedState adminMsg admin
                 |> updateWith AdminModel AdminMsg model
 
+        ( ProfileEditorMsg profileEditorMsg, ProfileEditorModel profileEditor ) ->
+            ProfileEditor.update sharedState profileEditorMsg profileEditor
+                |> updateWith ProfileEditorModel ProfileEditorMsg model
+
         ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
@@ -300,6 +307,9 @@ navigateTo route model =
         AdminRoute ->
             Admin.init |> initWith AdminModel AdminMsg model NoUpdate
 
+        ProfileEditorRoute ->
+            ProfileEditor.init |> initWith ProfileEditorModel ProfileEditorMsg model NoUpdate
+
         NotFoundRoute ->
             ( { model | currentModel = NotFound }
             , Cmd.none
@@ -357,6 +367,9 @@ view msgMapper sharedState model =
                 AdminRoute ->
                     "page-title-admin"
 
+                ProfileEditorRoute ->
+                    "page-title-profile"
+
                 NotFoundRoute ->
                     "page-title-404"
 
@@ -387,6 +400,19 @@ navView sharedState model =
     let
         t =
             I18n.get sharedState.translations
+
+        navItems = 
+            [ (t "page-title-courses", Just "assets/school-white.svg", NavigateTo CoursesRoute) ]
+            ++ 
+                ( if sharedState.role == Just { root = True } then
+                    [ (t "page-title-admin", Just "assets/database-settings-white.svg", NavigateTo AdminRoute) ]
+                else
+                    [ ]
+                )
+            ++ 
+                [ (t "page-title-profile", Just "assets/account-settings-white.svg", NavigateTo ProfileEditorRoute )
+                , (t "action-logout", Just "assets/logout-variant-white.svg", Logout)
+                ]
     in
     nav
         [ classes
@@ -424,29 +450,39 @@ navView sharedState model =
                 , TC.pa3
                 ]
             ]
-            [ button
-                [ Styles.linkWhiteStyle
-                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
-                , onClick <| NavigateTo CoursesRoute
-                ]
-                [ text (t "page-title-courses") ]
+            ( List.map (\(labelText, maybeIcon, msgAction) ->
+                div 
+                    [ classes [ TC.dim, TC.pointer, TC.mr1, TC.mr4_ns, TC.flex, TC.items_center ] 
+                    , onClick <| msgAction ]
+                    (case maybeIcon of
+                        Just icon ->
+                            [ img 
+                                [ src icon
+                                , classes [TC.w2, TC.h2, TC.mr2, TC.mr0_l] 
+                                ] []
+                            , p 
+                                [ classes 
+                                    [ TC.f5
+                                    , TC.ph2
+                                    , TC.white
+                                    , TC.fw6
+                                    , TC.tracked
+                                    , TC.ttu
+                                    , TC.ml2
+                                    , TC.dn
+                                    , TC.dib_l
+                                    ] 
+                                ] [ text labelText ]
+                            ]
 
-            -- TODO use translations
-            , button
-                [ Styles.linkWhiteStyle
-                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
-                , onClick <| NavigateTo AdminRoute
-                ]
-                [ text (t "page-title-admin") ]
+                        Nothing ->
+                            [ p 
+                                [ Styles.linkWhiteStyle
+                                , classes [ TC.fw6, TC.tracked, TC.ttu] 
+                                ] [ text labelText ] ]
+                    )
 
-            -- TODO use Translations - Only show if root
-            , button
-                [ Styles.linkWhiteStyle
-                , classes [ TC.mr1, TC.mr4_ns, TC.fw6, TC.tracked, TC.ttu ]
-                , onClick Logout
-                ]
-                [ text (t "action-logout") ]
-            ]
+            ) navItems )
         ]
 
 
@@ -610,6 +646,10 @@ pageView sharedState model =
         AdminModel admin ->
             Admin.view sharedState admin
                 |> Html.map AdminMsg
+
+        ProfileEditorModel profileEditor ->
+            ProfileEditor.view sharedState profileEditor
+                |> Html.map ProfileEditorMsg
 
         NotFound ->
             div

@@ -19,6 +19,7 @@ type Route
     | EditTaskRoute Int
     | SubmissionGradingRoute Int Int
     | AdminRoute
+    | ProfileEditorRoute
     | NotFoundRoute
 
 
@@ -69,6 +70,9 @@ reverseRoute route =
                 AdminRoute ->
                     [ "admin" ]
 
+                ProfileEditorRoute ->
+                    [ "profile" ]
+
                 _ ->
                     []
     in
@@ -90,6 +94,7 @@ routeParser =
         , Url.Parser.map CreateTaskRoute (Url.Parser.s "task" </> Url.Parser.s "create")
         , Url.Parser.map EditTaskRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
+        , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")
         ]
 
