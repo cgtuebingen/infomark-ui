@@ -458,7 +458,7 @@ navView sharedState model =
                         Just icon ->
                             [ img 
                                 [ src icon
-                                , classes [TC.w2, TC.h2, TC.mr2, TC.mr0_l] 
+                                , classes [TC.w2, TC.h2, TC.mr3, TC.mr2_l] 
                                 ] []
                             , p 
                                 [ classes 
@@ -468,7 +468,6 @@ navView sharedState model =
                                     , TC.fw6
                                     , TC.tracked
                                     , TC.ttu
-                                    , TC.ml2
                                     , TC.dn
                                     , TC.dib_l
                                     ] 
