@@ -8,6 +8,7 @@ module Api.Request.Courses exposing
     , coursesEnrollmentDelete
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
+    , coursesEnrollmentGetTeam
     , coursesEnrollmentPost
     , coursesGet
     , coursesPost

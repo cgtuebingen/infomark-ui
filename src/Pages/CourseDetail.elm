@@ -39,7 +39,6 @@ import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
-import Api.Request.UserEnrollments as UserEnrollmentsRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.Dropdown as Dropdown exposing (ToggleEvent(..), drawer, dropdown, toggle)
 import Html exposing (..)
@@ -143,7 +142,7 @@ determineInitialRoleRequests model role =
                 , groupRequest = Loading
               }
             , Cmd.batch
-                [ UserEnrollmentsRequests.courseEnrollmentGetTeam model.courseId EnrollmentsResponse
+                [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
                 , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
                 ]
             )
@@ -154,7 +153,7 @@ determineInitialRoleRequests model role =
                 , groupRequest = Loading
               }
             , Cmd.batch
-                [ UserEnrollmentsRequests.courseEnrollmentGetTeam model.courseId EnrollmentsResponse
+                [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
                 , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
                 ]
             )
@@ -454,11 +453,6 @@ viewDetermineGroupDisplay courseRole sharedState model =
     -- Not set: Display bidding screen
     -- If set: Display own group. With members. Option to send email to other members and tutor
     ]
-
-
-getTeam : Course -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
-getTeam course msg =
-    UserEnrollmentsRequests.courseEnrollmentGetTeam course.id msg
 
 
 compareRoleName : UserEnrollment -> UserEnrollment -> Order
