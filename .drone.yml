@@ -1,0 +1,33 @@
+pipeline:
+  restore-cache:
+    image: drillster/drone-volume-cache
+    restore: true
+    mount:
+      - ./node_modules
+    volumes:
+      - /tmp/cache:/cache
+
+  install:
+    image: node:8.6.0
+    commands:
+      - node -v
+      - npm -v
+      - npm install elm
+
+  build:
+    image: node:8.6.0
+    commands:
+      - node_modules/elm/bin/elm make src/Main.elm --output=elm.js
+
+  test:
+    image: node:8.6.0
+    commands:
+      - echo "none"
+
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - ./node_modules
+    volumes:
+      - /tmp/cache:/cache
