@@ -34,6 +34,7 @@ import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors)
+import Components.Dialog as Dialog
 
 
 type alias Model =
@@ -43,6 +44,8 @@ type alias Model =
     , disenrollProgress : WebData ()
     , showArchive : Bool
     , toasties : Toasty.Stack Components.Toasty.Toast
+    , deleteDialogState : Dialog.State
+    , courseToDelete : Maybe Course
     }
 
 
@@ -53,12 +56,14 @@ type Msg
     | Disenroll Course
     | EnrollResponse (WebData ())
     | DisenrollResponse (WebData ())
-    | Delete Course
+    | RequestDelete Course
+    | PerformDelete Course
     | DeleteCourseResponse (WebData ())
+    | DeleteCourseDialogShown Bool
     | ToggleArchive
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | NavigateTo Route
-    | ForceExpire
+    | NoOp
 
 
 init : ( Model, Cmd Msg )
@@ -69,6 +74,8 @@ init =
       , disenrollProgress = NotAsked
       , showArchive = False
       , toasties = Toasty.initialState
+      , deleteDialogState = False
+      , courseToDelete = Nothing
       }
     , Cmd.batch
         [ AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
@@ -102,8 +109,13 @@ update sharedState msg model =
         DisenrollResponse response ->
             updateHandleDisenroll sharedState model response
 
-        Delete course ->
-            (model, CoursesRequests.courseDelete course.id DeleteCourseResponse, NoUpdate)
+        RequestDelete course ->
+            ( { model 
+                | courseToDelete = Just course
+                , deleteDialogState = True }, Cmd.none, NoUpdate)
+
+        PerformDelete course ->
+            ( model, CoursesRequests.courseDelete course.id DeleteCourseResponse, NoUpdate )
 
         DeleteCourseResponse response ->
             updateHandleDelete sharedState model response
@@ -114,6 +126,15 @@ update sharedState msg model =
         ToggleArchive ->
             ( { model | showArchive = not model.showArchive }, Cmd.none, NoUpdate )
 
+        DeleteCourseDialogShown visible ->
+            case visible of
+                False -> 
+                    ( { model 
+                        | deleteDialogState = visible
+                        , courseToDelete = Nothing }, Cmd.none, NoUpdate )
+                True ->
+                    ( { model | deleteDialogState = visible }, Cmd.none, NoUpdate )
+            
         ToastyMsg subMsg ->
             let
                 ( newModel, newCmd ) =
@@ -121,8 +142,8 @@ update sharedState msg model =
             in
             ( newModel, newCmd, NoUpdate )
 
-        ForceExpire ->
-            ( model, Cmd.none, RefreshLogin )
+        NoOp ->
+            ( model, Cmd.none, NoUpdate )
 
 
 updateHandleCourses : SharedState -> Model -> WebData (List Course) -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -225,7 +246,9 @@ updateHandleDelete sharedState model response =
         RemoteData.Success _ ->
             let
                 ( newModel, newCmd ) =
-                    ( { model | disenrollProgress = response }
+                    ( { model 
+                        | courseToDelete = Nothing
+                        , deleteDialogState = False }
                     , CoursesRequests.coursesGet CoursesResponse
                     )
                         |> addToast (Components.Toasty.Success "Success" "You've deleted the course") --TODO this should be that easy. Add a modal dialog
@@ -237,7 +260,7 @@ updateHandleDelete sharedState model response =
                 (\e -> -- Differentiate between errros
                     (let
                         ( newModel, newCmd ) =
-                            ( { model | disenrollProgress = response }, Cmd.none )
+                            ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to delete")
                     in
                     ( newModel, newCmd, NoUpdate )
@@ -246,7 +269,7 @@ updateHandleDelete sharedState model response =
                 err
 
         _ ->
-            ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
+            ( model, Cmd.none, NoUpdate )
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -334,7 +357,8 @@ view sharedState model =
                         cTemp
             in
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-                [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+                [ viewDeleteCourseDialog sharedState model
+                , Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
                 , div
                     [ classes
                         [ TC.w_75_l
@@ -350,6 +374,49 @@ view sharedState model =
 
         ( _, _ ) ->
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100 ] ] []
+
+
+viewDeleteCourseDialog : SharedState -> Model -> Html Msg
+viewDeleteCourseDialog sharedState model =
+    case model.courseToDelete of
+        Just course ->
+            Dialog.modalDialog div
+                [ Styles.dialogOverlayStyle
+                ]
+                (Dialog.dialog div
+                    [ Styles.dialogContainerStyle
+                    ]
+                    [ div
+                        [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
+                        [ h1 [] [ text "Delete the course?" ] ]
+                    , div
+                        [ classes [ TC.w_100, TC.mt4 ] ]
+                        [ p [ Styles.textStyle ] [ text "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone."]
+                        , div [ classes [ TC.fr, TC.mt3 ] ]
+                            [ button
+                                [ classes
+                                    []
+                                , Styles.buttonRedStyle
+                                , onClick <| PerformDelete course
+                                ]
+                                [ text "Delete" ]
+                            , button
+                                [ classes
+                                    [ TC.ml3 ]
+                                , Styles.buttonGreenStyle
+                                , onClick <| DeleteCourseDialogShown False
+                                ]
+                                [ text "Cancel" ]
+                            ]
+                        ]
+                    ]
+                )
+                model.deleteDialogState
+                deleteCourseDialogConfig
+
+        Nothing ->
+            text ""
+
 
 
 viewCoursesHeader : String -> Bool -> Bool -> Model -> Html Msg
@@ -398,7 +465,6 @@ viewCoursesHeader lbl toggable creatable model =
             ]
         ]
         [ h1 [ Styles.headerStyle ] [ text lbl ]
-        , button [ onClick ForceExpire ] [ text "Force Expire" ]
         , toggle
         , create
         ]
@@ -447,7 +513,7 @@ viewRenderCourse sharedState course enrollment =
                                 [ type_ "image"
                                 , src "assets/delete.svg" 
                                 , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                                , onClick <| Delete course
+                                , onClick <| RequestDelete course
                                 ]
                                 []
                             ]
@@ -486,3 +552,13 @@ findEnrollmentForCourse course enrollments =
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
+
+
+deleteCourseDialogConfig : Dialog.Config Msg
+deleteCourseDialogConfig =
+    Dialog.Config
+        Styles.dialogVisibleStyle
+        Styles.dialogGoneStyle
+        DeleteCourseDialogShown
+        True
+        NoOp
