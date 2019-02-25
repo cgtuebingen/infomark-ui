@@ -40,12 +40,12 @@ import Components.Dialog as Dialog
 type alias Model =
     { courseRequest : WebData (List Course)
     , accountEnrollmentsRequest : WebData (List AccountEnrollment)
-    , enrollProgress : WebData ()
-    , disenrollProgress : WebData ()
     , showArchive : Bool
     , toasties : Toasty.Stack Components.Toasty.Toast
     , deleteDialogState : Dialog.State
     , courseToDelete : Maybe Course
+    , disenrollDialogState : Dialog.State
+    , courseToDisenroll : Maybe Course
     }
 
 
@@ -53,7 +53,9 @@ type Msg
     = CoursesResponse (WebData (List Course))
     | AccountEnrollmentsResponse (WebData (List AccountEnrollment))
     | Enroll Course
-    | Disenroll Course
+    | RequestDisenroll Course
+    | PerformDisenroll Course
+    | DisenrollCourseDialogShown Bool
     | EnrollResponse (WebData ())
     | DisenrollResponse (WebData ())
     | RequestDelete Course
@@ -70,12 +72,12 @@ init : ( Model, Cmd Msg )
 init =
     ( { courseRequest = Loading
       , accountEnrollmentsRequest = Loading
-      , enrollProgress = NotAsked
-      , disenrollProgress = NotAsked
       , showArchive = False
       , toasties = Toasty.initialState
       , deleteDialogState = False
       , courseToDelete = Nothing
+      , disenrollDialogState = False
+      , courseToDisenroll = Nothing
       }
     , Cmd.batch
         [ AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
@@ -86,10 +88,6 @@ init =
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
-    let
-        _ =
-            Debug.log "MSG" msg
-    in
     case msg of
         CoursesResponse response ->
             updateHandleCourses sharedState model response
@@ -100,7 +98,13 @@ update sharedState msg model =
         Enroll course ->
             ( model, CoursesRequests.coursesEnrollmentPost course.id EnrollResponse, NoUpdate )
 
-        Disenroll course ->
+        RequestDisenroll course ->
+            ( { model
+                | courseToDisenroll = Just course
+                , disenrollDialogState = True }, Cmd.none, NoUpdate
+            )
+
+        PerformDisenroll course ->
             ( model, CoursesRequests.coursesEnrollmentDelete course.id DisenrollResponse, NoUpdate )
 
         EnrollResponse response ->
@@ -134,6 +138,15 @@ update sharedState msg model =
                         , courseToDelete = Nothing }, Cmd.none, NoUpdate )
                 True ->
                     ( { model | deleteDialogState = visible }, Cmd.none, NoUpdate )
+
+        DisenrollCourseDialogShown visible ->
+            case visible of
+                False -> 
+                    ( { model 
+                        | disenrollDialogState = visible
+                        , courseToDisenroll = Nothing }, Cmd.none, NoUpdate )
+                True ->
+                    ( { model | disenrollDialogState = visible }, Cmd.none, NoUpdate )
             
         ToastyMsg subMsg ->
             let
@@ -186,7 +199,7 @@ updateHandleEnroll sharedState model response =
         RemoteData.Success _ ->
             let
                 ( newModel, newCmd ) =
-                    ( { model | enrollProgress = response }
+                    ( model
                     , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
                     )
                         |> addToast (Components.Toasty.Success "Success" "You are now enrolled")
@@ -198,7 +211,7 @@ updateHandleEnroll sharedState model response =
                 (\e -> -- Differentiate between errros
                     (let
                         ( newModel, newCmd ) =
-                            ( { model | enrollProgress = response }, Cmd.none )
+                            ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to enroll")
                     in
                     ( newModel, newCmd, NoUpdate )
@@ -208,7 +221,7 @@ updateHandleEnroll sharedState model response =
             
 
         _ ->
-            ( { model | enrollProgress = response }, Cmd.none, NoUpdate )
+            ( model, Cmd.none, NoUpdate )
 
 
 updateHandleDisenroll : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -217,7 +230,10 @@ updateHandleDisenroll sharedState model response =
         RemoteData.Success _ ->
             let
                 ( newModel, newCmd ) =
-                    ( { model | disenrollProgress = response }
+                    ( { model 
+                        | courseToDisenroll = Nothing
+                        , disenrollDialogState = False
+                     }
                     , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
                     )
                         |> addToast (Components.Toasty.Success "Success" "You are now disenrolled")
@@ -229,7 +245,7 @@ updateHandleDisenroll sharedState model response =
                 (\e -> -- Differentiate between errros
                     (let
                         ( newModel, newCmd ) =
-                            ( { model | disenrollProgress = response }, Cmd.none )
+                            ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to disenroll")
                     in
                     ( newModel, newCmd, NoUpdate )
@@ -238,7 +254,8 @@ updateHandleDisenroll sharedState model response =
                 err
 
         _ ->
-            ( { model | disenrollProgress = response }, Cmd.none, NoUpdate )
+            ( model, Cmd.none, NoUpdate )
+
 
 updateHandleDelete : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleDelete sharedState model response =
@@ -357,7 +374,8 @@ view sharedState model =
                         cTemp
             in
             div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-                [ viewDeleteCourseDialog sharedState model
+                [ viewDisenrollCourseDialog sharedState model
+                , viewDeleteCourseDialog sharedState model
                 , Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
                 , div
                     [ classes
@@ -417,6 +435,47 @@ viewDeleteCourseDialog sharedState model =
         Nothing ->
             text ""
 
+
+viewDisenrollCourseDialog : SharedState -> Model -> Html Msg
+viewDisenrollCourseDialog sharedState model =
+    case model.courseToDisenroll of
+        Just course ->
+            Dialog.modalDialog div
+                [ Styles.dialogOverlayStyle
+                ]
+                (Dialog.dialog div
+                    [ Styles.dialogContainerStyle
+                    ]
+                    [ div
+                        [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
+                        [ h1 [] [ text "Disenroll from course?" ] ]
+                    , div
+                        [ classes [ TC.w_100, TC.mt4 ] ]
+                        [ p [ Styles.textStyle ] [ text "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!"]
+                        , div [ classes [ TC.fr, TC.mt3 ] ]
+                            [ button
+                                [ classes
+                                    []
+                                , Styles.buttonRedStyle
+                                , onClick <| PerformDisenroll course
+                                ]
+                                [ text "Disenroll" ]
+                            , button
+                                [ classes
+                                    [ TC.ml3 ]
+                                , Styles.buttonGreenStyle
+                                , onClick <| DisenrollCourseDialogShown False
+                                ]
+                                [ text "Cancel" ]
+                            ]
+                        ]
+                    ]
+                )
+                model.disenrollDialogState
+                disenrollCourseDialogConfig
+
+        Nothing ->
+            text ""
 
 
 viewCoursesHeader : String -> Bool -> Bool -> Model -> Html Msg
@@ -481,8 +540,7 @@ viewRenderCourse sharedState course enrollment =
                     [ ( "Enroll", Enroll course ) ]
 
                 Just _ ->
-                    [ ( "Disenroll", Disenroll course ) -- TODO add a confirm dialog
-                    , ( "Show", NavigateTo <| CourseDetailRoute course.id )
+                    [ ( "Show", NavigateTo <| CourseDetailRoute course.id )
                     ]
 
         buttonsHtml =
@@ -497,37 +555,36 @@ viewRenderCourse sharedState course enrollment =
                 )
                 showButtons
 
-        showAdminButtons =
-            case sharedState.role of
-                Just ({ root }) ->
-                    if root then
-                        [ div []
-                            [ input 
-                                [ type_ "image"
-                                , src "assets/pencil.svg" 
-                                , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                                , onClick <| NavigateTo <| EditCourseRoute course.id
-                                ]
-                                []
-                            , input 
-                                [ type_ "image"
-                                , src "assets/delete.svg" 
-                                , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                                , onClick <| RequestDelete course
-                                ]
-                                []
-                            ]
-                        ]
-                    else 
-                        []
+        actionItems = 
+                (case enrollment of
+                    Nothing -> []
 
-                _ -> []
+                    Just _ -> [ ("assets/logout-variant.svg", RequestDisenroll course) ]
+                )
+            ++
+                (if sharedState.role == Just { root = True } then
+                    [ ("assets/pencil.svg", NavigateTo <| EditCourseRoute course.id)
+                    , ("assets/delete.svg", RequestDelete course)
+                    ]
+                else
+                    []
+                )
+        
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
             [ div[ classes [TC.flex, TC.w_100, TC.justify_between, TC.items_center ] ] <|
                 [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
-                ] ++ showAdminButtons
+                ] ++ [div [] 
+                    (List.map (\(icon, msgAction) ->
+                        input 
+                            [ type_ "image"
+                            , src icon 
+                            , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                            , onClick msgAction
+                            ]
+                            []
+                    ) actionItems)]
             , dl [ Styles.dateStyle ]
                 [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
                 , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
@@ -560,5 +617,15 @@ deleteCourseDialogConfig =
         Styles.dialogVisibleStyle
         Styles.dialogGoneStyle
         DeleteCourseDialogShown
+        True
+        NoOp
+
+
+disenrollCourseDialogConfig : Dialog.Config Msg
+disenrollCourseDialogConfig =
+    Dialog.Config
+        Styles.dialogVisibleStyle
+        Styles.dialogGoneStyle
+        DisenrollCourseDialogShown
         True
         NoOp
