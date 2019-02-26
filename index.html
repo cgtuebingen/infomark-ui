@@ -38,6 +38,11 @@
 			color: #A51E37
 		}
 
+		.hover-b--dark-red:hover,
+		.hover-b--dark-red:focus {
+			border-color: #A51E37
+		}
+
 		.gold {
 			color: #B4A069
 		}
@@ -58,6 +63,11 @@
 		.hover-gold:focus,
 		.hover-gold:hover {
 			color: #B4A069
+		}
+
+		.hover-b--gold:hover,
+		.hover-b--gold:focus {
+			border-color: #B4A069
 		}
 
 		.dark-gray {
@@ -82,6 +92,11 @@
 			color: #324148
 		}
 
+		.hover-b--gold:hover,
+		.hover-b--gold:focus {
+			border-color: #324148
+		}
+
 		.red {
 			color: #A94442
 		}
@@ -104,10 +119,23 @@
 			color: #A94442
 		}
 
+		.hover-b--gold:hover,
+		.hover-b--gold:focus {
+			border-color: #A94442
+		}
+
 		.input-reset {
 			-webkit-appearance: none;
 			-moz-appearance: none;
 			outline: 0 !important;
+		}
+
+		.disabled-content {
+			cursor: not-allowed;
+		}
+
+		.disabled-content>* {
+			pointer-events: none;
 		}
 	</style>
 	<link rel="stylesheet" href="assets/elm-datepicker.css" />

@@ -4,6 +4,7 @@ module Utils.Styles exposing
     , buttonGreenStyle
     , buttonGreyStyle
     , buttonRedStyle
+    , buttonDisabled
     , dateStyle
     , dialogContainerStyle
     , dialogGoneStyle
@@ -34,6 +35,12 @@ import Html.Attributes exposing (..)
 import Spinner
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
+
+
+hover_b__dark_red = "hover-b--dark-red"
+hover_b__dark_gray = "hover-b--dark-gray"
+hover_b__gold = "hover-b--gold"
+hover_b__red = "hover-b--red"
 
 
 textAreaReset : List (Html.Attribute msg)
@@ -114,6 +121,16 @@ buttonStyle =
     ]
 
 
+buttonDisabled = 
+    classes <|
+        buttonStyle
+            ++ 
+                [ TC.black_40
+                , TC.b__black_40
+                , "disabled-content"
+                ]
+
+
 buttonBlackStyle =
     classes <|
         buttonStyle
@@ -188,7 +205,8 @@ lineInputStyle =
         , TC.ph0
         , TC.pv3
         , TC.input_reset
-        , TC.b__dark_red
+        , TC.b__dark_gray
+        , "hover-b--dark-red"
         , TC.black_80
         , TC.f5
         ]
