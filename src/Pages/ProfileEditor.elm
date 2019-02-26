@@ -318,7 +318,7 @@ avatarUploader model =
             , TC.ba
             , TC.b__dashed
             , if model.hover then TC.b__dark_red else TC.b__black_40
-            , TC.bw3
+            , TC.bw2
             , TC.br3
             , TC.w_50_ns
             , TC.w_100

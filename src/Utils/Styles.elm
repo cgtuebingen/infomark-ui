@@ -181,7 +181,7 @@ lineInputStyle : Html.Attribute msg
 lineInputStyle =
     classes
         [ TC.bb
-        , TC.bw2
+        , TC.bw1
         , TC.bt_0
         , TC.bl_0
         , TC.br_0
