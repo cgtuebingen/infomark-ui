@@ -1,4 +1,4 @@
-module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postExpectNothing, postImage)
+module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postExpectNothing, postFile)
 
 import File exposing (File)
 import Http
@@ -43,26 +43,26 @@ postExpectNothing url body msg =
         , tracker = Nothing
         }
 
-{-| Uploads an single image. You can subscribe to the tracker "image\_upload" using
+{-| Uploads a single file. You can subscribe to the tracker "file\_upload" using
 
     type Msg
         = GotProgress Http.Progress
 
     subscriptions : Model -> Sub Msg
     subscriptions model =
-        Http.track "image_upload" GotProgress
+        Http.track "file_upload" GotProgress
 
 -}
-postImage : String -> File -> (WebData () -> msg) -> Cmd msg
-postImage url file msg =
+postFile : String -> File -> (WebData () -> msg) -> Cmd msg
+postFile url file msg =
     Http.request
         { method = "POST"
         , headers = []
         , url = url
-        , body = Http.fileBody file
+        , body = Http.multipartBody [ Http.filePart "file_data" file ]
         , expect = Http.expectWhatever (RemoteData.fromResult >> msg)
         , timeout = Nothing
-        , tracker = Just "image_upload"
+        , tracker = Just "file_upload"
         }
 
 

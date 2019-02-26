@@ -20,6 +20,7 @@ module Utils.Styles exposing
     , linkRedStyle
     , linkWhiteStyle
     , listHeadingStyle
+    , sectionStyle
     , spinnerGoldStyle
     , spinnerGreyStyle
     , spinnerRedStyle
@@ -201,6 +202,14 @@ headerStyle =
         , TC.b
         ]
 
+sectionStyle =
+    classes
+        [ TC.f2
+        , TC.fw6
+        , TC.black
+        , TC.b
+        , TC.lh_title
+        ]
 
 listHeadingStyle =
     classes

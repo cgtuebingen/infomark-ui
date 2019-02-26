@@ -1,4 +1,24 @@
-module Api.Endpoint exposing (Endpoint(..), account, accountAvatar, accountEnrollment, basePath, confirmEmail, course, courseEnrollment, courseEnrollmentUserDetail, courseGroup, courseGroupBids, courseGroups, courses, groups, groupsEnrollment, passwordResetSet, requestPasswordReset, sessions, unwrap, url, user, users)
+module Api.Endpoint exposing 
+    ( Endpoint(..)
+    , account
+    , accountAvatar
+    , accountEnrollment
+    , confirmEmail
+    , course
+    , courseEnrollment
+    , courseEnrollmentUserDetail
+    , courseGroup
+    , courseGroupBids
+    , courseGroups
+    , courses
+    , groups
+    , groupsEnrollment
+    , passwordResetSet
+    , requestPasswordReset
+    , sessions
+    , unwrap
+    , user
+    , users)
 
 import Api.Data.Course exposing (Course)
 import Http

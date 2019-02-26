@@ -34,12 +34,11 @@ accountPost accountNew msg =
         User.decoder
 
 
-accountPatch : Account -> (WebData User -> msg) -> Cmd msg
+accountPatch : Account -> (WebData () -> msg) -> Cmd msg
 accountPatch accountUpdate msg =
-    patch (unwrap account)
+    patchExpectNothing (unwrap account)
         (Http.jsonBody <| Account.encoder accountUpdate)
         msg
-        User.decoder
 
 
 accountEnrollmentGet : (WebData (List AccountEnrollment) -> msg) -> Cmd msg
@@ -50,4 +49,4 @@ accountEnrollmentGet msg =
 
 accountAvatarPost : File -> (WebData () -> msg) -> Cmd msg
 accountAvatarPost file msg =
-    postImage (unwrap accountAvatar) file msg
+    postFile (unwrap accountAvatar) file msg
