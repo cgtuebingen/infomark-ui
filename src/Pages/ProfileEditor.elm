@@ -28,6 +28,7 @@ import Types
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
 import Toasty
 import Json.Decode as Decode exposing (Decoder)
+import Utils.Utils exposing (handleLogoutErrors)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Task
@@ -42,6 +43,8 @@ type Msg
     | DragEnter
     | DragLeave
     | Save
+    | RequestAccountDelete
+    | PerformAccountDelete
     | AccountUpdateResponse (WebData ())
     | UserUpdateResponse (WebData ())
     | AvatarUpdateResponse (WebData ())
@@ -102,6 +105,9 @@ init =
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
+    let
+        _ = Debug.log "MSG" msg
+    in
     case msg of
         AccountGetResponse response ->
             updateAccountGetResponse sharedState model response
@@ -111,6 +117,12 @@ update sharedState msg model =
 
         Save ->
             updateSave sharedState model
+
+        RequestAccountDelete ->
+            (model, Cmd.none, NoUpdate)
+
+        PerformAccountDelete ->
+            (model, Cmd.none, NoUpdate)
 
         Pick ->
             ( model, Select.files ["image/*"] GotFiles, NoUpdate)
@@ -122,7 +134,7 @@ update sharedState msg model =
             ( { model | hover = False }, Cmd.none, NoUpdate )
 
         GotFiles file files ->
-            ( { model | hover = False, avatar = Just file }
+            ( { model | hover = False, avatar = Just file, avatarChanged = True }
             , Task.perform GotPreview <| File.toUrl file
             , NoUpdate)
 
@@ -132,16 +144,16 @@ update sharedState msg model =
             , NoUpdate)
 
         AccountUpdateResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            updateAccountUpdateResponse sharedState model response
         
         UserUpdateResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            updateUserUpdateResponse sharedState model response
 
         AvatarUpdateResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            updateAvatarUpdateResponse sharedState model response
 
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         AccountDeleteDialogShown visible ->
             ( { model | accountDeleteDialog = visible }, Cmd.none, NoUpdate )
@@ -166,6 +178,13 @@ updateAccountGetResponse sharedState model response =
             in
             ( { newModel | user = response }, Cmd.none, NoUpdate)
 
+        Failure err ->
+            handleLogoutErrors model sharedState
+                (\e ->
+                    ( { model | user = response }, Cmd.none, NoUpdate)
+                )
+                err
+
         _ -> 
             ( { model | user = response }, Cmd.none, NoUpdate)
     
@@ -178,12 +197,96 @@ updateSave sharedState model =
             , ( model.userDataChanged, userUpdateRequest sharedState model UserUpdateResponse )
             , ( model.avatarChanged, avatarUpdateRequest model AvatarUpdateResponse )
             ]
+
+        toExecute = List.filter Tuple.first cmds
+
+        _ = Debug.log "ToExectue" toExecute
     in
     ( model
-    , Cmd.batch <| 
-        List.map Tuple.second <| 
-            List.filter Tuple.first cmds
+    , Cmd.batch <| List.map Tuple.second <|  toExecute
     , NoUpdate)
+
+
+updateUserUpdateResponse : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateUserUpdateResponse sharedState model response =
+    case response of
+        Success _ ->
+            let
+                ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Success "Success" "Profile updated!")
+            in
+            ( { newModel | userDataChanged = False }, newCmd, NoUpdate )
+            
+
+        Failure err ->
+            handleLogoutErrors model sharedState
+                (\e ->
+                    (let
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to update profile!")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                ) err
+
+        _ ->
+            (model, Cmd.none, NoUpdate)
+
+
+updateAccountUpdateResponse : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateAccountUpdateResponse sharedState model response =
+    case response of
+        Success _ ->
+            let
+                ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Success "Success" "Profile updated!")
+            in
+            ( { newModel | accountDataChanged = False }, newCmd, NoUpdate )
+
+        Failure err ->
+            handleLogoutErrors model sharedState
+                (\e ->
+                    (let
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to update profile!")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                ) err
+
+        _ ->
+            (model, Cmd.none, NoUpdate)
+
+
+updateAvatarUpdateResponse : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateAvatarUpdateResponse sharedState model response =
+    case response of
+        Success _ ->
+            let
+                ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Success "Success" "Profile updated!")
+            in
+            ( { newModel | avatarChanged = False }, newCmd, NoUpdate )
+
+        Failure err ->
+            handleLogoutErrors model sharedState
+                (\e ->
+                    (let
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to update profile!")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                    )
+                ) err
+
+        _ ->
+            (model, Cmd.none, NoUpdate)
 
 
 view : SharedState -> Model -> Html Msg
@@ -267,10 +370,17 @@ viewForm sharedState model =
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
             [ button 
-                [ Styles.buttonGreenStyle
-                , classes [ TC.w_100 ]
-                , onClick Save
-                ] [ text "Save"]
+                (   
+                    [ classes [ TC.w_100 ]
+                    ] 
+                ++ 
+                    (if model.accountDataChanged || model.userDataChanged || model.avatarChanged then
+                        [ Styles.buttonGreenStyle
+                        , onClick Save ]
+                    else
+                        [ Styles.buttonDisabled ]
+                    )
+                ) [ text "Save"]
             ]
         , h2
             [ Styles.sectionStyle
@@ -282,7 +392,7 @@ viewForm sharedState model =
                 [ button 
                     [ Styles.buttonRedStyle
                     , classes [ TC.w_100 ]
-                    , onClick Save
+                    , onClick RequestAccountDelete
                     ] [ text "Delete"]
                 ]
             ]
@@ -530,3 +640,8 @@ hijackOn event decoder =
 hijack : msg -> (msg, Bool)
 hijack msg =
   (msg, True)
+
+
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
