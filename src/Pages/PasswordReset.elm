@@ -1,8 +1,7 @@
-module Pages.Login exposing (Model, Msg(..), init, update, view)
+module Pages.PasswordReset exposing (Model, Msg(..), init, update, view)
 
-import Api.Data.Account exposing (Account)
-import Api.Data.Role exposing (Role)
-import Api.Request.Auth exposing (sessionPost)
+import Api.Request.Auth exposing (updatePasswordPost)
+import Api.Data.UpdatePassword exposing (UpdatePassword)
 import Browser.Navigation exposing (pushUrl)
 import Components.Toasty
 import Decoders
@@ -27,21 +26,21 @@ import Validate exposing (Validator, ifBlank, validate)
 
 type alias Model =
     { email : String
-    , plain_password : String
-    , loginProgress : WebData Role
+    , token : String
+    , password : String
+    , passwordRepeat : String
     , errors : List Error
-    , spinner : Spinner.Model
     , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { email = ""
-      , plain_password = ""
-      , loginProgress = NotAsked
+init : String -> String -> ( Model, Cmd Msg )
+init email token =
+    ( { email = email
+      , token = token
+      , password = ""
+      , passwordRepeat = ""
       , errors = []
-      , spinner = Spinner.init
       , toasties = Toasty.initialState
       }
     , Cmd.none
@@ -51,10 +50,9 @@ init =
 type Msg
     = NavigateTo Route
     | SetField Field String
-    | Login
-    | LoginResponse (WebData Role)
+    | SetPassword
+    | SetPasswordResponse (WebData ())
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
-    | SpinnerMsg Spinner.Msg
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -66,50 +64,28 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
-        Login ->
+        SetPassword ->
             case validate modelValidator model of
                 Err errors ->
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    let
-                        account =
-                            { email = model.email, plain_password = model.plain_password }
-                    in
-                    ( { model | loginProgress = Loading, errors = [] }, sessionPost account LoginResponse, NoUpdate )
+                    ( { model | errors = [] }, updatePasswordPost (modelToUpdatePassword model) SetPasswordResponse, NoUpdate)
 
         -- TODO: Start the web request here.
-        LoginResponse (RemoteData.Failure err) ->
+        SetPasswordResponse (Success _ ) ->
+            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+
+        SetPasswordResponse (Failure err) ->
             let
-                errorString =
-                    case err of
-                        Http.BadStatus 400 ->
-                            "Wrong Password or Username!"
-
-                        Http.BadStatus 422 ->
-                            "Your email is not confirmed!"
-
-                        _ ->
-                            "Something went wrong"
-
                 ( newModel, newCmd ) =
-                    ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
-                        |> addToast (Components.Toasty.Error "Error" errorString)
+                    ( model, Cmd.none )
+                        |> addToast (Components.Toasty.Error "Error" "There was a problem changing your password.")
             in
             ( newModel, newCmd, NoUpdate )
-
-        LoginResponse (RemoteData.Success role) ->
-            ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRoleAndMail role model.email )
-
-        LoginResponse _ ->
-            ( model, Cmd.none, NoUpdate )
-
-        SpinnerMsg spinmsg ->
-            let
-                spinnerModel =
-                    Spinner.update spinmsg model.spinner
-            in
-            ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
+    
+        SetPasswordResponse response ->
+            (model, Cmd.none, NoUpdate)
 
         ToastyMsg subMsg ->
             let
@@ -119,11 +95,12 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
 
-type alias LoginBody =
-    { email : String
-    , plain_password : String
+modelToUpdatePassword : Model -> UpdatePassword 
+modelToUpdatePassword model =
+    { email = model.email
+    , resetPasswordToken = model.token
+    , password = model.password
     }
-
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -168,7 +145,7 @@ view sharedState model =
                     , TC.pa4
                     , TC.black_40
                     ]
-                , onSubmit Login
+                , onSubmit SetPassword
                 ]
                 [ fieldset
                     [ classes
@@ -183,69 +160,27 @@ view sharedState model =
                             ]
                         , Styles.headerStyle
                         ]
-                        [ text (t "page-title-login") ]
+                        [ text (t "page-title-reset") ]
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement "Email address" "Email" "email" Email model.email model.errors
-                    , div [ classes [ TC.mt3 ] ] <|
-                        inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
-                    , viewLoginButtonOrSpinner model.loginProgress model
+                        inputElement "Password" "Password" "password" Password model.password model.errors
+                    , div [ classes [ TC.mt4 ] ] <|
+                        inputElement "Password repeat" "Password" "password" PasswordRepeat model.passwordRepeat model.errors
+                    , button
+                        [ Styles.buttonGreyStyle
+                        , classes [ TC.mt4, TC.w_100 ]
+                        , onClick SetPassword
+                        ]
+                        [ text "Change Password" ]
                     ]
                 , div [ classes [ TC.mt3 ] ]
                     [ button 
-                        [ onClick <| NavigateTo RequestPasswordResetRoute
-                        , Styles.linkGreyStyle ] [ text "Passwort vergessen?" ] -- TODO: Create password reset page
-                    , button 
-                        [ onClick <| NavigateTo RegistrationRoute
-                        , Styles.linkGreyStyle ] [ text "Registrieren" ]
+                        [ Styles.linkGreyStyle
+                        , onClick <| NavigateTo LoginRoute ] [ text "Ich erinnere mich doch" ]
                     ]
                 ]
             ]
-        ]
-
-
-viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg
-viewLoginButtonOrSpinner status model =
-    case status of
-        RemoteData.Loading ->
-            div
-                [ classes
-                    [ TC.dib
-                    , TC.relative
-                    , TC.w_100
-                    , TC.mt5
-                    , TC.mb3
-                    ]
-                ]
-                [ Spinner.view Styles.spinnerRedStyle model.spinner ]
-
-        _ ->
-            button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.mt4, TC.w_100 ]
-                , onClick Login
-                ]
-                [ text "Anmelden" ]
-
-
-viewLoginError : String -> Html Msg
-viewLoginError error =
-    div
-        [ classes
-            [ TC.items_center
-            , TC.justify_center
-            , TC.w_100
-            , TC.bg_red
-            , TC.white
-            , TC.flex
-            , TC.pa4
-            , TC.absolute
-            ]
-        , Styles.textStyle
-        ]
-        [ img [ src "/assets/alert-circle.svg", classes [ TC.w2, TC.mr3 ] ] []
-        , text error
         ]
 
 
@@ -279,18 +214,18 @@ viewFormErrors field errors =
 
 
 type Field
-    = Email
-    | Password
+    = Password
+    | PasswordRepeat
 
 
 setField : Model -> Field -> String -> Model
 setField model field value =
     case field of
-        Email ->
-            { model | email = value }
-
         Password ->
-            { model | plain_password = value }
+            { model | password = value }
+
+        PasswordRepeat ->
+            { model | passwordRepeat = value }
 
 
 type alias Error =
@@ -300,10 +235,13 @@ type alias Error =
 modelValidator : Validator Error Model
 modelValidator =
     Validate.all
-        [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
-        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
+        [ Validate.firstError
+            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
+            , Validate.ifTrue (\model -> (String.length model.password) < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein.")
+            , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
+            , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
+            ]
         ]
-
 
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =

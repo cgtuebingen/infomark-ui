@@ -416,6 +416,7 @@ modelValidator =
             ]
         , Validate.firstError
             [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
+            , Validate.ifTrue (\model -> (String.length model.password) < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein.")
             , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
             , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
             ]

@@ -21,6 +21,8 @@ type Route
     | AdminRoute
     | ProfileEditorRoute
     | MailConfirmationRoute String String
+    | RequestPasswordResetRoute
+    | PasswordResetRoute String String
     | NotFoundRoute
 
 
@@ -77,6 +79,12 @@ reverseRoute route =
                 MailConfirmationRoute mail token ->
                     [ "confirmation", mail, token ]
 
+                RequestPasswordResetRoute ->
+                    [ "request_reset" ]
+
+                PasswordResetRoute mail token ->
+                    [ "password_reset", mail, token ]
+
                 _ ->
                     []
     in
@@ -101,6 +109,8 @@ routeParser =
         , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")
         , Url.Parser.map MailConfirmationRoute (Url.Parser.s "confirmation" </> Url.Parser.string </> Url.Parser.string)
+        , Url.Parser.map RequestPasswordResetRoute (Url.Parser.s "request_reset")
+        , Url.Parser.map PasswordResetRoute (Url.Parser.s "password_reset" </> Url.Parser.string </> Url.Parser.string)
         ]
 
 

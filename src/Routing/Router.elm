@@ -27,6 +27,8 @@ import Pages.SubmissionGradingEditor as SubmissionGradingEditor
 import Pages.TaskEditor as TaskEditor
 import Pages.ProfileEditor as ProfileEditor
 import Pages.MailConfirmation as MailConfirmation
+import Pages.RequestPasswordReset as RequestPasswordReset
+import Pages.PasswordReset as PasswordReset
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -65,6 +67,8 @@ type CurrentModel
     | TaskEditorModel TaskEditor.Model
     | ProfileEditorModel ProfileEditor.Model
     | MailConfirmationModel MailConfirmation.Model
+    | RequestPasswordResetModel RequestPasswordReset.Model
+    | PasswordResetModel PasswordReset.Model
     | NotFound
 
 
@@ -94,6 +98,8 @@ type Msg
     | TaskEditorMsg TaskEditor.Msg
     | ProfileEditorMsg ProfileEditor.Msg
     | MailConfirmationMsg MailConfirmation.Msg
+    | RequestPasswordResetMsg RequestPasswordReset.Msg
+    | PasswordResetMsg PasswordReset.Msg
     | NoOp
 
 
@@ -226,6 +232,14 @@ update sharedState msg model =
             MailConfirmation.update sharedState mailConfirmationMsg mailConfirmation
                 |> updateWith MailConfirmationModel MailConfirmationMsg model
 
+        ( RequestPasswordResetMsg requestPasswordResetMsg, RequestPasswordResetModel requestPasswordReset ) ->
+            RequestPasswordReset.update sharedState requestPasswordResetMsg requestPasswordReset
+                |> updateWith RequestPasswordResetModel RequestPasswordResetMsg model
+
+        ( PasswordResetMsg passwordResetMsg, PasswordResetModel passwordReset ) ->
+            PasswordReset.update sharedState passwordResetMsg passwordReset
+                |> updateWith PasswordResetModel PasswordResetMsg model
+
         ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
@@ -320,6 +334,12 @@ navigateTo route model =
         MailConfirmationRoute mail token ->
             MailConfirmation.init mail token |> initWith MailConfirmationModel MailConfirmationMsg model NoUpdate
 
+        RequestPasswordResetRoute ->
+            RequestPasswordReset.init |> initWith RequestPasswordResetModel RequestPasswordResetMsg model NoUpdate
+
+        PasswordResetRoute mail token ->
+            PasswordReset.init mail token |> initWith PasswordResetModel PasswordResetMsg model NoUpdate
+
         NotFoundRoute ->
             ( { model | currentModel = NotFound }
             , Cmd.none
@@ -383,6 +403,12 @@ view msgMapper sharedState model =
                 MailConfirmationRoute _ _ ->
                     "page-title-confirm"
 
+                RequestPasswordResetRoute ->
+                    "page-title-reset"
+
+                PasswordResetRoute _ _ ->
+                    "page-title-reset"
+
                 NotFoundRoute ->
                     "page-title-404"
 
@@ -398,6 +424,12 @@ view msgMapper sharedState model =
                     noTabPage sharedState model
 
                 MailConfirmationRoute _ _ ->
+                    noTabPage sharedState model
+
+                RequestPasswordResetRoute ->
+                    noTabPage sharedState model
+
+                PasswordResetRoute _ _ ->
                     noTabPage sharedState model
 
                 _ ->
@@ -669,6 +701,14 @@ pageView sharedState model =
         MailConfirmationModel mailConfirmation ->
             MailConfirmation.view sharedState mailConfirmation
                 |> Html.map MailConfirmationMsg
+
+        RequestPasswordResetModel requestPasswordReset ->
+            RequestPasswordReset.view sharedState requestPasswordReset
+                |> Html.map RequestPasswordResetMsg
+
+        PasswordResetModel passwordReset ->
+            PasswordReset.view sharedState passwordReset
+                |> Html.map PasswordResetMsg
 
         NotFound ->
             div

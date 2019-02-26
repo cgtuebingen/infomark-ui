@@ -13,7 +13,7 @@ module Api.Endpoint exposing
     , courses
     , groups
     , groupsEnrollment
-    , passwordResetSet
+    , updatePassword
     , requestPasswordReset
     , sessions
     , unwrap
@@ -63,8 +63,8 @@ requestPasswordReset =
     url [ "auth", "request_password_reset" ] []
 
 
-passwordResetSet : Endpoint
-passwordResetSet =
+updatePassword : Endpoint
+updatePassword =
     url [ "auth", "update_password" ] []
 
 

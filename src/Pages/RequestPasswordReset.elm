@@ -1,8 +1,6 @@
-module Pages.Login exposing (Model, Msg(..), init, update, view)
+module Pages.RequestPasswordReset exposing (Model, Msg(..), init, update, view)
 
-import Api.Data.Account exposing (Account)
-import Api.Data.Role exposing (Role)
-import Api.Request.Auth exposing (sessionPost)
+import Api.Request.Auth exposing (requestPasswordResetPost)
 import Browser.Navigation exposing (pushUrl)
 import Components.Toasty
 import Decoders
@@ -27,10 +25,7 @@ import Validate exposing (Validator, ifBlank, validate)
 
 type alias Model =
     { email : String
-    , plain_password : String
-    , loginProgress : WebData Role
     , errors : List Error
-    , spinner : Spinner.Model
     , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
@@ -38,10 +33,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { email = ""
-      , plain_password = ""
-      , loginProgress = NotAsked
       , errors = []
-      , spinner = Spinner.init
       , toasties = Toasty.initialState
       }
     , Cmd.none
@@ -51,10 +43,9 @@ init =
 type Msg
     = NavigateTo Route
     | SetField Field String
-    | Login
-    | LoginResponse (WebData Role)
+    | RequestReset
+    | RequestResetResponse (WebData ())
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
-    | SpinnerMsg Spinner.Msg
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -66,50 +57,28 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
-        Login ->
+        RequestReset ->
             case validate modelValidator model of
                 Err errors ->
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    let
-                        account =
-                            { email = model.email, plain_password = model.plain_password }
-                    in
-                    ( { model | loginProgress = Loading, errors = [] }, sessionPost account LoginResponse, NoUpdate )
+                    ( { model | errors = [] }, requestPasswordResetPost model.email RequestResetResponse, NoUpdate)
 
         -- TODO: Start the web request here.
-        LoginResponse (RemoteData.Failure err) ->
+        RequestResetResponse (Success _ ) ->
+            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+
+        RequestResetResponse (Failure err) ->
             let
-                errorString =
-                    case err of
-                        Http.BadStatus 400 ->
-                            "Wrong Password or Username!"
-
-                        Http.BadStatus 422 ->
-                            "Your email is not confirmed!"
-
-                        _ ->
-                            "Something went wrong"
-
                 ( newModel, newCmd ) =
-                    ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
-                        |> addToast (Components.Toasty.Error "Error" errorString)
+                    ( model, Cmd.none )
+                        |> addToast (Components.Toasty.Error "Error" "There was a problem requesting your password reset.")
             in
             ( newModel, newCmd, NoUpdate )
-
-        LoginResponse (RemoteData.Success role) ->
-            ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRoleAndMail role model.email )
-
-        LoginResponse _ ->
-            ( model, Cmd.none, NoUpdate )
-
-        SpinnerMsg spinmsg ->
-            let
-                spinnerModel =
-                    Spinner.update spinmsg model.spinner
-            in
-            ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
+    
+        RequestResetResponse response ->
+            (model, Cmd.none, NoUpdate)
 
         ToastyMsg subMsg ->
             let
@@ -117,12 +86,6 @@ update sharedState msg model =
                     Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
             ( newModel, newCmd, NoUpdate )
-
-
-type alias LoginBody =
-    { email : String
-    , plain_password : String
-    }
 
 
 view : SharedState -> Model -> Html Msg
@@ -168,7 +131,7 @@ view sharedState model =
                     , TC.pa4
                     , TC.black_40
                     ]
-                , onSubmit Login
+                , onSubmit RequestReset
                 ]
                 [ fieldset
                     [ classes
@@ -183,69 +146,25 @@ view sharedState model =
                             ]
                         , Styles.headerStyle
                         ]
-                        [ text (t "page-title-login") ]
+                        [ text (t "page-title-reset") ]
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
                         inputElement "Email address" "Email" "email" Email model.email model.errors
-                    , div [ classes [ TC.mt3 ] ] <|
-                        inputElement "Passwort" "Password" "password" Password model.plain_password model.errors
-                    , viewLoginButtonOrSpinner model.loginProgress model
+                    , button
+                        [ Styles.buttonGreyStyle
+                        , classes [ TC.mt4, TC.w_100 ]
+                        , onClick RequestReset
+                        ]
+                        [ text "Reset" ]
                     ]
                 , div [ classes [ TC.mt3 ] ]
                     [ button 
-                        [ onClick <| NavigateTo RequestPasswordResetRoute
-                        , Styles.linkGreyStyle ] [ text "Passwort vergessen?" ] -- TODO: Create password reset page
-                    , button 
-                        [ onClick <| NavigateTo RegistrationRoute
-                        , Styles.linkGreyStyle ] [ text "Registrieren" ]
+                        [ Styles.linkGreyStyle
+                        , onClick <| NavigateTo LoginRoute ] [ text "Ich erinnere mich doch" ]
                     ]
                 ]
             ]
-        ]
-
-
-viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg
-viewLoginButtonOrSpinner status model =
-    case status of
-        RemoteData.Loading ->
-            div
-                [ classes
-                    [ TC.dib
-                    , TC.relative
-                    , TC.w_100
-                    , TC.mt5
-                    , TC.mb3
-                    ]
-                ]
-                [ Spinner.view Styles.spinnerRedStyle model.spinner ]
-
-        _ ->
-            button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.mt4, TC.w_100 ]
-                , onClick Login
-                ]
-                [ text "Anmelden" ]
-
-
-viewLoginError : String -> Html Msg
-viewLoginError error =
-    div
-        [ classes
-            [ TC.items_center
-            , TC.justify_center
-            , TC.w_100
-            , TC.bg_red
-            , TC.white
-            , TC.flex
-            , TC.pa4
-            , TC.absolute
-            ]
-        , Styles.textStyle
-        ]
-        [ img [ src "/assets/alert-circle.svg", classes [ TC.w2, TC.mr3 ] ] []
-        , text error
         ]
 
 
@@ -280,7 +199,6 @@ viewFormErrors field errors =
 
 type Field
     = Email
-    | Password
 
 
 setField : Model -> Field -> String -> Model
@@ -288,9 +206,6 @@ setField model field value =
     case field of
         Email ->
             { model | email = value }
-
-        Password ->
-            { model | plain_password = value }
 
 
 type alias Error =
@@ -301,7 +216,6 @@ modelValidator : Validator Error Model
 modelValidator =
     Validate.all
         [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
-        , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
         ]
 
 
