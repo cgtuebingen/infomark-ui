@@ -44,6 +44,7 @@ import Components.Dropdown as Dropdown exposing (ToggleEvent(..), drawer, dropdo
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
+import Html.Events.Extra exposing (onEnter)
 import Http
 import I18n
 import Markdown as MD
@@ -57,17 +58,12 @@ import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 
 
-type Field
-    = EnrollmentSearchField
-    | GroupSearchField
-
-
 type Msg
     = NavigateTo Route
     | CourseResponse (WebData Course) -- Get basic information about the course
     | CourseRoleResponse (WebData (List AccountEnrollment)) -- Used to determine the course role
     | EnrollmentsResponse (WebData (List UserEnrollment)) -- List all enrollments in the course. Only used for students and tutors
-    | SearchUserForEnrollmentResponse (WebData UserEnrollment) -- Search for a specific user to change the enrollment
+    | SearchUserForEnrollmentResponse (WebData (List UserEnrollment)) -- Search for a specific user to change the enrollment
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
     | GroupsListResponse (WebData (List Group)) -- List all groups. Only visible for unenrolled students/tutors and admins
     | GroupDisplayResponse (WebData Group) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
@@ -88,7 +84,7 @@ type alias Model =
     , courseRequest : WebData Course
     , courseRoleRequest : WebData (List AccountEnrollment)
     , enrollmentsRequest : WebData (List UserEnrollment)
-    , searchUserForEnrollmentRequest : WebData UserEnrollment
+    , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
     , groupsRequest : WebData (List Group)
     , groupRequest : WebData Group
@@ -186,6 +182,15 @@ update sharedState msg model =
                 Nothing ->
                     -- Whoops. The user is not enrolled in the course. Navigate back to the courses page
                     ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), NoUpdate )
+
+        SearchUserForEnrollment ->
+            ( { model | searchUserForEnrollmentRequest = Loading }, CoursesRequests.coursesEnrollmentGetByEmail model.courseId model.searchEnrollmentInput SearchUserForEnrollmentResponse, NoUpdate )
+
+        SearchUserForEnrollmentResponse response ->
+            ( { model | searchUserForEnrollmentRequest = response }, Cmd.none, NoUpdate )
+
+        SetField field value ->
+            ( setField model field value, Cmd.none, NoUpdate )
 
         _ ->
             ( model, Cmd.none, NoUpdate )
@@ -318,7 +323,7 @@ viewMemberSearch sharedState model =
         displaySearchResults =
             case model.searchUserForEnrollmentRequest of
                 Success userEnrollment ->
-                    viewUserSearchResult model userEnrollment
+                    viewUserSearchResult model <| List.head userEnrollment
 
                 _ ->
                     text ""
@@ -335,6 +340,7 @@ viewMemberSearch sharedState model =
                 , type_ "email"
                 , placeholder "E-Mail"
                 , onInput <| SetField EnrollmentSearchField
+                , onEnter SearchUserForEnrollment
                 , classes [ TC.measure, TC.w_90 ]
                 ]
                 []
@@ -342,6 +348,7 @@ viewMemberSearch sharedState model =
                 [ type_ "image"
                 , src "assets/magnify.svg"
                 , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                , onClick SearchUserForEnrollment
                 ]
                 []
             ]
@@ -350,97 +357,104 @@ viewMemberSearch sharedState model =
     ]
 
 
-viewUserSearchResult : Model -> UserEnrollment -> Html Msg
-viewUserSearchResult model userEnrollment =
-    let
-        user =
-            userEnrollment.user
+viewUserSearchResult : Model -> Maybe UserEnrollment -> Html Msg
+viewUserSearchResult model maybeUserEnrollment =
+    case maybeUserEnrollment of
+        Just userEnrollment ->
+            (let
+                user =
+                    userEnrollment.user
 
-        avatar =
-            case user.avatarUrl of
-                Just avatarUrl ->
-                    avatarUrl
+                avatar =
+                    case user.avatarUrl of
+                        Just avatarUrl ->
+                            avatarUrl
 
-                Nothing ->
-                    "assets/defaultAvatar.png"
+                        Nothing ->
+                            "assets/defaultAvatar.png"
 
-        currentRoleString =
-            case userEnrollment.role of
-                Student ->
-                    "Student"
+                currentRoleString =
+                    case userEnrollment.role of
+                        Student ->
+                            "Student"
 
-                Tutor ->
-                    "Tutor"
+                        Tutor ->
+                            "Tutor"
 
-                Admin ->
-                    "Admin"
-    in
-    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ] ]
-        [ img
-            [ src avatar
-            , classes
-                [ TC.br_100
-                , TC.ba
-                , TC.b__black_10
-                , TC.shadow_5_ns
-                , TC.h3_ns
-                , TC.h2
-                , TC.w3_ns
-                , TC.w2
-                ]
-            ]
-            []
-        , div [ classes [ TC.ph3 ] ]
-            [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
-            , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
-            ]
-        , div [ classes [ TC.ml4, TC.w4 ] ]
-            [ dropdown
-                div
-                []
-                [ toggle
-                    button
-                    [ classes [ TC.w4, TC.tc, TC.button_reset, TC.bg_white ]
-                    , Styles.lineInputStyle
-                    , Styles.labelStyle
-                    ]
-                    [ text currentRoleString ]
-                , drawer div
-                    []
-                  <|
-                    List.map
-                        (\( role, label ) ->
-                            button
-                                [ onClick <| ChangeEnrollment { userEnrollment | role = role }
-                                , classes
-                                    [ TC.w_100
-                                    , TC.bl_0
-                                    , TC.br_0
-                                    , TC.bb_0
-                                    , TC.bt
-                                    , TC.b__black_20
-                                    , TC.tc
-                                    , TC.button_reset
-                                    , TC.bg_near_white
-                                    , TC.ph2
-                                    , TC.pv3
-                                    , TC.grow
-                                    , TC.pointer
-                                    , TC.shadow_5
-                                    ]
-                                , Styles.textStyle
-                                ]
-                                [ text label ]
-                        )
-                        [ ( Student, "Student" )
-                        , ( Tutor, "Tutor" )
-                        , ( Admin, "Admin" )
+                        Admin ->
+                            "Admin"
+            in
+            div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ] ]
+                [ img
+                    [ src avatar
+                    , classes
+                        [ TC.br_100
+                        , TC.ba
+                        , TC.b__black_10
+                        , TC.shadow_5_ns
+                        , TC.h3_ns
+                        , TC.h2
+                        , TC.w3_ns
+                        , TC.w2
                         ]
-                ]
-                model.roleDropdown
-                roleDropdownConfig
-            ]
-        ]
+                    ]
+                    []
+                , div [ classes [ TC.ph3 ] ]
+                    [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
+                    , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
+                    ]
+                , div [ classes [ TC.ml4, TC.w4 ] ]
+                    [ dropdown
+                        div
+                        []
+                        [ toggle
+                            button
+                            [ classes [ TC.w4, TC.tc, TC.button_reset, TC.bg_white ]
+                            , Styles.lineInputStyle
+                            , Styles.labelStyle
+                            ]
+                            [ text currentRoleString ]
+                        , drawer div
+                            []
+                        <|
+                            List.map
+                                (\( role, label ) ->
+                                    button
+                                        [ onClick <| ChangeEnrollment { userEnrollment | role = role }
+                                        , classes
+                                            [ TC.w_100
+                                            , TC.bl_0
+                                            , TC.br_0
+                                            , TC.bb_0
+                                            , TC.bt
+                                            , TC.b__black_20
+                                            , TC.tc
+                                            , TC.button_reset
+                                            , TC.bg_near_white
+                                            , TC.ph2
+                                            , TC.pv3
+                                            , TC.grow
+                                            , TC.pointer
+                                            , TC.shadow_5
+                                            ]
+                                        , Styles.textStyle
+                                        ]
+                                        [ text label ]
+                                )
+                                [ ( Student, "Student" )
+                                , ( Tutor, "Tutor" )
+                                , ( Admin, "Admin" )
+                                ]
+                        ]
+                        model.roleDropdown
+                        roleDropdownConfig
+                    ]
+                ])
+
+        Nothing ->
+            h2 
+                [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ]
+                , Styles.listHeadingStyle ] [text "Not found"]
 
 
 viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> List (Html Msg)
@@ -494,3 +508,18 @@ roleDropdownConfig =
         OnClick
         (class "visible")
         ToggleRoleDropdown
+
+
+type Field
+    = EnrollmentSearchField
+    | GroupSearchField
+
+
+setField : Model -> Field -> String -> Model
+setField model field value = 
+    case field of
+        EnrollmentSearchField ->
+            { model | searchEnrollmentInput = value }
+
+        GroupSearchField ->
+            { model | searchGroupInput = value }

@@ -8,6 +8,7 @@ module Api.Request.Courses exposing
     , coursesEnrollmentDelete
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
+    , coursesEnrollmentGetByEmail
     , coursesEnrollmentGetTeam
     , coursesEnrollmentPost
     , coursesGet
@@ -91,6 +92,15 @@ coursesEnrollmentGetTeam courseId msg =
 
         params =
             [ Url.Builder.string "roles" roles ]
+    in
+    coursesEnrollmentGet courseId params msg
+
+
+coursesEnrollmentGetByEmail : Int -> String -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+coursesEnrollmentGetByEmail courseId emailToSearch msg =
+    let
+        params =
+            [ Url.Builder.string "email" emailToSearch ]
     in
     coursesEnrollmentGet courseId params msg
 
