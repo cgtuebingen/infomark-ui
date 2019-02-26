@@ -1,33 +1,61 @@
-pipeline:
-  restore-cache:
-    image: drillster/drone-volume-cache
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: restore-cache
+  pull: default
+  image: drillster/drone-volume-cache
+  settings:
+    mount:
+    - ./node_modules
     restore: true
+  volumes:
+  - name: 2f746d702f6361636865
+    path: /cache
+
+- name: install
+  pull: default
+  image: node:8.6.0
+  commands:
+  - node -v
+  - npm -v
+  - npm install elm
+
+- name: build
+  pull: default
+  image: node:8.6.0
+  commands:
+  - node_modules/elm/bin/elm make src/Main.elm --output=elm.js
+
+- name: test
+  pull: default
+  image: node:8.6.0
+  commands:
+  - "echo \"none\""
+
+- name: rebuild-cache
+  pull: default
+  image: drillster/drone-volume-cache
+  settings:
     mount:
-      - ./node_modules
-    volumes:
-      - /tmp/cache:/cache
-
-  install:
-    image: node:8.6.0
-    commands:
-      - node -v
-      - npm -v
-      - npm install elm
-
-  build:
-    image: node:8.6.0
-    commands:
-      - node_modules/elm/bin/elm make src/Main.elm --output=elm.js
-
-  test:
-    image: node:8.6.0
-    commands:
-      - echo "none"
-
-  rebuild-cache:
-    image: drillster/drone-volume-cache
+    - ./node_modules
     rebuild: true
-    mount:
-      - ./node_modules
-    volumes:
-      - /tmp/cache:/cache
+  volumes:
+  - name: 2f746d702f6361636865
+    path: /cache
+
+volumes:
+- name: 2f746d702f6361636865
+  host:
+    path: /tmp/cache
+
+---
+kind: signature
+hmac: 85edb8ff73e5b9f41a0fbe860da66abded93f1c6cd70f1ed6f8eb2e525286058
+
+...
