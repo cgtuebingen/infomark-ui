@@ -20,6 +20,7 @@ type Route
     | SubmissionGradingRoute Int Int
     | AdminRoute
     | ProfileEditorRoute
+    | MailConfirmationRoute String String
     | NotFoundRoute
 
 
@@ -73,6 +74,9 @@ reverseRoute route =
                 ProfileEditorRoute ->
                     [ "profile" ]
 
+                MailConfirmationRoute mail token ->
+                    [ "confirmation", mail, token ]
+
                 _ ->
                     []
     in
@@ -96,6 +100,7 @@ routeParser =
         , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")
+        , Url.Parser.map MailConfirmationRoute (Url.Parser.s "confirmation" </> Url.Parser.string </> Url.Parser.string)
         ]
 
 

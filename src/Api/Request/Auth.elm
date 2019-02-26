@@ -1,11 +1,12 @@
-module Api.Request.Auth exposing (sessionDelete, sessionPost)
+module Api.Request.Auth exposing (confirmMailPost, sessionDelete, sessionPost)
 
 --import Api.Helper exposing (..)
 
 import Api.Data.Account as Account exposing (Account)
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.Role as Role exposing (Role)
-import Api.Endpoint exposing (sessions, unwrap)
+import Api.Data.MailConfirmation as MailConfirmation exposing (MailConfirmation)
+import Api.Endpoint exposing (confirmEmail, sessions, unwrap)
 import Api.Helper exposing (..)
 import Decoders
 import Dict
@@ -27,4 +28,10 @@ sessionPost account msg =
 sessionDelete : (WebData () -> msg) -> Cmd msg
 sessionDelete msg =
     deleteExpectNothing (unwrap sessions)
+        msg
+
+confirmMailPost : MailConfirmation -> (WebData () -> msg) -> Cmd msg
+confirmMailPost confirmation msg =
+    postExpectNothing (unwrap confirmEmail)
+        (Http.jsonBody <| MailConfirmation.encoder confirmation)
         msg

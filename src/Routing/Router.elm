@@ -26,6 +26,7 @@ import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
 import Pages.TaskEditor as TaskEditor
 import Pages.ProfileEditor as ProfileEditor
+import Pages.MailConfirmation as MailConfirmation
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -63,6 +64,7 @@ type CurrentModel
     | SubmissionGradingEditorModel SubmissionGradingEditor.Model
     | TaskEditorModel TaskEditor.Model
     | ProfileEditorModel ProfileEditor.Model
+    | MailConfirmationModel MailConfirmation.Model
     | NotFound
 
 
@@ -91,6 +93,7 @@ type Msg
     | SubmissionGradingEditorMsg SubmissionGradingEditor.Msg
     | TaskEditorMsg TaskEditor.Msg
     | ProfileEditorMsg ProfileEditor.Msg
+    | MailConfirmationMsg MailConfirmation.Msg
     | NoOp
 
 
@@ -219,6 +222,10 @@ update sharedState msg model =
             ProfileEditor.update sharedState profileEditorMsg profileEditor
                 |> updateWith ProfileEditorModel ProfileEditorMsg model
 
+        ( MailConfirmationMsg mailConfirmationMsg, MailConfirmationModel mailConfirmation ) ->
+            MailConfirmation.update sharedState mailConfirmationMsg mailConfirmation
+                |> updateWith MailConfirmationModel MailConfirmationMsg model
+
         ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
@@ -310,6 +317,9 @@ navigateTo route model =
         ProfileEditorRoute ->
             ProfileEditor.init |> initWith ProfileEditorModel ProfileEditorMsg model NoUpdate
 
+        MailConfirmationRoute mail token ->
+            MailConfirmation.init mail token |> initWith MailConfirmationModel MailConfirmationMsg model NoUpdate
+
         NotFoundRoute ->
             ( { model | currentModel = NotFound }
             , Cmd.none
@@ -370,6 +380,9 @@ view msgMapper sharedState model =
                 ProfileEditorRoute ->
                     "page-title-profile"
 
+                MailConfirmationRoute _ _ ->
+                    "page-title-confirm"
+
                 NotFoundRoute ->
                     "page-title-404"
 
@@ -382,6 +395,9 @@ view msgMapper sharedState model =
                     noTabPage sharedState model
 
                 NotFoundRoute ->
+                    noTabPage sharedState model
+
+                MailConfirmationRoute _ _ ->
                     noTabPage sharedState model
 
                 _ ->
@@ -649,6 +665,10 @@ pageView sharedState model =
         ProfileEditorModel profileEditor ->
             ProfileEditor.view sharedState profileEditor
                 |> Html.map ProfileEditorMsg
+
+        MailConfirmationModel mailConfirmation ->
+            MailConfirmation.view sharedState mailConfirmation
+                |> Html.map MailConfirmationMsg
 
         NotFound ->
             div
