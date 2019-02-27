@@ -7,6 +7,7 @@
     "dependencies": {
         "direct": {
             "CurrySoftware/elm-datepicker": "3.0.1",
+            "NoRedInk/datetimepicker-legacy": "1.0.1",
             "NoRedInk/elm-json-decode-pipeline": "1.0.0",
             "avh4/elm-color": "1.0.0",
             "damienklinnert/elm-spinner": "3.0.2",
@@ -35,8 +36,7 @@
             "rtfeldman/elm-iso8601-date-strings": "1.1.2",
             "rtfeldman/elm-validate": "4.0.1",
             "ryannhg/date-format": "2.3.0",
-            "simonh1000/elm-jwt": "7.0.0",
-            "stephenreddek/elm-time-picker": "1.0.3"
+            "simonh1000/elm-jwt": "7.0.0"
         },
         "indirect": {
             "Skinney/murmur3": "2.0.8",
