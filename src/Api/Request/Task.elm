@@ -1,13 +1,13 @@
 module Api.Request.Task exposing
     ( taskGet
-    , taskPut
-    , taskPublicFilesPost
     , taskPrivateFilesPost
+    , taskPublicFilesPost
+    , taskPut
     )
 
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.Task as Task exposing (Task)
-import Api.Endpoint exposing (task, taskPublicFiles, taskPrivateFiles, unwrap)
+import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, unwrap)
 import Api.Helper exposing (..)
 import Decoders
 import Dict
@@ -19,8 +19,8 @@ import RemoteData exposing (RemoteData(..), WebData)
 
 taskGet : Int -> (WebData Task -> msg) -> Cmd msg
 taskGet id msg =
-    get (unwrap <| task id) 
-        msg 
+    get (unwrap <| task id)
+        msg
         Task.decoder
 
 

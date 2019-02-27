@@ -16,6 +16,7 @@ import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.Dialog as Dialog
 import Components.Toasty
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -34,7 +35,6 @@ import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors)
-import Components.Dialog as Dialog
 
 
 type alias Model =
@@ -101,7 +101,10 @@ update sharedState msg model =
         RequestDisenroll course ->
             ( { model
                 | courseToDisenroll = Just course
-                , disenrollDialogState = True }, Cmd.none, NoUpdate
+                , disenrollDialogState = True
+              }
+            , Cmd.none
+            , NoUpdate
             )
 
         PerformDisenroll course ->
@@ -114,9 +117,13 @@ update sharedState msg model =
             updateHandleDisenroll sharedState model response
 
         RequestDelete course ->
-            ( { model 
+            ( { model
                 | courseToDelete = Just course
-                , deleteDialogState = True }, Cmd.none, NoUpdate)
+                , deleteDialogState = True
+              }
+            , Cmd.none
+            , NoUpdate
+            )
 
         PerformDelete course ->
             ( model, CoursesRequests.courseDelete course.id DeleteCourseResponse, NoUpdate )
@@ -132,22 +139,32 @@ update sharedState msg model =
 
         DeleteCourseDialogShown visible ->
             case visible of
-                False -> 
-                    ( { model 
+                False ->
+                    ( { model
                         | deleteDialogState = visible
-                        , courseToDelete = Nothing }, Cmd.none, NoUpdate )
+                        , courseToDelete = Nothing
+                      }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+
                 True ->
                     ( { model | deleteDialogState = visible }, Cmd.none, NoUpdate )
 
         DisenrollCourseDialogShown visible ->
             case visible of
-                False -> 
-                    ( { model 
+                False ->
+                    ( { model
                         | disenrollDialogState = visible
-                        , courseToDisenroll = Nothing }, Cmd.none, NoUpdate )
+                        , courseToDisenroll = Nothing
+                      }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+
                 True ->
                     ( { model | disenrollDialogState = visible }, Cmd.none, NoUpdate )
-            
+
         ToastyMsg subMsg ->
             let
                 ( newModel, newCmd ) =
@@ -166,8 +183,10 @@ updateHandleCourses sharedState model response =
             ( { model | courseRequest = response }, Cmd.none, NoUpdate )
 
         RemoteData.Failure err ->
-            handleLogoutErrors model sharedState
-                (\e -> -- Differentiate between errros
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
                     ( { model | courseRequest = response }, Cmd.none, NoUpdate )
                 )
                 err
@@ -183,8 +202,10 @@ updateHandleAccountEnrollments sharedState model response =
             ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
 
         RemoteData.Failure err ->
-            handleLogoutErrors model sharedState
-                (\e -> -- Differentiate between errros
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
                     ( { model | accountEnrollmentsRequest = response }, Cmd.none, NoUpdate )
                 )
                 err
@@ -207,18 +228,18 @@ updateHandleEnroll sharedState model response =
             ( newModel, newCmd, NoUpdate )
 
         RemoteData.Failure err ->
-            handleLogoutErrors model sharedState
-                (\e -> -- Differentiate between errros
-                    (let
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
+                    let
                         ( newModel, newCmd ) =
                             ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to enroll")
                     in
                     ( newModel, newCmd, NoUpdate )
-                    )
                 )
                 err
-            
 
         _ ->
             ( model, Cmd.none, NoUpdate )
@@ -230,10 +251,10 @@ updateHandleDisenroll sharedState model response =
         RemoteData.Success _ ->
             let
                 ( newModel, newCmd ) =
-                    ( { model 
+                    ( { model
                         | courseToDisenroll = Nothing
                         , disenrollDialogState = False
-                     }
+                      }
                     , AccountRequests.accountEnrollmentGet AccountEnrollmentsResponse
                     )
                         |> addToast (Components.Toasty.Success "Success" "You are now disenrolled")
@@ -241,15 +262,16 @@ updateHandleDisenroll sharedState model response =
             ( newModel, newCmd, NoUpdate )
 
         RemoteData.Failure err ->
-            handleLogoutErrors model sharedState
-                (\e -> -- Differentiate between errros
-                    (let
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
+                    let
                         ( newModel, newCmd ) =
                             ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to disenroll")
                     in
                     ( newModel, newCmd, NoUpdate )
-                    )
                 )
                 err
 
@@ -263,30 +285,35 @@ updateHandleDelete sharedState model response =
         RemoteData.Success _ ->
             let
                 ( newModel, newCmd ) =
-                    ( { model 
+                    ( { model
                         | courseToDelete = Nothing
-                        , deleteDialogState = False }
+                        , deleteDialogState = False
+                      }
                     , CoursesRequests.coursesGet CoursesResponse
                     )
-                        |> addToast (Components.Toasty.Success "Success" "You've deleted the course") --TODO this should be that easy. Add a modal dialog
+                        |> addToast (Components.Toasty.Success "Success" "You've deleted the course")
+
+                --TODO this should be that easy. Add a modal dialog
             in
             ( newModel, newCmd, NoUpdate )
 
         RemoteData.Failure err ->
-            handleLogoutErrors model sharedState
-                (\e -> -- Differentiate between errros
-                    (let
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
+                    let
                         ( newModel, newCmd ) =
                             ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" "Failed to delete")
                     in
                     ( newModel, newCmd, NoUpdate )
-                    )
                 )
                 err
 
         _ ->
             ( model, Cmd.none, NoUpdate )
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -409,7 +436,7 @@ viewDeleteCourseDialog sharedState model =
                         [ h1 [] [ text "Delete the course?" ] ]
                     , div
                         [ classes [ TC.w_100, TC.mt4 ] ]
-                        [ p [ Styles.textStyle ] [ text "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone."]
+                        [ p [ Styles.textStyle ] [ text "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone." ]
                         , div [ classes [ TC.fr, TC.mt3 ] ]
                             [ button
                                 [ classes
@@ -451,7 +478,7 @@ viewDisenrollCourseDialog sharedState model =
                         [ h1 [] [ text "Disenroll from course?" ] ]
                     , div
                         [ classes [ TC.w_100, TC.mt4 ] ]
-                        [ p [ Styles.textStyle ] [ text "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!"]
+                        [ p [ Styles.textStyle ] [ text "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!" ]
                         , div [ classes [ TC.fr, TC.mt3 ] ]
                             [ button
                                 [ classes
@@ -555,36 +582,42 @@ viewRenderCourse sharedState course enrollment =
                 )
                 showButtons
 
-        actionItems = 
-                (case enrollment of
-                    Nothing -> []
-
-                    Just _ -> [ ("assets/logout-variant.svg", RequestDisenroll course) ]
-                )
-            ++
-                (if sharedState.role == Just { root = True } then
-                    [ ("assets/pencil.svg", NavigateTo <| EditCourseRoute course.id)
-                    , ("assets/delete.svg", RequestDelete course)
-                    ]
-                else
+        actionItems =
+            (case enrollment of
+                Nothing ->
                     []
-                )
-        
+
+                Just _ ->
+                    [ ( "assets/logout-variant.svg", RequestDisenroll course ) ]
+            )
+                ++ (if sharedState.role == Just { root = True } then
+                        [ ( "assets/pencil.svg", NavigateTo <| EditCourseRoute course.id )
+                        , ( "assets/delete.svg", RequestDelete course )
+                        ]
+
+                    else
+                        []
+                   )
     in
     article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
         [ header [ classes [ TC.measure ] ]
-            [ div[ classes [TC.flex, TC.w_100, TC.justify_between, TC.items_center ] ] <|
+            [ div [ classes [ TC.flex, TC.w_100, TC.justify_between, TC.items_center ] ] <|
                 [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
-                ] ++ [div [] 
-                    (List.map (\(icon, msgAction) ->
-                        input 
-                            [ type_ "image"
-                            , src icon 
-                            , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                            , onClick msgAction
-                            ]
-                            []
-                    ) actionItems)]
+                ]
+                    ++ [ div []
+                            (List.map
+                                (\( icon, msgAction ) ->
+                                    input
+                                        [ type_ "image"
+                                        , src icon
+                                        , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                                        , onClick msgAction
+                                        ]
+                                        []
+                                )
+                                actionItems
+                            )
+                       ]
             , dl [ Styles.dateStyle ]
                 [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
                 , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]

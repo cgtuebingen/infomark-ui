@@ -1,7 +1,7 @@
 module Pages.PasswordReset exposing (Model, Msg(..), init, update, view)
 
-import Api.Request.Auth exposing (updatePasswordPost)
 import Api.Data.UpdatePassword exposing (UpdatePassword)
+import Api.Request.Auth exposing (updatePasswordPost)
 import Browser.Navigation exposing (pushUrl)
 import Components.Toasty
 import Decoders
@@ -70,10 +70,10 @@ update sharedState msg model =
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    ( { model | errors = [] }, updatePasswordPost (modelToUpdatePassword model) SetPasswordResponse, NoUpdate)
+                    ( { model | errors = [] }, updatePasswordPost (modelToUpdatePassword model) SetPasswordResponse, NoUpdate )
 
         -- TODO: Start the web request here.
-        SetPasswordResponse (Success _ ) ->
+        SetPasswordResponse (Success _) ->
             ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         SetPasswordResponse (Failure err) ->
@@ -83,9 +83,9 @@ update sharedState msg model =
                         |> addToast (Components.Toasty.Error "Error" "There was a problem changing your password.")
             in
             ( newModel, newCmd, NoUpdate )
-    
+
         SetPasswordResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         ToastyMsg subMsg ->
             let
@@ -95,12 +95,13 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
 
-modelToUpdatePassword : Model -> UpdatePassword 
+modelToUpdatePassword : Model -> UpdatePassword
 modelToUpdatePassword model =
     { email = model.email
     , resetPasswordToken = model.token
     , password = model.password
     }
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -175,9 +176,11 @@ view sharedState model =
                         [ text "Change Password" ]
                     ]
                 , div [ classes [ TC.mt3 ] ]
-                    [ button 
+                    [ button
                         [ Styles.linkGreyStyle
-                        , onClick <| NavigateTo LoginRoute ] [ text "Ich erinnere mich doch" ]
+                        , onClick <| NavigateTo LoginRoute
+                        ]
+                        [ text "Ich erinnere mich doch" ]
                     ]
                 ]
             ]
@@ -237,11 +240,12 @@ modelValidator =
     Validate.all
         [ Validate.firstError
             [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
-            , Validate.ifTrue (\model -> (String.length model.password) < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein.")
+            , Validate.ifTrue (\model -> String.length model.password < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein." )
             , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
             , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
             ]
         ]
+
 
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =

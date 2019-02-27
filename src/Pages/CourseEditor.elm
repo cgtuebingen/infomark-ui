@@ -7,7 +7,8 @@ module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update
 
 import Api.Data.Course as Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
-import Browser.Navigation exposing (pushUrl, back)
+import Browser.Navigation exposing (back, pushUrl)
+import Components.Toasty
 import Date exposing (Date, day, month, weekday, year)
 import DatePicker exposing (DateEvent(..), defaultSettings)
 import Html exposing (..)
@@ -21,12 +22,11 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time exposing (Posix)
+import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
-import Toasty
-import Components.Toasty
 import Utils.Utils exposing (handleLogoutErrors)
+import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
 
 
 type Msg
@@ -172,15 +172,18 @@ update sharedState msg model =
 
                 Ok _ ->
                     let
-                        body = fillRequestFromModel model
+                        body =
+                            fillRequestFromModel model
                     in
                     ( { model | errors = [] }
                     , case model.createCourse of
-                        True -> CoursesRequest.coursesPost body CourseCreateResponse
+                        True ->
+                            CoursesRequest.coursesPost body CourseCreateResponse
 
-                        False -> CoursesRequest.coursePut model.id body CourseEditResponse
-
-                    , NoUpdate )
+                        False ->
+                            CoursesRequest.coursePut model.id body CourseEditResponse
+                    , NoUpdate
+                    )
 
         CourseCreateResponse response ->
             updateHandleCreateOrEditResponse sharedState model response
@@ -235,16 +238,17 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
 
-
 updateHandleCreateOrEditResponse : SharedState -> Model -> WebData ret -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleCreateOrEditResponse sharedState model response =
     case response of
-        Success _ -> (model, back sharedState.navKey 1, NoUpdate)
+        Success _ ->
+            ( model, back sharedState.navKey 1, NoUpdate )
 
         Failure err ->
-            handleLogoutErrors model sharedState 
-                (\e -> 
-                    (let
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    let
                         errorString =
                             case e of
                                 Http.BadStatus 400 ->
@@ -252,23 +256,27 @@ updateHandleCreateOrEditResponse sharedState model response =
 
                                 Http.BadStatus 403 ->
                                     "You are not allowed to do this!"
-                                
+
                                 Http.BadBody message ->
                                     "Bad return: " ++ message
 
                                 _ ->
                                     "Something other went wrong"
+
                         ( newModel, newCmd ) =
                             ( model, Cmd.none )
                                 |> addToast (Components.Toasty.Error "Error" errorString)
                     in
-                    (newModel, newCmd, NoUpdate)
-                    )
+                    ( newModel, newCmd, NoUpdate )
                 )
                 err
-        
-        _ -> (model, Cmd.none, NoUpdate) -- TODO handle loading
-            
+
+        _ ->
+            ( model, Cmd.none, NoUpdate )
+
+
+
+-- TODO handle loading
 
 
 view : SharedState -> Model -> Html Msg
@@ -373,8 +381,11 @@ viewForm sharedState model =
             ]
             [ text <|
                 case model.createCourse of
-                    True -> "Erstellen"
-                    False -> "Bearbeiten"
+                    True ->
+                        "Erstellen"
+
+                    False ->
+                        "Bearbeiten"
             ]
 
         -- TODO check if edit or create AND use translations
@@ -394,6 +405,7 @@ viewRequiredPercentage model =
         showElement =
             if model.required_percentage == Nothing then
                 text ""
+
             else
                 input
                     [ type_ "number"
@@ -447,7 +459,8 @@ fillModelFromResponse sharedState course model =
         timezone =
             Maybe.withDefault Time.utc sharedState.timezone
 
-        _ = Debug.log "Course" course
+        _ =
+            Debug.log "Course" course
     in
     { model
         | courseName = course.name
@@ -457,17 +470,31 @@ fillModelFromResponse sharedState course model =
         , required_percentage = Maybe.map String.fromInt course.required_percentage
     }
 
+
 fillRequestFromModel : Model -> Course
 fillRequestFromModel model =
-    let -- Ugly as sin. Should never happen because we validate the model before
-        defaultPosix = Time.millisToPosix 0
-        defaultDate = Date.fromPosix Time.utc defaultPosix
-        beginDate = Maybe.withDefault defaultDate model.beginsAtDate
-        endDate = Maybe.withDefault defaultDate model.endsAtDate
-        beginPosix = DF.dateToPosix beginDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
-        endPosix = DF.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+    let
+        -- Ugly as sin. Should never happen because we validate the model before
+        defaultPosix =
+            Time.millisToPosix 0
 
-        perc = Maybe.map String.toInt model.required_percentage |> Maybe.withDefault Nothing
+        defaultDate =
+            Date.fromPosix Time.utc defaultPosix
+
+        beginDate =
+            Maybe.withDefault defaultDate model.beginsAtDate
+
+        endDate =
+            Maybe.withDefault defaultDate model.endsAtDate
+
+        beginPosix =
+            DF.dateToPosix beginDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+
+        endPosix =
+            DF.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+
+        perc =
+            Maybe.map String.toInt model.required_percentage |> Maybe.withDefault Nothing
     in
     { id = model.id
     , name = model.courseName
@@ -478,6 +505,7 @@ fillRequestFromModel model =
     , sheets = Nothing
     , materials = Nothing
     }
+
 
 type Field
     = Name

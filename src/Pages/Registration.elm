@@ -411,12 +411,12 @@ modelValidator =
         , Validate.firstError
             [ ifBlank .semester ( Semester, "Bitte gib dein Semester ein." )
             , ifNotInt .semester (\value -> ( Semester, value ++ " ist keine gültige Zahl." ))
-            , Validate.ifTrue (\model -> isZero model.semester ) ( Semester, "Auch als Informatiker beginnt das erste Semester mit 1 :).")
-            , Validate.ifTrue (\model -> isNegative model.semester ) ( Semester, "Es gibt keine negativen Semester.")  
+            , Validate.ifTrue (\model -> isZero model.semester) ( Semester, "Auch als Informatiker beginnt das erste Semester mit 1 :)." )
+            , Validate.ifTrue (\model -> isNegative model.semester) ( Semester, "Es gibt keine negativen Semester." )
             ]
         , Validate.firstError
             [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
-            , Validate.ifTrue (\model -> (String.length model.password) < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein.")
+            , Validate.ifTrue (\model -> String.length model.password < 7) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein." )
             , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
             , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
             ]
@@ -425,22 +425,31 @@ modelValidator =
         , Validate.firstError
             [ ifBlank .studentNumber ( StudentNumber, "Bitte gib deine Martrikelnummer ein." )
             , ifNotInt .studentNumber (\value -> ( StudentNumber, value ++ " ist keine gültige Zahl." ))
-            , Validate.ifTrue (\model -> isNegative model.studentNumber) (StudentNumber, "Matrikelnummern sind positiv.")
+            , Validate.ifTrue (\model -> isNegative model.studentNumber) ( StudentNumber, "Matrikelnummern sind positiv." )
             ]
         , ifBlank .subject ( Subject, "Bitte gib dein Fach ein." )
         ]
 
+
 isNegative : String -> Bool
 isNegative numberString =
     case String.toInt numberString of
-        Just num -> num < 0
-        Nothing -> True
+        Just num ->
+            num < 0
+
+        Nothing ->
+            True
+
 
 isZero : String -> Bool
 isZero numberString =
     case String.toInt numberString of
-        Just num -> num == 0
-        Nothing -> True
+        Just num ->
+            num == 0
+
+        Nothing ->
+            True
+
 
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =

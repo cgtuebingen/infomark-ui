@@ -20,15 +20,15 @@ import Pages.CourseEditor as CourseEditor
 import Pages.Courses as Courses
 import Pages.Dashboard as Dashboard
 import Pages.Login as Login
+import Pages.MailConfirmation as MailConfirmation
+import Pages.PasswordReset as PasswordReset
+import Pages.ProfileEditor as ProfileEditor
 import Pages.Registration as Registration
+import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
 import Pages.TaskEditor as TaskEditor
-import Pages.ProfileEditor as ProfileEditor
-import Pages.MailConfirmation as MailConfirmation
-import Pages.RequestPasswordReset as RequestPasswordReset
-import Pages.PasswordReset as PasswordReset
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -449,18 +449,17 @@ navView sharedState model =
         t =
             I18n.get sharedState.translations
 
-        navItems = 
-            [ (t "page-title-courses", Just "assets/school-white.svg", NavigateTo CoursesRoute) ]
-            ++ 
-                ( if sharedState.role == Just { root = True } then
-                    [ (t "page-title-admin", Just "assets/database-settings-white.svg", NavigateTo AdminRoute) ]
-                else
-                    [ ]
-                )
-            ++ 
-                [ (t "page-title-profile", Just "assets/account-settings-white.svg", NavigateTo ProfileEditorRoute )
-                , (t "action-logout", Just "assets/logout-variant-white.svg", Logout)
-                ]
+        navItems =
+            [ ( t "page-title-courses", Just "assets/school-white.svg", NavigateTo CoursesRoute ) ]
+                ++ (if sharedState.role == Just { root = True } then
+                        [ ( t "page-title-admin", Just "assets/database-settings-white.svg", NavigateTo AdminRoute ) ]
+
+                    else
+                        []
+                   )
+                ++ [ ( t "page-title-profile", Just "assets/account-settings-white.svg", NavigateTo ProfileEditorRoute )
+                   , ( t "action-logout", Just "assets/logout-variant-white.svg", Logout )
+                   ]
     in
     nav
         [ classes
@@ -498,38 +497,45 @@ navView sharedState model =
                 , TC.pa3
                 ]
             ]
-            ( List.map (\(labelText, maybeIcon, msgAction) ->
-                div 
-                    [ classes [ TC.dim, TC.pointer, TC.mr1, TC.mr4_ns, TC.flex, TC.items_center ] 
-                    , onClick <| msgAction ]
-                    (case maybeIcon of
-                        Just icon ->
-                            [ img 
-                                [ src icon
-                                , classes [TC.w2, TC.h2, TC.mr3, TC.mr2_l] 
-                                ] []
-                            , p 
-                                [ classes 
-                                    [ TC.f5
-                                    , TC.ph2
-                                    , TC.white
-                                    , TC.fw6
-                                    , TC.tracked
-                                    , TC.ttu
-                                    , TC.dn
-                                    , TC.dib_l
-                                    ] 
-                                ] [ text labelText ]
-                            ]
+            (List.map
+                (\( labelText, maybeIcon, msgAction ) ->
+                    div
+                        [ classes [ TC.dim, TC.pointer, TC.mr1, TC.mr4_ns, TC.flex, TC.items_center ]
+                        , onClick <| msgAction
+                        ]
+                        (case maybeIcon of
+                            Just icon ->
+                                [ img
+                                    [ src icon
+                                    , classes [ TC.w2, TC.h2, TC.mr3, TC.mr2_l ]
+                                    ]
+                                    []
+                                , p
+                                    [ classes
+                                        [ TC.f5
+                                        , TC.ph2
+                                        , TC.white
+                                        , TC.fw6
+                                        , TC.tracked
+                                        , TC.ttu
+                                        , TC.dn
+                                        , TC.dib_l
+                                        ]
+                                    ]
+                                    [ text labelText ]
+                                ]
 
-                        Nothing ->
-                            [ p 
-                                [ Styles.linkWhiteStyle
-                                , classes [ TC.fw6, TC.tracked, TC.ttu] 
-                                ] [ text labelText ] ]
-                    )
-
-            ) navItems )
+                            Nothing ->
+                                [ p
+                                    [ Styles.linkWhiteStyle
+                                    , classes [ TC.fw6, TC.tracked, TC.ttu ]
+                                    ]
+                                    [ text labelText ]
+                                ]
+                        )
+                )
+                navItems
+            )
         ]
 
 

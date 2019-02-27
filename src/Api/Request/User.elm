@@ -1,12 +1,12 @@
 module Api.Request.User exposing
-    ( usersGet
-    , userGet
+    ( userGet
     , userPut
+    , usersGet
     )
 
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
-import Api.Endpoint exposing (user, users, unwrap)
+import Api.Endpoint exposing (unwrap, user, users)
 import Api.Helper exposing (..)
 import Decoders
 import Dict

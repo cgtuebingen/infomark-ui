@@ -29,22 +29,22 @@ type alias Model =
 
 initCreate : ( Model, Cmd Msg )
 initCreate =
-    ( 
-        { id = 0
-        , max_points = ""
-        , task = NotAsked 
-        }
-    , Cmd.none )
+    ( { id = 0
+      , max_points = ""
+      , task = NotAsked
+      }
+    , Cmd.none
+    )
 
 
 initEdit : Int -> ( Model, Cmd Msg )
 initEdit id =
-    ( 
-        { id = id 
-        , max_points = "" 
-        , task = Loading
-        }
-    , Cmd.none )
+    ( { id = id
+      , max_points = ""
+      , task = Loading
+      }
+    , Cmd.none
+    )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )

@@ -29,10 +29,10 @@ type alias Model =
 init : String -> String -> ( Model, Cmd Msg )
 init email token =
     let
-        confirmation = { email = email, confirmationToken = token }
+        confirmation =
+            { email = email, confirmationToken = token }
     in
-    ( {confirmationProgress = Loading }, AuthRequests.confirmMailPost confirmation ConfirmationResponse)
-
+    ( { confirmationProgress = Loading }, AuthRequests.confirmMailPost confirmation ConfirmationResponse )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )

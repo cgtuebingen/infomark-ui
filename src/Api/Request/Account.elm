@@ -6,8 +6,8 @@ module Api.Request.Account exposing
     )
 
 import Api.Data.Account as Account exposing (Account)
-import Api.Data.AccountUpdate as AccountUpdate exposing (AccountUpdate)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
+import Api.Data.AccountUpdate as AccountUpdate exposing (AccountUpdate)
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserAccount as UserAccount exposing (UserAccount)

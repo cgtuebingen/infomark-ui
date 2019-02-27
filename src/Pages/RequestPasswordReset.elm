@@ -63,10 +63,10 @@ update sharedState msg model =
                     ( { model | errors = errors }, Cmd.none, NoUpdate )
 
                 Ok _ ->
-                    ( { model | errors = [] }, requestPasswordResetPost model.email RequestResetResponse, NoUpdate)
+                    ( { model | errors = [] }, requestPasswordResetPost model.email RequestResetResponse, NoUpdate )
 
         -- TODO: Start the web request here.
-        RequestResetResponse (Success _ ) ->
+        RequestResetResponse (Success _) ->
             ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         RequestResetResponse (Failure err) ->
@@ -76,9 +76,9 @@ update sharedState msg model =
                         |> addToast (Components.Toasty.Error "Error" "There was a problem requesting your password reset.")
             in
             ( newModel, newCmd, NoUpdate )
-    
+
         RequestResetResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         ToastyMsg subMsg ->
             let
@@ -159,9 +159,11 @@ view sharedState model =
                         [ text "Reset" ]
                     ]
                 , div [ classes [ TC.mt3 ] ]
-                    [ button 
+                    [ button
                         [ Styles.linkGreyStyle
-                        , onClick <| NavigateTo LoginRoute ] [ text "Ich erinnere mich doch" ]
+                        , onClick <| NavigateTo LoginRoute
+                        ]
+                        [ text "Ich erinnere mich doch" ]
                     ]
                 ]
             ]

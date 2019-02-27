@@ -1,9 +1,10 @@
-module Api.Request.Groups exposing 
+module Api.Request.Groups exposing
     ( groupsDelete
-    , groupsEnrollmentPut
     , groupsEnrollmentPost
+    , groupsEnrollmentPut
     , groupsGet
-    , groupsPut)
+    , groupsPut
+    )
 
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)

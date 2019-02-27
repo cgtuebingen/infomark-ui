@@ -1,4 +1,4 @@
-module Api.Helper exposing 
+module Api.Helper exposing
     ( delete
     , deleteExpectNothing
     , get
@@ -8,7 +8,8 @@ module Api.Helper exposing
     , postExpectNothing
     , postFile
     , put
-    , putExpectNothing)
+    , putExpectNothing
+    )
 
 import File exposing (File)
 import Http
@@ -41,6 +42,7 @@ post url body msg decoder =
         , tracker = Nothing
         }
 
+
 postExpectNothing : String -> Http.Body -> (WebData () -> msg) -> Cmd msg
 postExpectNothing url body msg =
     Http.request
@@ -52,6 +54,7 @@ postExpectNothing url body msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
 
 {-| Uploads a single file. You can subscribe to the tracker "file\_upload" using
 

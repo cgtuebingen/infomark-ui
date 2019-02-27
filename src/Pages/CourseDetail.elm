@@ -3,8 +3,8 @@
    - Basic information (Title, Description, Start and Ends dates etc.)
    - The course tutors as avatars with email, name etc
        - If you are a root user:
-           - Option to search for all enrolled users and change the enrollment (tutor/student) 
-           
+           - Option to search for all enrolled users and change the enrollment (tutor/student)
+
            (done?)
    - Group information:
        - If you are a student and not distributed to a group:
@@ -363,7 +363,7 @@ viewUserSearchResult : Model -> Maybe UserEnrollment -> Html Msg
 viewUserSearchResult model maybeUserEnrollment =
     case maybeUserEnrollment of
         Just userEnrollment ->
-            (let
+            let
                 user =
                     userEnrollment.user
 
@@ -418,7 +418,7 @@ viewUserSearchResult model maybeUserEnrollment =
                             [ text currentRoleString ]
                         , drawer div
                             []
-                        <|
+                          <|
                             List.map
                                 (\( role, label ) ->
                                     button
@@ -451,12 +451,14 @@ viewUserSearchResult model maybeUserEnrollment =
                         model.roleDropdown
                         roleDropdownConfig
                     ]
-                ])
+                ]
 
         Nothing ->
-            h2 
+            h2
                 [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ]
-                , Styles.listHeadingStyle ] [text "Not found"]
+                , Styles.listHeadingStyle
+                ]
+                [ text "Not found" ]
 
 
 viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> List (Html Msg)
@@ -518,7 +520,7 @@ type Field
 
 
 setField : Model -> Field -> String -> Model
-setField model field value = 
+setField model field value =
     case field of
         EnrollmentSearchField ->
             { model | searchEnrollmentInput = value }

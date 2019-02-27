@@ -1,4 +1,4 @@
-module Api.Endpoint exposing 
+module Api.Endpoint exposing
     ( Endpoint(..)
     , account
     , accountAvatar
@@ -10,17 +10,18 @@ module Api.Endpoint exposing
     , courseGroup
     , courseGroupBids
     , courseGroups
-    , courses
     , courseSheets
+    , courses
     , groups
     , groupsEnrollment
     , me
-    , updatePassword
     , requestPasswordReset
     , sessions
     , unwrap
+    , updatePassword
     , user
-    , users)
+    , users
+    )
 
 import Api.Data.Course exposing (Course)
 import Http

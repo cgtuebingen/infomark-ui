@@ -193,12 +193,18 @@ view sharedState model =
                     , viewLoginButtonOrSpinner model.loginProgress model
                     ]
                 , div [ classes [ TC.mt3 ] ]
-                    [ button 
+                    [ button
                         [ onClick <| NavigateTo RequestPasswordResetRoute
-                        , Styles.linkGreyStyle ] [ text "Passwort vergessen?" ] -- TODO: Create password reset page
-                    , button 
+                        , Styles.linkGreyStyle
+                        ]
+                        [ text "Passwort vergessen?" ]
+
+                    -- TODO: Create password reset page
+                    , button
                         [ onClick <| NavigateTo RegistrationRoute
-                        , Styles.linkGreyStyle ] [ text "Registrieren" ]
+                        , Styles.linkGreyStyle
+                        ]
+                        [ text "Registrieren" ]
                     ]
                 ]
             ]

@@ -1,10 +1,10 @@
 module Utils.Styles exposing
     ( buttonBlackStyle
+    , buttonDisabled
     , buttonGoldStyle
     , buttonGreenStyle
     , buttonGreyStyle
     , buttonRedStyle
-    , buttonDisabled
     , dateStyle
     , dialogContainerStyle
     , dialogGoneStyle
@@ -37,10 +37,20 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 
 
-hover_b__dark_red = "hover-b--dark-red"
-hover_b__dark_gray = "hover-b--dark-gray"
-hover_b__gold = "hover-b--gold"
-hover_b__red = "hover-b--red"
+hover_b__dark_red =
+    "hover-b--dark-red"
+
+
+hover_b__dark_gray =
+    "hover-b--dark-gray"
+
+
+hover_b__gold =
+    "hover-b--gold"
+
+
+hover_b__red =
+    "hover-b--red"
 
 
 textAreaReset : List (Html.Attribute msg)
@@ -121,14 +131,13 @@ buttonStyle =
     ]
 
 
-buttonDisabled = 
+buttonDisabled =
     classes <|
         buttonStyle
-            ++ 
-                [ TC.black_40
-                , TC.b__black_40
-                , "disabled-content"
-                ]
+            ++ [ TC.black_40
+               , TC.b__black_40
+               , "disabled-content"
+               ]
 
 
 buttonBlackStyle =
@@ -220,6 +229,7 @@ headerStyle =
         , TC.b
         ]
 
+
 sectionStyle =
     classes
         [ TC.f2
@@ -228,6 +238,7 @@ sectionStyle =
         , TC.b
         , TC.lh_title
         ]
+
 
 listHeadingStyle =
     classes

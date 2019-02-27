@@ -5,6 +5,8 @@ module Api.Request.Courses exposing
     , courseGroupsPost
     , courseOwnGroupGet
     , coursePut
+    , courseSheetsGet
+    , courseSheetsPost
     , coursesEnrollmentDelete
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
@@ -13,8 +15,6 @@ module Api.Request.Courses exposing
     , coursesEnrollmentPost
     , coursesGet
     , coursesPost
-    , courseSheetsGet
-    , courseSheetsPost
     )
 
 import Api.Data.Course as Course exposing (Course)
@@ -22,19 +22,21 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
-import Api.Data.User as User exposing (User)
 import Api.Data.Sheet as Sheet exposing (Sheet)
+import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
-import Api.Endpoint exposing 
-    ( course
-    , courseEnrollment
-    , courseEnrollmentUserDetail
-    , courseGroup
-    , courseGroupBids
-    , courseGroups
-    , courses
-    , courseSheets
-    , unwrap)
+import Api.Endpoint
+    exposing
+        ( course
+        , courseEnrollment
+        , courseEnrollmentUserDetail
+        , courseGroup
+        , courseGroupBids
+        , courseGroups
+        , courseSheets
+        , courses
+        , unwrap
+        )
 import Api.Helper exposing (..)
 import Decoders
 import Dict
