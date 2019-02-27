@@ -10,6 +10,8 @@ module Utils.DateFormatter exposing
     , timeFormatter
     , joinDateAndTime
     , timeZoneToUtcOffsetMinutes
+    , utcOffsetMinutes
+    , offsetToParts
     )
 
 import Date exposing (Date)
@@ -260,19 +262,47 @@ joinDateAndTime sharedState date time =
 
         Err _ -> Nothing
 
+
 timeZoneToUtcOffsetMinutes : Time.Zone -> Int
 timeZoneToUtcOffsetMinutes zone =
     let
-       hourOffset = Time.toHour zone <| Time.millisToPosix 0
-       minuteOffset = Time.toMinute zone <| Time.millisToPosix 0
+        oneDay = 24 * 60 * 60 * 1000
+        
+        hour = Time.toHour zone <| Time.millisToPosix oneDay
+        minute = Time.toMinute zone <| Time.millisToPosix oneDay
+        day = Time.toDay zone <| Time.millisToPosix oneDay
 
-       _ = Debug.log "Time" (hourOffset, minuteOffset)
+        hourUtc = Time.toHour Time.utc <| Time.millisToPosix oneDay
+        minuteUtc = Time.toMinute Time.utc <| Time.millisToPosix oneDay
+        dayUtc = Time.toDay Time.utc <| Time.millisToPosix oneDay
+
+        hourOffset = (hour - hourUtc) * 60
+        minuteOffset = minute - minuteUtc
+        dayOffset = (day - dayUtc) * 24 * 60
+
+        offset = dayOffset + hourOffset + minuteOffset
     in
-    0
+    offset
 
 
 utcOffsetMinutes : Int -> Int -> Int -> Int
 utcOffsetMinutes multiplier hours minutes =
     -- multiplier is either 1 or -1 (for negative UTC offsets)
     multiplier * ((hours * 60) + minutes)
+
+
+offsetToParts : Int -> { multiplier : Int, hours : Int, minutes : Int }
+offsetToParts offset =
+    let
+        multiplier = if offset < 0 then -1 else 1
+
+        hours = (abs offset) // 60
+        minutes = modBy 60 <| abs offset
+    in
+    { multiplier = multiplier
+    , hours = hours
+    , minutes = minutes
+    }
+    
+
 

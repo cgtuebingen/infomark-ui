@@ -86,11 +86,7 @@ update msg model =
         TimeChange time ->
             updateTime model time
 
-        AdjustTimeZone zone ->
-            let
-                _ = DF.timeZoneToUtcOffsetMinutes zone
-            in
-            
+        AdjustTimeZone zone ->          
             updateTimeZone model zone
 
         HandleTranslationsResponse webData ->
