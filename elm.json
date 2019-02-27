@@ -35,7 +35,8 @@
             "rtfeldman/elm-iso8601-date-strings": "1.1.2",
             "rtfeldman/elm-validate": "4.0.1",
             "ryannhg/date-format": "2.3.0",
-            "simonh1000/elm-jwt": "7.0.0"
+            "simonh1000/elm-jwt": "7.0.0",
+            "stephenreddek/elm-time-picker": "1.0.3"
         },
         "indirect": {
             "Skinney/murmur3": "2.0.8",

@@ -15,6 +15,7 @@ import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Utils.PersistantState as PersistantState
+import Utils.DateFormatter as DF
 
 
 main : Program Flags Model Msg
@@ -86,6 +87,10 @@ update msg model =
             updateTime model time
 
         AdjustTimeZone zone ->
+            let
+                _ = DF.timeZoneToUtcOffsetMinutes zone
+            in
+            
             updateTimeZone model zone
 
         HandleTranslationsResponse webData ->

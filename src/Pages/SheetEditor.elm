@@ -21,18 +21,19 @@ type Msg
 
 
 type alias Model =
-    { dummy : Int
+    { id : Int
+    , name : String
     }
 
 
 initCreate : ( Model, Cmd Msg )
 initCreate =
-    ( { dummy = 0 }, Cmd.none )
+    ( { id = 0, name = "" }, Cmd.none )
 
 
 initEdit : Int -> ( Model, Cmd Msg )
 initEdit id =
-    ( { dummy = 0 }, Cmd.none )
+    ( { id = 0, name = "" }, Cmd.none )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )

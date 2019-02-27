@@ -3,7 +3,8 @@ module UtilsTester exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
-import EmailHelper
+import Utils.EmailHelper as EmailHelper
+import Utils.DateFormatter as DateFormatter
 
 success : Result a b -> Bool
 success result =

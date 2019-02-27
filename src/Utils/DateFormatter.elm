@@ -1,11 +1,24 @@
-module Utils.DateFormatter exposing (dateAndTimeFormatter, dateToPosix, dateToShortFormatString, dayFormatter, fullDateFormatter, monthFormatter, shortDateFormatter, shortDayFormatter, timeFormatter)
+module Utils.DateFormatter exposing 
+    ( dateAndTimeFormatter
+    , dateToPosix
+    , dateToShortFormatString
+    , dayFormatter
+    , fullDateFormatter
+    , monthFormatter
+    , shortDateFormatter
+    , shortDayFormatter
+    , timeFormatter
+    , joinDateAndTime
+    , timeZoneToUtcOffsetMinutes
+    )
 
 import Date exposing (Date)
 import Html exposing (..)
 import I18n
 import Iso8601
 import SharedState exposing (SharedState)
-import Time exposing (Posix)
+import Time exposing (Posix, Zone(..))
+import TimePicker
 
 
 dayFormatter : SharedState -> Time.Weekday -> String
@@ -233,3 +246,33 @@ fullDateFormatter sharedState time =
                 )
     in
     text <| String.toUpper (weekday ++ ", " ++ month ++ " " ++ day ++ ", " ++ year)
+
+
+joinDateAndTime : SharedState -> Date -> TimePicker.Time -> Maybe Posix
+joinDateAndTime sharedState date time =
+    let
+        resultDatePosix = dateToPosix date
+
+        timeMillis = (time.seconds + (time.minutes * 60) + (time.hours * 60 * 60)) * 1000
+    in
+    case resultDatePosix of
+        Ok datePosix -> Just <| Time.millisToPosix <| timeMillis + (Time.posixToMillis datePosix)
+
+        Err _ -> Nothing
+
+timeZoneToUtcOffsetMinutes : Time.Zone -> Int
+timeZoneToUtcOffsetMinutes zone =
+    let
+       hourOffset = Time.toHour zone <| Time.millisToPosix 0
+       minuteOffset = Time.toMinute zone <| Time.millisToPosix 0
+
+       _ = Debug.log "Time" (hourOffset, minuteOffset)
+    in
+    0
+
+
+utcOffsetMinutes : Int -> Int -> Int -> Int
+utcOffsetMinutes multiplier hours minutes =
+    -- multiplier is either 1 or -1 (for negative UTC offsets)
+    multiplier * ((hours * 60) + minutes)
+
