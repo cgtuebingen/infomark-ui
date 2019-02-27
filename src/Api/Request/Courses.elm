@@ -4,7 +4,7 @@ module Api.Request.Courses exposing
     , courseGroupsGet
     , courseGroupsPost
     , courseOwnGroupGet
-    , coursePatch
+    , coursePut
     , coursesEnrollmentDelete
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
@@ -56,9 +56,9 @@ courseGet id msg =
         Course.decoder
 
 
-coursePatch : Int -> Course -> (WebData () -> msg) -> Cmd msg
-coursePatch id courseUp msg =
-    patchExpectNothing (unwrap <| course id)
+coursePut : Int -> Course -> (WebData () -> msg) -> Cmd msg
+coursePut id courseUp msg =
+    putExpectNothing (unwrap <| course id)
         (Http.jsonBody (Course.encoder courseUp))
         msg
 

@@ -6,9 +6,11 @@
 module Pages.ProfileEditor exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.Account exposing (Account)
+import Api.Data.AccountUpdate exposing (AccountUpdate)
 import Api.Data.User exposing (User)
-import Api.Request.Account as AccountRequests
+import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
+import Api.Request.Account as AccountRequests
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -32,10 +34,12 @@ import Utils.Utils exposing (handleLogoutErrors)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Task
+import Dict
+import Dict.Extra exposing (groupBy)
 
 
 type Msg
-    = AccountGetResponse (WebData User)
+    = UserGetResponse (WebData User)
     | SetField Field String
     | GotFiles File (List File)
     | GotPreview String
@@ -64,6 +68,7 @@ type alias Model =
     , email : String
     , password : String
     , passwordRepeat : String
+    , oldPassword : String
     , avatar : Maybe File
     , accountDataChanged : Bool
     , avatarChanged : Bool
@@ -89,6 +94,7 @@ init =
         , email = ""
         , password = ""
         , passwordRepeat = ""
+        , oldPassword = ""
         , avatar = Nothing
         , accountDataChanged = False
         , avatarChanged = False
@@ -100,16 +106,13 @@ init =
         , toasties = Toasty.initialState
         , accountDeleteDialog = False
         }
-    , AccountRequests.accountGet AccountGetResponse )
+    , MeRequests.meGet UserGetResponse )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
-    let
-        _ = Debug.log "MSG" msg
-    in
     case msg of
-        AccountGetResponse response ->
+        UserGetResponse response ->
             updateAccountGetResponse sharedState model response
 
         SetField field value ->
@@ -193,18 +196,49 @@ updateSave : SharedState -> Model -> (Model, Cmd Msg, SharedStateUpdate)
 updateSave sharedState model =
     let
         cmds = 
-            [ ( model.accountDataChanged, AccountRequests.accountPatch (modelToAccount model) AccountUpdateResponse )
-            , ( model.userDataChanged, userUpdateRequest sharedState model UserUpdateResponse )
-            , ( model.avatarChanged, avatarUpdateRequest model AvatarUpdateResponse )
+            [ 
+                { changed = model.accountDataChanged
+                , updateModel = (\m -> 
+                    { m | accountErrors =
+                        (case validate accountValidator m of
+                            Err err -> err
+                            Ok _ -> [] 
+                        )
+                    }
+                )
+                , request = AccountRequests.accountPatch (modelToAccount model) AccountUpdateResponse 
+                }
+            , 
+                { changed = model.userDataChanged
+                , updateModel = (\m -> 
+                    { m | userErrors =
+                        (case validate userValidator m of
+                            Err err -> err
+                            Ok _ -> [] 
+                        )
+                    }
+                )
+                , request = userUpdateRequest sharedState model UserUpdateResponse
+                }
+            ,  
+                { changed = model.avatarChanged
+                , updateModel = (\m -> m)
+                , request = avatarUpdateRequest model AvatarUpdateResponse 
+                }
             ]
 
-        toExecute = List.filter Tuple.first cmds
+        changed = List.filter .changed cmds -- All changed parts: User, Account, Avatar
 
-        _ = Debug.log "ToExectue" toExecute
+        updatedModel = List.foldl .updateModel model changed
+
+        requests = List.map .request changed
     in
-    ( model
-    , Cmd.batch <| List.map Tuple.second <|  toExecute
-    , NoUpdate)
+    case (updatedModel.userErrors, updatedModel.accountErrors) of
+        ([], []) -> -- Ready to update
+            (updatedModel, Cmd.batch requests, NoUpdate)
+
+        (_, _) -> -- There are errors
+            (updatedModel, Cmd.none, NoUpdate)
 
 
 updateUserUpdateResponse : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
@@ -364,9 +398,13 @@ viewForm sharedState model =
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                inputElement "Password" "Password" "password" Password model.password model.accountErrors
+                inputElement "New Password" "Password" "password" Password model.password model.accountErrors
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                inputElement "Password Repeat" "Password" "password" PasswordRepeat model.passwordRepeat model.accountErrors
+                inputElement "New Password Repeat" "Password" "password" PasswordRepeat model.passwordRepeat model.accountErrors
+            ]
+        , div [ classes [TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+                inputElement "Old Password" "Password" "password" OldPassword model.oldPassword model.accountErrors
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
             [ button 
@@ -478,6 +516,7 @@ type Field
     | StudentNumber
     | Semester
     | Subject
+    | OldPassword
     | Password
     | PasswordRepeat
 
@@ -492,7 +531,7 @@ setField model field value =
             { model | lastname = value, userDataChanged = True }
 
         Email ->
-            { model | email = value, accountDataChanged = True, userDataChanged = True }
+            { model | email = value, accountDataChanged = True }
 
         StudentNumber ->
             { model | studentNumber = value, userDataChanged = True }
@@ -508,6 +547,9 @@ setField model field value =
 
         PasswordRepeat ->
             { model | passwordRepeat = value, accountDataChanged = True }
+
+        OldPassword ->
+            { model | oldPassword = value }
 
 
 type alias Error =
@@ -533,10 +575,13 @@ modelToUser sharedState model =
         _ -> Nothing
 
 
-modelToAccount : Model -> Account
+modelToAccount : Model -> AccountUpdate
 modelToAccount model =
-    { email = model.email 
-    , plain_password = model.password 
+    { account =
+        { email = if model.email == "" then Nothing else Just model.email
+        , plain_password = if model.password == "" then Nothing else Just model.password
+        }
+    , oldPassword = model.oldPassword
     }
 
 
@@ -586,10 +631,10 @@ accountValidator =
             , ifInvalidEmail .email (\value -> ( Email, "Die eingegebene E-Mail Addresse " ++ value ++ " ist nicht gültig." ))
             ]
         , Validate.firstError
-            [ ifBlank .password ( Password, "Bitte gib ein Passwort ein." ) -- TODO: Check if password is at least 7 characters long
-            , ifBlank .passwordRepeat ( PasswordRepeat, "Bitte gib dein Passwort erneut ein." )
-            , Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
+            [ Validate.ifFalse (\model -> model.password == model.passwordRepeat) ( Password, "Die Passwörter müssen identisch sein." )
+            , Validate.ifTrue (\model -> (String.length model.password) < 7 && String.length model.password > 0) ( Password, "Das Passwort muss mindestens 7 Zeichen lang sein.")
             ]
+        , Validate.ifBlank .oldPassword ( OldPassword, "Bitte gib dein altes Passwort ein.")
         ]
 
 
@@ -611,7 +656,7 @@ userUpdateRequest : SharedState -> Model -> (WebData () -> msg) -> Cmd msg
 userUpdateRequest sharedState model msg =
     case (model.user, modelToUser sharedState model) of
         (Success user, Just userUpdate) ->
-            UserRequests.userPatch user.id userUpdate msg
+            MeRequests.mePut userUpdate msg
 
         (_, _) ->
             Cmd.none

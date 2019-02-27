@@ -178,7 +178,7 @@ update sharedState msg model =
                     , case model.createCourse of
                         True -> CoursesRequest.coursesPost body CourseCreateResponse
 
-                        False -> CoursesRequest.coursePatch model.id body CourseEditResponse
+                        False -> CoursesRequest.coursePut model.id body CourseEditResponse
 
                     , NoUpdate )
 

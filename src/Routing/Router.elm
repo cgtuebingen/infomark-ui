@@ -838,8 +838,8 @@ modelToLoginRequest sharedState model =
     case sharedState.userMail of
         Just mail ->
             Just
-                { email = mail
-                , plain_password = model.plain_password
+                { email = Just mail
+                , plain_password = Just model.plain_password
                 }
 
         Nothing ->

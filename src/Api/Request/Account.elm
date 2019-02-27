@@ -1,12 +1,12 @@
 module Api.Request.Account exposing
     ( accountAvatarPost
     , accountEnrollmentGet
-    , accountGet
     , accountPatch
     , accountPost
     )
 
 import Api.Data.Account as Account exposing (Account)
+import Api.Data.AccountUpdate as AccountUpdate exposing (AccountUpdate)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
@@ -21,11 +21,6 @@ import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 
 
-accountGet : (WebData User -> msg) -> Cmd msg
-accountGet msg =
-    get (unwrap account) msg User.decoder
-
-
 accountPost : UserAccount -> (WebData User -> msg) -> Cmd msg
 accountPost accountNew msg =
     post (unwrap account)
@@ -34,10 +29,10 @@ accountPost accountNew msg =
         User.decoder
 
 
-accountPatch : Account -> (WebData () -> msg) -> Cmd msg
+accountPatch : AccountUpdate -> (WebData () -> msg) -> Cmd msg
 accountPatch accountUpdate msg =
     patchExpectNothing (unwrap account)
-        (Http.jsonBody <| Account.encoder accountUpdate)
+        (Http.jsonBody <| AccountUpdate.encoder accountUpdate)
         msg
 
 

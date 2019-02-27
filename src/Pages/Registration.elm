@@ -53,8 +53,8 @@ modelToBody sharedState model =
         , subject = Just model.subject
         }
     , account =
-        { email = model.email
-        , plain_password = model.password
+        { email = Just model.email
+        , plain_password = Just model.password
         }
     }
 

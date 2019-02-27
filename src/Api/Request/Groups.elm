@@ -1,4 +1,9 @@
-module Api.Request.Groups exposing (groupsDelete, groupsEnrollmentPatch, groupsEnrollmentPost, groupsGet, groupsPatch)
+module Api.Request.Groups exposing 
+    ( groupsDelete
+    , groupsEnrollmentPut
+    , groupsEnrollmentPost
+    , groupsGet
+    , groupsPut)
 
 import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)
@@ -20,9 +25,9 @@ groupsGet id msg =
         Group.decoder
 
 
-groupsPatch : Int -> Group -> (WebData String -> msg) -> Cmd msg
-groupsPatch id group msg =
-    patch (unwrap <| groups id)
+groupsPut : Int -> Group -> (WebData String -> msg) -> Cmd msg
+groupsPut id group msg =
+    put (unwrap <| groups id)
         (Http.jsonBody (Group.encoder group))
         msg
         Decode.string
@@ -35,9 +40,9 @@ groupsDelete id msg =
         Decode.string
 
 
-groupsEnrollmentPatch : Int -> GroupEnrollmentChange -> (WebData String -> msg) -> Cmd msg
-groupsEnrollmentPatch id groupEnrollment msg =
-    patch (unwrap <| groupsEnrollment id)
+groupsEnrollmentPut : Int -> GroupEnrollmentChange -> (WebData String -> msg) -> Cmd msg
+groupsEnrollmentPut id groupEnrollment msg =
+    put (unwrap <| groupsEnrollment id)
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
         Decode.string

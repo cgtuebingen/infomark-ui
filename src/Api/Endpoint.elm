@@ -13,6 +13,7 @@ module Api.Endpoint exposing
     , courses
     , groups
     , groupsEnrollment
+    , me
     , updatePassword
     , requestPasswordReset
     , sessions
@@ -71,6 +72,11 @@ updatePassword =
 confirmEmail : Endpoint
 confirmEmail =
     url [ "auth", "confirm_email" ] []
+
+
+me : Endpoint
+me =
+    url [ "me" ] []
 
 
 account : Endpoint

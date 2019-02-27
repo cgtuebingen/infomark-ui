@@ -1,7 +1,7 @@
 module Api.Request.User exposing
     ( usersGet
     , userGet
-    , userPatch
+    , userPut
     )
 
 import Api.Data.Error as Error exposing (Error)
@@ -27,8 +27,8 @@ userGet id msg =
     get (unwrap (user id)) msg User.decoder
 
 
-userPatch : Int -> User -> (WebData () -> msg) -> Cmd msg
-userPatch id userUpdate msg =
+userPut : Int -> User -> (WebData () -> msg) -> Cmd msg
+userPut id userUpdate msg =
     patchExpectNothing (unwrap (user id))
         (Http.jsonBody <| User.encoder userUpdate)
         msg

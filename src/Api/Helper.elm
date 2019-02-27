@@ -1,4 +1,14 @@
-module Api.Helper exposing (delete, deleteExpectNothing, get, patch, patchExpectNothing, post, postExpectNothing, postFile)
+module Api.Helper exposing 
+    ( delete
+    , deleteExpectNothing
+    , get
+    , patch
+    , patchExpectNothing
+    , post
+    , postExpectNothing
+    , postFile
+    , put
+    , putExpectNothing)
 
 import File exposing (File)
 import Http
@@ -83,6 +93,32 @@ patchExpectNothing : String -> Http.Body -> (WebData () -> msg) -> Cmd msg
 patchExpectNothing url body msg =
     Http.request
         { method = "PATCH"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = Http.expectWhatever (RemoteData.fromResult >> msg)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+put : String -> Http.Body -> (WebData a -> msg) -> Decoder a -> Cmd msg
+put url body msg decoder =
+    Http.request
+        { method = "PUT"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = Http.expectJson (RemoteData.fromResult >> msg) decoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+putExpectNothing : String -> Http.Body -> (WebData () -> msg) -> Cmd msg
+putExpectNothing url body msg =
+    Http.request
+        { method = "PUT"
         , headers = []
         , url = url
         , body = body

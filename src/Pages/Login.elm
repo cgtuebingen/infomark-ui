@@ -74,7 +74,7 @@ update sharedState msg model =
                 Ok _ ->
                     let
                         account =
-                            { email = model.email, plain_password = model.plain_password }
+                            { email = Just model.email, plain_password = Just model.plain_password }
                     in
                     ( { model | loginProgress = Loading, errors = [] }, sessionPost account LoginResponse, NoUpdate )
 
