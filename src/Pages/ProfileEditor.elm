@@ -34,7 +34,7 @@ import Time
 import Toasty
 import Types
 import Utils.Styles as Styles
-import Utils.Utils exposing (handleLogoutErrors)
+import Utils.Utils exposing (handleLogoutErrors, perform)
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
 
 
@@ -49,6 +49,7 @@ type Msg
     | Save
     | RequestAccountDelete
     | PerformAccountDelete
+    | RequestInformationUpdate
     | AccountUpdateResponse (WebData ())
     | UserUpdateResponse (WebData ())
     | AvatarUpdateResponse (WebData ())
@@ -70,9 +71,7 @@ type alias Model =
     , passwordRepeat : String
     , oldPassword : String
     , avatar : Maybe File
-    , accountDataChanged : Bool
     , avatarChanged : Bool
-    , userDataChanged : Bool
     , userErrors : List Error
     , accountErrors : List Error
     , hover : Bool
@@ -95,9 +94,7 @@ init =
       , passwordRepeat = ""
       , oldPassword = ""
       , avatar = Nothing
-      , accountDataChanged = False
       , avatarChanged = False
-      , userDataChanged = False
       , userErrors = []
       , accountErrors = []
       , hover = False
@@ -157,6 +154,14 @@ update sharedState msg model =
         AvatarUpdateResponse response ->
             updateAvatarUpdateResponse sharedState model response
 
+        RequestInformationUpdate ->
+            case model.user of
+                Loading ->
+                    (model, Cmd.none, NoUpdate)
+
+                _ ->
+                    ( { model | user = Loading }, MeRequests.meGet UserGetResponse, NoUpdate)
+
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
@@ -200,7 +205,7 @@ updateSave : SharedState -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 updateSave sharedState model =
     let
         cmds =
-            [ { changed = model.accountDataChanged
+            [ { changed = checkIfAccountChanged model
               , updateModel =
                     \m ->
                         { m
@@ -214,7 +219,7 @@ updateSave sharedState model =
                         }
               , request = AccountRequests.accountPatch (modelToAccount model) AccountUpdateResponse
               }
-            , { changed = model.userDataChanged
+            , { changed = checkIfUserChanged model
               , updateModel =
                     \m ->
                         { m
@@ -254,6 +259,34 @@ updateSave sharedState model =
             ( updatedModel, Cmd.none, NoUpdate )
 
 
+checkIfUserChanged : Model -> Bool
+checkIfUserChanged model =
+    case model.user of
+        Success user ->
+            let
+                toCompare = 
+                    [ (model.firstname, user.firstname) 
+                    , (model.lastname, user.lastname)
+                    , (model.studentNumber, Maybe.withDefault "" user.studentNumber)
+                    , (model.semester, Maybe.withDefault "" <| Maybe.map String.fromInt user.semester )
+                    , (model.subject, Maybe.withDefault "" user.subject)
+                    ]
+            in
+            List.any (\(fromModel, fromUser) -> fromModel /= fromUser) toCompare
+
+        _ -> False
+
+
+checkIfAccountChanged : Model -> Bool
+checkIfAccountChanged model =
+    case model.user of
+        Success user ->
+            (model.email /= user.email) || (model.password /= "")
+
+        _ -> False
+
+    
+
 updateUserUpdateResponse : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateUserUpdateResponse sharedState model response =
     case response of
@@ -263,7 +296,7 @@ updateUserUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( { newModel | userDataChanged = False }, newCmd, NoUpdate )
+            ( newModel, Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -291,7 +324,13 @@ updateAccountUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( { newModel | accountDataChanged = False }, newCmd, NoUpdate )
+            ( 
+                { newModel 
+                    | password = ""
+                    , passwordRepeat = ""
+                    , oldPassword = ""  }
+                , Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate 
+            )
 
         Failure err ->
             handleLogoutErrors model
@@ -319,7 +358,12 @@ updateAvatarUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( { newModel | avatarChanged = False }, newCmd, NoUpdate )
+            ( 
+                { newModel 
+                    | avatarChanged = False
+                    , preview = ""
+                    , avatar = Nothing 
+                }, Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -430,7 +474,7 @@ viewForm sharedState model =
             [ button
                 ([ classes [ TC.w_100 ]
                  ]
-                    ++ (if model.accountDataChanged || model.userDataChanged || model.avatarChanged then
+                    ++ (if checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged then
                             [ Styles.buttonGreenStyle
                             , onClick Save
                             ]
@@ -555,28 +599,28 @@ setField : Model -> Field -> String -> Model
 setField model field value =
     case field of
         FirstName ->
-            { model | firstname = value, userDataChanged = True }
+            { model | firstname = value }
 
         LastName ->
-            { model | lastname = value, userDataChanged = True }
+            { model | lastname = value }
 
         Email ->
-            { model | email = value, accountDataChanged = True }
+            { model | email = value }
 
         StudentNumber ->
-            { model | studentNumber = value, userDataChanged = True }
+            { model | studentNumber = value }
 
         Semester ->
-            { model | semester = value, userDataChanged = True }
+            { model | semester = value }
 
         Subject ->
-            { model | subject = value, userDataChanged = True }
+            { model | subject = value }
 
         Password ->
-            { model | password = value, accountDataChanged = True }
+            { model | password = value }
 
         PasswordRepeat ->
-            { model | passwordRepeat = value, accountDataChanged = True }
+            { model | passwordRepeat = value }
 
         OldPassword ->
             { model | oldPassword = value }
