@@ -13,6 +13,8 @@ module Api.Request.Courses exposing
     , coursesEnrollmentPost
     , coursesGet
     , coursesPost
+    , courseSheetsGet
+    , courseSheetsPost
     )
 
 import Api.Data.Course as Course exposing (Course)
@@ -21,8 +23,18 @@ import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.User as User exposing (User)
+import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
-import Api.Endpoint exposing (course, courseEnrollment, courseEnrollmentUserDetail, courseGroup, courseGroupBids, courseGroups, courses, unwrap)
+import Api.Endpoint exposing 
+    ( course
+    , courseEnrollment
+    , courseEnrollmentUserDetail
+    , courseGroup
+    , courseGroupBids
+    , courseGroups
+    , courses
+    , courseSheets
+    , unwrap)
 import Api.Helper exposing (..)
 import Decoders
 import Dict
@@ -155,3 +167,19 @@ coursesBidsPost id groupBidNew msg =
         (Http.jsonBody (GroupBid.encoder groupBidNew))
         msg
         GroupBid.decoder
+
+
+courseSheetsGet : Int -> (WebData (List Sheet) -> msg) -> Cmd msg
+courseSheetsGet id msg =
+    get (unwrap <| courseSheets id)
+        msg
+    <|
+        Decode.list Sheet.decoder
+
+
+courseSheetsPost : Int -> Sheet -> (WebData Sheet -> msg) -> Cmd msg
+courseSheetsPost id sheetNew msg =
+    post (unwrap <| courseSheets id)
+        (Http.jsonBody <| Sheet.encoder sheetNew)
+        msg
+        Sheet.decoder

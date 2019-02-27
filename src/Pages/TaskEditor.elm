@@ -1,6 +1,6 @@
 module Pages.TaskEditor exposing (Model, Msg(..), initCreate, initEdit, update, view)
 
-import Api.Data.Course exposing (Course)
+import Api.Data.Task exposing (Task)
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -21,18 +21,30 @@ type Msg
 
 
 type alias Model =
-    { dummy : Int
+    { id : Int
+    , max_points : String
+    , task : WebData Task
     }
 
 
 initCreate : ( Model, Cmd Msg )
 initCreate =
-    ( { dummy = 0 }, Cmd.none )
+    ( 
+        { id = 0
+        , max_points = ""
+        , task = NotAsked 
+        }
+    , Cmd.none )
 
 
 initEdit : Int -> ( Model, Cmd Msg )
 initEdit id =
-    ( { dummy = 0 }, Cmd.none )
+    ( 
+        { id = id 
+        , max_points = "" 
+        , task = Loading
+        }
+    , Cmd.none )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )

@@ -11,6 +11,7 @@ module Api.Endpoint exposing
     , courseGroupBids
     , courseGroups
     , courses
+    , courseSheets
     , groups
     , groupsEnrollment
     , me
@@ -114,6 +115,11 @@ course id =
     url [ "courses", String.fromInt id ] []
 
 
+courseSheets : Int -> Endpoint
+courseSheets id =
+    url [ "courses", String.fromInt id, "sheets" ] []
+
+
 courseEnrollment : Int -> List QueryParameter -> Endpoint
 courseEnrollment id params =
     url [ "courses", String.fromInt id, "enrollments" ] params
@@ -134,10 +140,6 @@ courseGroupBids id =
     url [ "courses", String.fromInt id, "bids" ] []
 
 
-
---offset, limit, roles
-
-
 courseEnrollmentUserDetail : Int -> Int -> Endpoint
 courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
@@ -151,3 +153,33 @@ groups id =
 groupsEnrollment : Int -> Endpoint
 groupsEnrollment id =
     url [ "groups", String.fromInt id, "enrollments" ] []
+
+
+sheet : Int -> Endpoint
+sheet id =
+    url [ "sheets", String.fromInt id ] []
+
+
+sheetFile : Int -> Endpoint
+sheetFile id =
+    url [ "sheets", String.fromInt id, "file" ] []
+
+
+sheetTasks : Int -> Endpoint
+sheetTasks id =
+    url [ "sheets", String.fromInt id, "tasks" ] []
+
+
+task : Int -> Endpoint
+task id =
+    url [ "tasks", String.fromInt id ] []
+
+
+taskPublicFiles : Int -> Endpoint
+taskPublicFiles id =
+    url [ "tasks", String.fromInt id, "public_files" ] []
+
+
+taskPrivateFiles : Int -> Endpoint
+taskPrivateFiles id =
+    url [ "tasks", String.fromInt id, "private_files" ] []

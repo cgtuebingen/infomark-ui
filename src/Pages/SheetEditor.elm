@@ -1,6 +1,6 @@
 module Pages.SheetEditor exposing (Model, Msg(..), initCreate, initEdit, update, view)
 
-import Api.Data.Course exposing (Course)
+import Api.Data.Sheet exposing (Sheet)
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
