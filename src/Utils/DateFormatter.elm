@@ -8,6 +8,7 @@ module Utils.DateFormatter exposing
     , shortDateFormatter
     , shortDayFormatter
     , timeFormatter
+    , joinDateAndTime
     , timeZoneToUtcOffsetMinutes
     , utcOffsetMinutes
     , offsetToParts
@@ -19,6 +20,7 @@ import I18n
 import Iso8601
 import SharedState exposing (SharedState)
 import Time exposing (Posix, Zone(..))
+import TimePicker
 
 
 dayFormatter : SharedState -> Time.Weekday -> String
@@ -248,7 +250,7 @@ fullDateFormatter sharedState time =
     text <| String.toUpper (weekday ++ ", " ++ month ++ " " ++ day ++ ", " ++ year)
 
 
-{-joinDateAndTime : SharedState -> Date -> TimePicker.Time -> Maybe Posix
+joinDateAndTime : SharedState -> Date -> TimePicker.Time -> Maybe Posix
 joinDateAndTime sharedState date time =
     let
         resultDatePosix = dateToPosix date
@@ -259,7 +261,7 @@ joinDateAndTime sharedState date time =
         Ok datePosix -> Just <| Time.millisToPosix <| timeMillis + (Time.posixToMillis datePosix)
 
         Err _ -> Nothing
--}
+
 
 timeZoneToUtcOffsetMinutes : Time.Zone -> Int
 timeZoneToUtcOffsetMinutes zone =

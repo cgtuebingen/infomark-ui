@@ -7,7 +7,6 @@
     "dependencies": {
         "direct": {
             "CurrySoftware/elm-datepicker": "3.0.1",
-            "NoRedInk/datetimepicker-legacy": "1.0.1",
             "NoRedInk/elm-json-decode-pipeline": "1.0.0",
             "avh4/elm-color": "1.0.0",
             "damienklinnert/elm-spinner": "3.0.2",
