@@ -5,6 +5,8 @@ import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
+import Date exposing (Date, day, month, weekday, year)
+import DatePicker exposing (DateEvent(..), defaultSettings)
 import Http
 import I18n
 import RemoteData exposing (RemoteData(..), WebData)
@@ -24,7 +26,9 @@ import Components.CommonElements exposing (inputElement, timeInputElement, dateI
 type Msg
     = NavigateTo Route
     | PublishedTimePickerMsg TimePicker.Msg
+    | PublishedDatePickerMsg DatePicker.Msg
     | DeadlineTimePickerMsg TimePicker.Msg
+    | DeadlineDatePickerMsg DatePicker.Msg
     | SetField Field String
 
 
@@ -32,40 +36,60 @@ type alias Model =
     { id : Int
     , name : String
     , publishedTimePicker : TimePicker
+    , publishedDatePicker : DatePicker.DatePicker
+    , publishedAtDate : Maybe Date
     , deadlineTimePicker : TimePicker
+    , deadlineDatePicker : DatePicker.DatePicker
+    , deadlineAtDate : Maybe Date
     , sheetResponse : WebData Sheet
     , createSheet : Bool
     , errors : List Error
     }
 
 
-initModel : Model
+initModel : (Model, Cmd Msg)
 initModel =
-    { id = 0
+    let
+        ( publishedDatePicker, publishedDatePickerFx ) =
+            DatePicker.init
+
+        ( deadlineDatePicker, deadlineDatePickerFx ) =
+            DatePicker.init
+    in
+    ({ id = 0
     , name = ""
     , publishedTimePicker = TimePicker.init Nothing
+    , publishedDatePicker = publishedDatePicker
+    , publishedAtDate = Nothing
     , deadlineTimePicker = TimePicker.init Nothing
+    , deadlineDatePicker = deadlineDatePicker
+    , deadlineAtDate = Nothing
     , sheetResponse = NotAsked
     , createSheet = True
     , errors = []
     }
+    , Cmd.batch
+        [ Cmd.map PublishedDatePickerMsg publishedDatePickerFx
+        , Cmd.map DeadlineDatePickerMsg deadlineDatePickerFx
+        ]
+    )
 
 
 initCreate : ( Model, Cmd Msg )
-initCreate =
-    ( 
-    initModel
-    , Cmd.none 
-    )
+initCreate = initModel
 
 
 initEdit : Int -> ( Model, Cmd Msg )
 initEdit id =
+    let
+        ( model, cmd ) =
+            initModel
+    in
     ( 
-    { initModel
+    { model
         | createSheet = False
     }
-    , Cmd.none 
+    , cmd
     )
 
 
@@ -82,12 +106,53 @@ update sharedState msg model =
             in
             ( { model | publishedTimePicker = updatedPicker }, Cmd.none, NoUpdate )
 
+        PublishedDatePickerMsg subMsg ->
+            let
+                ( newDatePicker, event ) =
+                    DatePicker.update (datePickerSettings sharedState) subMsg model.publishedDatePicker
+
+                newDate = case event of
+                        Picked date ->
+                            Just date
+
+                        _ ->
+                            model.publishedAtDate
+            in
+            ( { model
+                | publishedAtDate = newDate
+                , publishedDatePicker = newDatePicker
+              }
+            , Cmd.none
+            , NoUpdate
+            )
+
         DeadlineTimePickerMsg subMsg ->
             let
                 ( updatedPicker, timeEvent ) =
                     TimePicker.update timePickerSettings subMsg model.deadlineTimePicker
             in
             ( { model | deadlineTimePicker = updatedPicker }, Cmd.none, NoUpdate)
+
+        DeadlineDatePickerMsg subMsg ->
+            let
+                ( newDatePicker, event ) =
+                    DatePicker.update (datePickerSettings sharedState) subMsg model.deadlineDatePicker
+
+                newDate = case event of
+                        Picked date ->
+                            Just date
+
+                        _ ->
+                            model.deadlineAtDate
+            in
+            ( { model
+                | deadlineAtDate = newDate
+                , deadlineDatePicker = newDatePicker
+              }
+            , Cmd.none
+            , NoUpdate
+            )
+            
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
@@ -147,15 +212,31 @@ viewForm sharedState model =
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
+                dateInputElement
+                    { label = "Published date"
+                    , value = model.publishedAtDate
+                    , datePicker = model.publishedDatePicker
+                    , settings = (datePickerSettings sharedState) 
+                    } PublishedDate model.errors PublishedDatePickerMsg
+            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
+                dateInputElement
+                    { label = "Deadline date"
+                    , value = model.deadlineAtDate
+                    , datePicker = model.deadlineDatePicker
+                    , settings = (datePickerSettings sharedState) 
+                    } DeadlineDate model.errors DeadlineDatePickerMsg
+            ]
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
                 timeInputElement
-                    { label = "Published at"
+                    { label = "Published time"
                     , placeholder = "Select time..."
                     , timePicker = model.publishedTimePicker
                     , settings = timePickerSettings 
                     } PublishedTime model.errors PublishedTimePickerMsg
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
                 timeInputElement
-                    { label = "Deadline at"
+                    { label = "Deadline time"
                     , placeholder = "Select time..."
                     , timePicker = model.deadlineTimePicker
                     , settings = timePickerSettings 
@@ -172,6 +253,21 @@ timePickerSettings =
     in
         { defaultSettings | showSeconds = False, minuteStep = 15, use24Hours = True }
 
+datePickerSettings : SharedState -> DatePicker.Settings
+datePickerSettings sharedState =
+    let
+        curTime =
+            Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
+    in
+    { defaultSettings
+        | inputAttributes = 
+            [ Styles.lineInputStyle
+            , classes [ TC.w_100, TC.mb3 ] 
+            ]
+       -- , dateFormatter = DF.dateToShortFormatString sharedState
+        , dayFormatter = DF.shortDayFormatter sharedState
+        , monthFormatter = DF.monthFormatter sharedState
+    }
 
 type alias Error =
     ( Field, String )
@@ -179,7 +275,9 @@ type alias Error =
 type Field
     = Name
     | PublishedTime
+    | PublishedDate
     | DeadlineTime
+    | DeadlineDate
 
 
 setField : Model -> Field -> String -> Model
