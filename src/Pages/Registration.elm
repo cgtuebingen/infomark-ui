@@ -1,4 +1,4 @@
-module Pages.Registration exposing (Error, Field(..), Model, Msg(..), init, inputElement, modelValidator, setField, update, view, viewFormErrors)
+module Pages.Registration exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.User exposing (User)
 import Api.Data.UserAccount exposing (UserAccount)
@@ -21,6 +21,7 @@ import Types exposing (Language(..), Translations, languageToBackendString)
 import Utils.EmailHelper as UniMailChecker
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
+import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -237,43 +238,83 @@ view sharedState model =
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
                               -- First element
                               <|
-                                inputElement "First name" "First name" "text" FirstName model.firstName model.errors
+                                inputElement 
+                                    { label = "First name"
+                                    , placeholder = "First name"
+                                    , fieldType = "text"
+                                    , value = model.firstName 
+                                    } FirstName model.errors SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement "Last name" "Last name" "text" LastName model.lastName model.errors
+                                inputElement 
+                                    { label = "Last name"
+                                    , placeholder = "Last name" 
+                                    , fieldType = "text" 
+                                    , value = model.lastName 
+                                    } LastName model.errors SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Second Row (Subject, Semester number)
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_70_ns ] ]
                               -- First element
                               <|
-                                inputElement "Subject" "Subject" "text" Subject model.subject model.errors
+                                inputElement 
+                                    { label = "Subject" 
+                                    , placeholder = "Subject" 
+                                    , fieldType = "text"
+                                    , value = model.subject
+                                    } Subject model.errors SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_30_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement "Semester" "1" "number" Semester model.semester model.errors
+                                inputElement 
+                                    { label = "Semester" 
+                                    , placeholder = "Semester"
+                                    , fieldType = "number"
+                                    , value = model.semester 
+                                    } Semester model.errors SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Thrid Row (Student Number)
                             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                                inputElement "Student Number" "123456" "number" StudentNumber model.studentNumber model.errors
+                                inputElement 
+                                    { label = "Student Number" 
+                                    , placeholder = "Student Number" 
+                                    , fieldType = "number" 
+                                    , value = model.studentNumber 
+                                    } StudentNumber model.errors SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Fourth Row (Email)
                             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                                inputElement "Email address" "Email" "email" Email model.email model.errors
+                                inputElement 
+                                    { label = "Email address"
+                                    , placeholder = "Email" 
+                                    , fieldType = "email"
+                                    , value = model.email
+                                    } Email model.errors SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Fifth Row (Password, Password)
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
                               -- First element
                               <|
-                                inputElement "Password" "Password" "password" Password model.password model.errors
+                                inputElement 
+                                    { label = "Password"
+                                    , placeholder = "Password" 
+                                    , fieldType = "password"
+                                    , value = model.password
+                                    } Password model.errors SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement "Repeat Password" "Password" "password" PasswordRepeat model.passwordRepeat model.errors
+                                inputElement 
+                                    { label = "Repeat Password" 
+                                    , placeholder = "Password" 
+                                    , fieldType = "password"
+                                    , value = model.passwordRepeat
+                                    } PasswordRepeat model.errors SetField
                             ]
                         ]
                     , button
@@ -327,35 +368,6 @@ noUniEmailDialog sharedState model =
         )
         model.noUniversityEmailDialogState
         noUniversityMailDialogConfig
-
-
-inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
-inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label
-        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle
-        ]
-        [ text inputLabel
-        ]
-    , input
-        [ type_ fieldType
-        , Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputPlaceholder
-        , onInput <| SetField field
-        , value curVal
-        ]
-        []
-    , viewFormErrors field errors
-    ]
-
-
-viewFormErrors : Field -> List Error -> Html Msg
-viewFormErrors field errors =
-    errors
-        |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
-        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
 type Field

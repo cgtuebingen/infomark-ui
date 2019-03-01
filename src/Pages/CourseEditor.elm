@@ -24,8 +24,10 @@ import Tachyons.Classes as TC
 import Time exposing (Posix)
 import Toasty
 import Utils.DateFormatter as DF
+import Utils.DateAndTimeUtils as DTU
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors)
+import Components.CommonElements exposing (inputElement, viewFormErrors, dateInputElement, textAreaElement)
 import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
 
 
@@ -65,8 +67,11 @@ settings sharedState =
             Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
     in
     { defaultSettings
-        | inputAttributes = [ Styles.lineInputStyle, classes [ TC.w_100, TC.mb3 ] ]
-        , dateFormatter = DF.dateToShortFormatString sharedState
+        | inputAttributes = 
+            [ Styles.lineInputStyle
+            , classes [ TC.w_100, TC.mb3 ] 
+            ]
+       -- , dateFormatter = DF.dateToShortFormatString sharedState
         , dayFormatter = DF.shortDayFormatter sharedState
         , monthFormatter = DF.monthFormatter sharedState
     }
@@ -196,15 +201,16 @@ update sharedState msg model =
             let
                 ( newDatePicker, event ) =
                     DatePicker.update (settings sharedState) subMsg model.beginsAtDatepicker
-            in
-            ( { model
-                | beginsAtDate =
-                    case event of
+
+                newDate = case event of
                         Picked date ->
                             Just date
 
                         _ ->
                             model.beginsAtDate
+            in
+            ( { model
+                | beginsAtDate = newDate
                 , beginsAtDatepicker = newDatePicker
               }
             , Cmd.none
@@ -215,15 +221,16 @@ update sharedState msg model =
             let
                 ( newDatePicker, event ) =
                     DatePicker.update (settings sharedState) subMsg model.endsAtDatepicker
-            in
-            ( { model
-                | endsAtDate =
-                    case event of
+
+                newDate = case event of
                         Picked date ->
                             Just date
 
                         _ ->
                             model.endsAtDate
+            in
+            ( { model
+                | endsAtDate = newDate
                 , endsAtDatepicker = newDatePicker
               }
             , Cmd.none
@@ -320,55 +327,44 @@ viewForm : SharedState -> Model -> Html Msg
 viewForm sharedState model =
     div
         [ classes [ TC.w_100 ] ]
-        [ h1 [ Styles.headerStyle ] [ text "Kurs erstellen" ]
+        [ h1 
+            [ Styles.headerStyle ] 
+            [ text <|
+                if model.createCourse then "Kurs erstellen" else "Kurs bearbeiten"
+            ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement "Course Name" "Name" "text" Name model.courseName model.errors
+                inputElement 
+                    { label = "Course Name"
+                    , placeholder = "Name"
+                    , fieldType = "text"
+                    , value = model.courseName
+                    } Name model.errors SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             -- Second Row (Start date, End date)
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
                 -- First element
-                [ label
-                    [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                    , Styles.labelStyle
-                    ]
-                    [ text "Start" ]
-                , DatePicker.view model.beginsAtDate (settings sharedState) model.beginsAtDatepicker
-                    |> Html.map BeginDatePicker
-                , viewFormErrors BeginsAtDate model.errors
-                ]
-            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
+                dateInputElement 
+                    { label = "Start"
+                    , value = model.beginsAtDate
+                    , datePicker = model.beginsAtDatepicker
+                    , settings = (settings sharedState)
+                    } BeginsAtDate model.errors BeginDatePicker
+            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
                 -- Second element
-                [ label
-                    [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                    , Styles.labelStyle
-                    ]
-                    [ text "Ende" ]
-                , DatePicker.view model.endsAtDate (settings sharedState) model.endsAtDatepicker
-                    |> Html.map EndDatePicker
-                , viewFormErrors EndsAtDate model.errors
-                ]
+                dateInputElement 
+                    { label = "Ende"
+                    , value = model.endsAtDate
+                    , datePicker = model.endsAtDatepicker
+                    , settings = (settings sharedState)
+                    } EndsAtDate model.errors EndDatePicker
             ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ label
-                [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                , Styles.labelStyle
-                ]
-                [ text "Beschreibung" ]
-            , textarea
-                (List.append Styles.textAreaReset
-                    [ Styles.lineInputStyle
-                    , classes [ TC.w_100 ]
-                    , rows 10
-                    , placeholder "Beschreibung"
-                    , onInput <| SetField Description
-                    , value model.description
-                    ]
-                )
-                []
-            , viewFormErrors Description model.errors
-            ]
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]  <|
+            textAreaElement 
+                    { label = "Beschreibung"
+                    , placeholder = "Beschreibung"
+                    , value = model.description} Description model.errors SetField
         , div [ classes [ TC.mt3, TC.ph2_ns ] ]
             [ div [ classes [ TC.h3, TC.flex, TC.justify_between, TC.items_center ] ] <|
                 viewRequiredPercentage model
@@ -427,27 +423,6 @@ viewRequiredPercentage model =
     ]
 
 
-inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
-inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label
-        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle
-        ]
-        [ text inputLabel
-        ]
-    , input
-        [ type_ fieldType
-        , Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputPlaceholder
-        , onInput <| SetField field
-        , value curVal
-        ]
-        []
-    , viewFormErrors field errors
-    ]
-
-
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
@@ -459,14 +434,14 @@ fillModelFromResponse sharedState course model =
         timezone =
             Maybe.withDefault Time.utc sharedState.timezone
 
-        _ =
-            Debug.log "Course" course
+        beginDate = Date.fromPosix timezone course.begins_at
+        endDate = Date.fromPosix timezone course.ends_at
     in
     { model
         | courseName = course.name
         , description = Maybe.withDefault "" course.description
-        , beginsAtDate = Just <| Date.fromPosix timezone course.begins_at
-        , endsAtDate = Just <| Date.fromPosix timezone course.ends_at
+        , beginsAtDate = Just <| beginDate
+        , endsAtDate = Just <| endDate
         , required_percentage = Maybe.map String.fromInt course.required_percentage
     }
 
@@ -488,10 +463,10 @@ fillRequestFromModel model =
             Maybe.withDefault defaultDate model.endsAtDate
 
         beginPosix =
-            DF.dateToPosix beginDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+            DTU.dateToPosix beginDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
 
         endPosix =
-            DF.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
+            DTU.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
 
         perc =
             Maybe.map String.toInt model.required_percentage |> Maybe.withDefault Nothing
@@ -527,20 +502,8 @@ setField model field value =
         RequiredPercentage ->
             { model | required_percentage = Just value }
 
-        _ ->
-            model
-
-
-
--- Only date fields left. They are set by the date picker
-
-
-viewFormErrors : Field -> List Error -> Html Msg
-viewFormErrors field errors =
-    errors
-        |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
-        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
+        _ -> -- Only date fields left. They are set by the date picker
+            model 
 
 
 modelValidator : SharedState -> Validator Error Model

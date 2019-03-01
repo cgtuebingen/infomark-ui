@@ -1,6 +1,5 @@
 module Utils.DateFormatter exposing 
     ( dateAndTimeFormatter
-    , dateToPosix
     , dateToShortFormatString
     , dayFormatter
     , fullDateFormatter
@@ -8,10 +7,6 @@ module Utils.DateFormatter exposing
     , shortDateFormatter
     , shortDayFormatter
     , timeFormatter
-    , joinDateAndTime
-    , timeZoneToUtcOffsetMinutes
-    , utcOffsetMinutes
-    , offsetToParts
     )
 
 import Date exposing (Date)
@@ -20,7 +15,7 @@ import I18n
 import Iso8601
 import SharedState exposing (SharedState)
 import Time exposing (Posix, Zone(..))
-import TimePicker
+import Utils.DateAndTimeUtils exposing (dateToPosix)
 
 
 dayFormatter : SharedState -> Time.Weekday -> String
@@ -128,16 +123,6 @@ shortDayFormatter sharedState day =
 flip : (a -> b -> c) -> (b -> a -> c)
 flip f b a =
     f a b
-
-
-dateToPosix : Date -> Result String Posix
-dateToPosix date =
-    case Date.toIsoString date |> Iso8601.toTime of
-        Err _ ->
-            Err "Failed to convert date to posix"
-
-        Ok time ->
-            Ok time
 
 
 dateToShortFormatString : SharedState -> Date -> String
@@ -248,61 +233,3 @@ fullDateFormatter sharedState time =
                 )
     in
     text <| String.toUpper (weekday ++ ", " ++ month ++ " " ++ day ++ ", " ++ year)
-
-
-joinDateAndTime : SharedState -> Date -> TimePicker.Time -> Maybe Posix
-joinDateAndTime sharedState date time =
-    let
-        resultDatePosix = dateToPosix date
-
-        timeMillis = (time.seconds + (time.minutes * 60) + (time.hours * 60 * 60)) * 1000
-    in
-    case resultDatePosix of
-        Ok datePosix -> Just <| Time.millisToPosix <| timeMillis + (Time.posixToMillis datePosix)
-
-        Err _ -> Nothing
-
-
-timeZoneToUtcOffsetMinutes : Time.Zone -> Int
-timeZoneToUtcOffsetMinutes zone =
-    let
-        oneDay = 24 * 60 * 60 * 1000
-        
-        hour = Time.toHour zone <| Time.millisToPosix oneDay
-        minute = Time.toMinute zone <| Time.millisToPosix oneDay
-        day = Time.toDay zone <| Time.millisToPosix oneDay
-
-        hourUtc = Time.toHour Time.utc <| Time.millisToPosix oneDay
-        minuteUtc = Time.toMinute Time.utc <| Time.millisToPosix oneDay
-        dayUtc = Time.toDay Time.utc <| Time.millisToPosix oneDay
-
-        hourOffset = (hour - hourUtc) * 60
-        minuteOffset = minute - minuteUtc
-        dayOffset = (day - dayUtc) * 24 * 60
-
-        offset = dayOffset + hourOffset + minuteOffset
-    in
-    offset
-
-
-utcOffsetMinutes : Int -> Int -> Int -> Int
-utcOffsetMinutes multiplier hours minutes =
-    -- multiplier is either 1 or -1 (for negative UTC offsets)
-    multiplier * ((hours * 60) + minutes)
-
-
-offsetToParts : Int -> { multiplier : Int, hours : Int, minutes : Int }
-offsetToParts offset =
-    let
-        multiplier = if offset < 0 then -1 else 1
-
-        hours = (abs offset) // 60
-        minutes = modBy 60 <| abs offset
-    in
-    { multiplier = multiplier
-    , hours = hours
-    , minutes = minutes
-    }
-    
-
-

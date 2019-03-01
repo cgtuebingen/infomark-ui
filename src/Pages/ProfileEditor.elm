@@ -36,6 +36,7 @@ import Types
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors, perform)
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
+import Components.CommonElements exposing (inputElement)
 
 
 type Msg
@@ -437,19 +438,46 @@ viewForm sharedState model =
                     ]
                 ]
               <|
-                (inputElement "First Name" "First Name" "text" FirstName model.firstname model.userErrors
-                    ++ inputElement "Last Name" "Last Name" "text" LastName model.lastname model.userErrors
+                (
+                    inputElement 
+                        { label = "First Name" 
+                        , placeholder = "First Name" 
+                        , fieldType = "text" 
+                        , value = model.firstname 
+                        } FirstName model.userErrors SetField
+                ++ 
+                    inputElement 
+                        { label = "Last Name" 
+                        , placeholder = "Last Name" 
+                        , fieldType = "text" 
+                        , value = model.lastname
+                        } LastName model.userErrors SetField
                 )
             ]
         , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_70_ns ] ] <|
-                inputElement "Subject" "Subject" "text" Subject model.subject model.userErrors
+                inputElement 
+                    { label = "Subject" 
+                    , placeholder = "Subject" 
+                    , fieldType = "text"
+                    , value = model.subject
+                    } Subject model.userErrors SetField
             , div [ classes [ TC.fl, TC.w_100, TC.w_30_ns, TC.pl2_ns ] ] <|
-                inputElement "Semester" "1" "number" Semester model.semester model.userErrors
+                inputElement 
+                    { label = "Semester"
+                    , placeholder = "Semester" 
+                    , fieldType = "number"
+                    , value = model.semester
+                    } Semester model.userErrors SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement "Student Number" "123456" "number" StudentNumber model.studentNumber model.userErrors
+                inputElement 
+                    { label = "Student Number"
+                    , placeholder = "Student Number"
+                    , fieldType = "number"
+                    , value = model.studentNumber
+                    } StudentNumber model.userErrors SetField
             ]
         , h2
             [ Styles.sectionStyle
@@ -458,17 +486,37 @@ viewForm sharedState model =
             [ text "Account" ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement "Email" "Email" "email" Email model.email model.accountErrors
+                inputElement 
+                    { label = "Email" 
+                    , placeholder = "Email"
+                    , fieldType = "email"
+                    , value = model.email
+                    } Email model.accountErrors SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                inputElement "New Password" "Password" "password" Password model.password model.accountErrors
+                inputElement 
+                    { label = "New Password"
+                    , placeholder = "Password" 
+                    , fieldType = "password"
+                    , value = model.password 
+                    } Password model.accountErrors SetField
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                inputElement "New Password Repeat" "Password" "password" PasswordRepeat model.passwordRepeat model.accountErrors
+                inputElement 
+                    { label = "New Password Repeat" 
+                    , placeholder = "Password" 
+                    , fieldType = "password"
+                    , value = model.passwordRepeat
+                    } PasswordRepeat model.accountErrors SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement "Old Password" "Password" "password" OldPassword model.oldPassword model.accountErrors
+                inputElement 
+                    { label = "Old Password" 
+                    , placeholder = "Password" 
+                    , fieldType = "password"
+                    , value = model.oldPassword
+                    } OldPassword model.accountErrors SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
             [ button
@@ -503,27 +551,6 @@ viewForm sharedState model =
                 ]
             ]
         ]
-
-
-inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
-inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label
-        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle
-        ]
-        [ text inputLabel
-        ]
-    , input
-        [ type_ fieldType
-        , Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputPlaceholder
-        , onInput <| SetField field
-        , value curVal
-        ]
-        []
-    , viewFormErrors field errors
-    ]
 
 
 avatarUploader : Model -> Html Msg
@@ -573,14 +600,6 @@ avatarUploader model =
             ]
             [ text "Pick avatar" ]
         ]
-
-
-viewFormErrors : Field -> List Error -> Html Msg
-viewFormErrors field errors =
-    errors
-        |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
-        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
 type Field

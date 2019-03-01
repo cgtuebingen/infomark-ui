@@ -41,6 +41,7 @@ import Utils.PersistantState as PersistantState
 import Utils.Styles as Styles
 import Utils.Utils as Utils
 import Validate exposing (Validator, ifBlank, validate)
+import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -613,7 +614,12 @@ loginDialog sharedState model =
                 [ classes [ TC.w_100, TC.mt4 ] ]
                 [ Html.form
                     []
-                    (inputElement "Password" "Password" "password" Password model.plain_password model.errors
+                    (inputElement 
+                        { label = "Password" 
+                        , placeholder = "Password" 
+                        , fieldType = "password"
+                        , value = model.plain_password
+                        } Password model.errors SetField
                         ++ [ div [ classes [ TC.fr, TC.mt3 ] ]
                                 [ button
                                     [ classes
@@ -803,40 +809,11 @@ type alias Error =
     ( Field, String )
 
 
-inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
-inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label
-        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle
-        ]
-        [ text inputLabel
-        ]
-    , input
-        [ type_ fieldType
-        , Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputPlaceholder
-        , onInput <| SetField field
-        , value curVal
-        ]
-        []
-    , viewFormErrors field errors
-    ]
-
-
 modelValidator : Validator Error Model
 modelValidator =
     Validate.all
         [ ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
         ]
-
-
-viewFormErrors : Field -> List Error -> Html Msg
-viewFormErrors field errors =
-    errors
-        |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
-        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
 modelToLoginRequest : SharedState -> Model -> Maybe Account

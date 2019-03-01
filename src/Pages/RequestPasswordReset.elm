@@ -21,6 +21,7 @@ import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
+import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -150,7 +151,12 @@ view sharedState model =
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement "Email address" "Email" "email" Email model.email model.errors
+                        inputElement 
+                            { label = "Email address" 
+                            , placeholder = "Email" 
+                            , fieldType = "email"
+                            , value = model.email
+                            } Email model.errors SetField
                     , button
                         [ Styles.buttonGreyStyle
                         , classes [ TC.mt4, TC.w_100 ]
@@ -168,35 +174,6 @@ view sharedState model =
                 ]
             ]
         ]
-
-
-inputElement : String -> String -> String -> Field -> String -> List Error -> List (Html Msg)
-inputElement inputLabel inputPlaceholder fieldType field curVal errors =
-    [ label
-        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-        , Styles.labelStyle
-        ]
-        [ text inputLabel
-        ]
-    , input
-        [ type_ fieldType
-        , Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputPlaceholder
-        , onInput <| SetField field
-        , value curVal
-        ]
-        []
-    , viewFormErrors field errors
-    ]
-
-
-viewFormErrors : Field -> List Error -> Html Msg
-viewFormErrors field errors =
-    errors
-        |> List.filter (\( fieldError, _ ) -> fieldError == field)
-        |> List.map (\( _, error ) -> li [ classes [ TC.red ] ] [ text error ])
-        |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
 type Field

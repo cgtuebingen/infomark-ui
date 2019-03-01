@@ -17,6 +17,7 @@
             "elm/html": "1.0.0",
             "elm/http": "2.0.0",
             "elm/json": "1.1.2",
+            "elm/parser": "1.1.0",
             "elm/regex": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
@@ -35,11 +36,11 @@
             "rtfeldman/elm-iso8601-date-strings": "1.1.2",
             "rtfeldman/elm-validate": "4.0.1",
             "ryannhg/date-format": "2.3.0",
-            "simonh1000/elm-jwt": "7.0.0"
+            "simonh1000/elm-jwt": "7.0.0",
+            "stephenreddek/elm-time-picker": "1.0.3"
         },
         "indirect": {
             "Skinney/murmur3": "2.0.8",
-            "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/list-extra": "8.1.0",
