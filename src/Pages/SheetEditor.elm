@@ -18,7 +18,7 @@ import Utils.Utils exposing (handleLogoutErrors)
 import Utils.DateFormatter as DF
 import Utils.DateAndTimeUtils as DTU
 import TimePicker exposing (TimeEvent(..), TimePicker)
-import Components.CommonElements exposing (inputElement)
+import Components.CommonElements exposing (inputElement, timeInputElement, dateInputElement)
 
 
 type Msg
@@ -106,11 +106,6 @@ view sharedState model =
             ]
             [ viewFormLoadingOrError sharedState model ]
         ]
-        {-[ h3 [] [ text "Sheeeeet" ]
-        , div [ class "default-time-picker" ]
-            [ Html.map PublishedTimePickerMsg <| TimePicker.view timePickerSettings model.publishedTimePicker 
-            ]
-        ]-}
 
 
 viewFormLoadingOrError : SharedState -> Model -> Html Msg
@@ -150,8 +145,22 @@ viewForm sharedState model =
                     , fieldType = "text"
                     , value = model.name } Name model.errors SetField
             ]
-
-
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
+                timeInputElement
+                    { label = "Published at"
+                    , placeholder = "Select time..."
+                    , timePicker = model.publishedTimePicker
+                    , settings = timePickerSettings 
+                    } PublishedTime model.errors PublishedTimePickerMsg
+            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
+                timeInputElement
+                    { label = "Deadline at"
+                    , placeholder = "Select time..."
+                    , timePicker = model.deadlineTimePicker
+                    , settings = timePickerSettings 
+                    } DeadlineTime model.errors DeadlineTimePickerMsg
+            ]
         ]
 
 
@@ -169,6 +178,8 @@ type alias Error =
 
 type Field
     = Name
+    | PublishedTime
+    | DeadlineTime
 
 
 setField : Model -> Field -> String -> Model
@@ -176,3 +187,7 @@ setField model field value =
     case field of
         Name ->
             { model | name = value }
+
+
+        _ -> -- times are set by TimePicker
+            model

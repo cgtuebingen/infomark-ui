@@ -2,7 +2,9 @@ module Components.CommonElements exposing
     ( inputElement
     , viewFormErrors
     , dateInputElement
-    , textAreaElement)
+    , textAreaElement
+    , timeInputElement
+    )
 
 
 import Html exposing (..)
@@ -13,6 +15,7 @@ import Tachyons.Classes as TC
 import Utils.Styles as Styles
 import Date exposing (Date)
 import DatePicker
+import TimePicker exposing (TimeEvent(..), TimePicker)
 
 
 inputElement : { label : String, placeholder : String, fieldType : String, value : String} -> field -> List (field, String) -> (field -> String -> msg) -> List (Html msg)
@@ -61,6 +64,34 @@ dateInputElement inputConfig field errors msg =
         [ text inputConfig.label ]
     , DatePicker.view inputConfig.value inputConfig.settings inputConfig.datePicker
         |> Html.map msg
+    , viewFormErrors field errors
+    ]
+
+
+timeInputElement : 
+    { label : String
+    , placeholder : String
+    , timePicker : TimePicker 
+    , settings : TimePicker.Settings }
+    -> field
+    -> List (field, String)
+    -> (TimePicker.Msg -> msg)
+    -> List (Html msg)
+timeInputElement inputConfig field errors msg =
+    let
+        originalConfig = inputConfig.settings
+        updatedConfig = { originalConfig | placeholder = inputConfig.placeholder }
+    in
+    [ label
+        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+        , Styles.labelStyle
+        ]
+        [ text inputConfig.label ]
+    , div [ class "default-time-picker" ]
+        [ Html.map msg <| TimePicker.view 
+            updatedConfig
+            inputConfig.timePicker 
+        ]
     , viewFormErrors field errors
     ]
 
