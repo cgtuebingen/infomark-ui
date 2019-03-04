@@ -8,6 +8,7 @@ module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update
 import Api.Data.Course as Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
 import Browser.Navigation exposing (back, pushUrl)
+import Components.CommonElements exposing (dateInputElement, inputElement, textAreaElement, viewFormErrors)
 import Components.Toasty
 import Date exposing (Date, day, month, weekday, year)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -23,11 +24,10 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time exposing (Posix)
 import Toasty
-import Utils.DateFormatter as DF
 import Utils.DateAndTimeUtils as DTU
+import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors)
-import Components.CommonElements exposing (inputElement, viewFormErrors, dateInputElement, textAreaElement)
 import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
 
 
@@ -67,11 +67,12 @@ settings sharedState =
             Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
     in
     { defaultSettings
-        | inputAttributes = 
+        | inputAttributes =
             [ Styles.lineInputStyle
-            , classes [ TC.w_100, TC.mb3 ] 
+            , classes [ TC.w_100, TC.mb3 ]
             ]
-       -- , dateFormatter = DF.dateToShortFormatString sharedState
+
+        -- , dateFormatter = DF.dateToShortFormatString sharedState
         , dayFormatter = DF.shortDayFormatter sharedState
         , monthFormatter = DF.monthFormatter sharedState
     }
@@ -202,7 +203,8 @@ update sharedState msg model =
                 ( newDatePicker, event ) =
                     DatePicker.update (settings sharedState) subMsg model.beginsAtDatepicker
 
-                newDate = case event of
+                newDate =
+                    case event of
                         Picked date ->
                             Just date
 
@@ -222,7 +224,8 @@ update sharedState msg model =
                 ( newDatePicker, event ) =
                     DatePicker.update (settings sharedState) subMsg model.endsAtDatepicker
 
-                newDate = case event of
+                newDate =
+                    case event of
                         Picked date ->
                             Just date
 
@@ -327,44 +330,61 @@ viewForm : SharedState -> Model -> Html Msg
 viewForm sharedState model =
     div
         [ classes [ TC.w_100 ] ]
-        [ h1 
-            [ Styles.headerStyle ] 
+        [ h1
+            [ Styles.headerStyle ]
             [ text <|
-                if model.createCourse then "Kurs erstellen" else "Kurs bearbeiten"
+                if model.createCourse then
+                    "Kurs erstellen"
+
+                else
+                    "Kurs bearbeiten"
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement 
+                inputElement
                     { label = "Course Name"
                     , placeholder = "Name"
                     , fieldType = "text"
                     , value = model.courseName
-                    } Name model.errors SetField
+                    }
+                    Name
+                    model.errors
+                    SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             -- Second Row (Start date, End date)
             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
                 -- First element
-                dateInputElement 
+                dateInputElement
                     { label = "Start"
                     , value = model.beginsAtDate
                     , datePicker = model.beginsAtDatepicker
-                    , settings = (settings sharedState)
-                    } BeginsAtDate model.errors BeginDatePicker
+                    , settings = settings sharedState
+                    }
+                    BeginsAtDate
+                    model.errors
+                    BeginDatePicker
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
                 -- Second element
-                dateInputElement 
+                dateInputElement
                     { label = "Ende"
                     , value = model.endsAtDate
                     , datePicker = model.endsAtDatepicker
-                    , settings = (settings sharedState)
-                    } EndsAtDate model.errors EndDatePicker
+                    , settings = settings sharedState
+                    }
+                    EndsAtDate
+                    model.errors
+                    EndDatePicker
             ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]  <|
-            textAreaElement 
-                    { label = "Beschreibung"
-                    , placeholder = "Beschreibung"
-                    , value = model.description} Description model.errors SetField
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ] <|
+            textAreaElement
+                { label = "Beschreibung"
+                , placeholder = "Beschreibung"
+                , value = model.description
+                }
+                Description
+                model.errors
+                SetField
         , div [ classes [ TC.mt3, TC.ph2_ns ] ]
             [ div [ classes [ TC.h3, TC.flex, TC.justify_between, TC.items_center ] ] <|
                 viewRequiredPercentage model
@@ -434,8 +454,11 @@ fillModelFromResponse sharedState course model =
         timezone =
             Maybe.withDefault Time.utc sharedState.timezone
 
-        beginDate = Date.fromPosix timezone course.begins_at
-        endDate = Date.fromPosix timezone course.ends_at
+        beginDate =
+            Date.fromPosix timezone course.begins_at
+
+        endDate =
+            Date.fromPosix timezone course.ends_at
     in
     { model
         | courseName = course.name
@@ -502,8 +525,9 @@ setField model field value =
         RequiredPercentage ->
             { model | required_percentage = Just value }
 
-        _ -> -- Only date fields left. They are set by the date picker
-            model 
+        _ ->
+            -- Only date fields left. They are set by the date picker
+            model
 
 
 modelValidator : SharedState -> Validator Error Model

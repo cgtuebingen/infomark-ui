@@ -14,8 +14,8 @@ import Task
 import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
-import Utils.PersistantState as PersistantState
 import Utils.DateFormatter as DF
+import Utils.PersistantState as PersistantState
 
 
 main : Program Flags Model Msg
@@ -86,7 +86,7 @@ update msg model =
         TimeChange time ->
             updateTime model time
 
-        AdjustTimeZone zone ->          
+        AdjustTimeZone zone ->
             updateTimeZone model zone
 
         HandleTranslationsResponse webData ->

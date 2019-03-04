@@ -7,6 +7,7 @@ import Api.Data.Role exposing (Role)
 import Api.Request.Auth as AuthRequests
 import Browser
 import Browser.Navigation exposing (Key)
+import Components.CommonElements exposing (inputElement)
 import Components.Dialog as Dialog
 import Decoders
 import Html exposing (..)
@@ -41,7 +42,6 @@ import Utils.PersistantState as PersistantState
 import Utils.Styles as Styles
 import Utils.Utils as Utils
 import Validate exposing (Validator, ifBlank, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -614,12 +614,15 @@ loginDialog sharedState model =
                 [ classes [ TC.w_100, TC.mt4 ] ]
                 [ Html.form
                     []
-                    (inputElement 
-                        { label = "Password" 
-                        , placeholder = "Password" 
+                    (inputElement
+                        { label = "Password"
+                        , placeholder = "Password"
                         , fieldType = "password"
                         , value = model.plain_password
-                        } Password model.errors SetField
+                        }
+                        Password
+                        model.errors
+                        SetField
                         ++ [ div [ classes [ TC.fr, TC.mt3 ] ]
                                 [ button
                                     [ classes

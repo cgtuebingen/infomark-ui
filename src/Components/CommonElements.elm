@@ -1,25 +1,24 @@
-module Components.CommonElements exposing 
-    ( inputElement
-    , viewFormErrors
-    , dateInputElement
+module Components.CommonElements exposing
+    ( dateInputElement
+    , inputElement
+    , sliderInputElement
     , textAreaElement
     , timeInputElement
-    , sliderInputElement
+    , viewFormErrors
     )
 
-
+import Date exposing (Date)
+import DatePicker
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
-import Utils.Styles as Styles
-import Date exposing (Date)
-import DatePicker
 import TimePicker exposing (TimeEvent(..), TimePicker)
+import Utils.Styles as Styles
 
 
-inputElement : { label : String, placeholder : String, fieldType : String, value : String} -> field -> List (field, String) -> (field -> String -> msg) -> List (Html msg)
+inputElement : { label : String, placeholder : String, fieldType : String, value : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
 inputElement inputConfig field errors msg =
     [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
@@ -40,7 +39,7 @@ inputElement inputConfig field errors msg =
     ]
 
 
-viewFormErrors : field -> List (field, String) -> Html msg
+viewFormErrors : field -> List ( field, String ) -> Html msg
 viewFormErrors field errors =
     errors
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
@@ -48,16 +47,17 @@ viewFormErrors field errors =
         |> ul [ classes [ TC.list, TC.pl0, TC.center ] ]
 
 
-dateInputElement : 
+dateInputElement :
     { label : String
     , value : Maybe Date
     , datePicker : DatePicker.DatePicker
-    , settings : DatePicker.Settings } 
-    -> field 
-    -> List (field, String) 
-    -> (DatePicker.Msg -> msg) 
+    , settings : DatePicker.Settings
+    }
+    -> field
+    -> List ( field, String )
+    -> (DatePicker.Msg -> msg)
     -> List (Html msg)
-dateInputElement inputConfig field errors msg = 
+dateInputElement inputConfig field errors msg =
     [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
         , Styles.labelStyle
@@ -69,19 +69,23 @@ dateInputElement inputConfig field errors msg =
     ]
 
 
-timeInputElement : 
+timeInputElement :
     { label : String
     , placeholder : String
-    , timePicker : TimePicker 
-    , settings : TimePicker.Settings }
+    , timePicker : TimePicker
+    , settings : TimePicker.Settings
+    }
     -> field
-    -> List (field, String)
+    -> List ( field, String )
     -> (TimePicker.Msg -> msg)
     -> List (Html msg)
 timeInputElement inputConfig field errors msg =
     let
-        originalConfig = inputConfig.settings
-        updatedConfig = { originalConfig | placeholder = inputConfig.placeholder }
+        originalConfig =
+            inputConfig.settings
+
+        updatedConfig =
+            { originalConfig | placeholder = inputConfig.placeholder }
     in
     [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
@@ -89,15 +93,16 @@ timeInputElement inputConfig field errors msg =
         ]
         [ text inputConfig.label ]
     , div [ class "default-time-picker" ]
-        [ Html.map msg <| TimePicker.view 
-            updatedConfig
-            inputConfig.timePicker 
+        [ Html.map msg <|
+            TimePicker.view
+                updatedConfig
+                inputConfig.timePicker
         ]
-    , div [ classes [TC.mt4, TC.pt2 ] ] [ viewFormErrors field errors ]
+    , div [ classes [ TC.mt4, TC.pt2 ] ] [ viewFormErrors field errors ]
     ]
 
 
-textAreaElement : { label : String, placeholder : String, value : String} -> field -> List (field, String) -> (field -> String -> msg) -> List (Html msg)
+textAreaElement : { label : String, placeholder : String, value : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
 textAreaElement inputConfig field errors msg =
     [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
@@ -107,17 +112,19 @@ textAreaElement inputConfig field errors msg =
         ]
     , textarea
         ([ Styles.lineInputStyle
-        , classes [ TC.w_100, TC.mb3 ]
-        , placeholder inputConfig.placeholder
-        , onInput <| msg field
-        , value inputConfig.value
-        ] ++ Styles.textAreaReset)
+         , classes [ TC.w_100, TC.mb3 ]
+         , placeholder inputConfig.placeholder
+         , onInput <| msg field
+         , value inputConfig.value
+         ]
+            ++ Styles.textAreaReset
+        )
         []
     , viewFormErrors field errors
     ]
 
 
-sliderInputElement : { label : String, value : Int, min : Int, max : Int, step : Int, valueLabel : String } -> field -> List (field, String) -> (field -> String -> msg) -> List (Html msg)
+sliderInputElement : { label : String, value : Int, min : Int, max : Int, step : Int, valueLabel : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
 sliderInputElement inputConfig field errors msg =
     [ label
         [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
@@ -125,7 +132,7 @@ sliderInputElement inputConfig field errors msg =
         ]
         [ text inputConfig.label
         ]
-    , input 
+    , input
         [ type_ "range"
         , Html.Attributes.min <| String.fromInt inputConfig.min
         , Html.Attributes.max <| String.fromInt inputConfig.max
@@ -134,7 +141,8 @@ sliderInputElement inputConfig field errors msg =
         , class "slider"
         , onInput <| msg field
         , classes [ TC.mt3, TC.bg_black_30 ]
-        ] []
+        ]
+        []
     , h2 [ Styles.labelStyle ] [ text inputConfig.valueLabel ]
     , viewFormErrors field errors
     ]

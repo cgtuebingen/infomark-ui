@@ -2,6 +2,7 @@ module Pages.RequestPasswordReset exposing (Model, Msg(..), init, update, view)
 
 import Api.Request.Auth exposing (requestPasswordResetPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Toasty
 import Decoders
 import Dict
@@ -21,7 +22,6 @@ import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -151,12 +151,15 @@ view sharedState model =
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement 
-                            { label = "Email address" 
-                            , placeholder = "Email" 
+                        inputElement
+                            { label = "Email address"
+                            , placeholder = "Email"
                             , fieldType = "email"
                             , value = model.email
-                            } Email model.errors SetField
+                            }
+                            Email
+                            model.errors
+                            SetField
                     , button
                         [ Styles.buttonGreyStyle
                         , classes [ TC.mt4, TC.w_100 ]

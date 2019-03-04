@@ -1,4 +1,4 @@
-module Utils.DateFormatter exposing 
+module Utils.DateFormatter exposing
     ( dateAndTimeFormatter
     , dateToShortFormatString
     , dayFormatter

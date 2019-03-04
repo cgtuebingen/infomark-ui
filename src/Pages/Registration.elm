@@ -4,6 +4,7 @@ import Api.Data.User exposing (User)
 import Api.Data.UserAccount exposing (UserAccount)
 import Api.Request.Account exposing (accountPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Html exposing (..)
@@ -21,7 +22,6 @@ import Types exposing (Language(..), Translations, languageToBackendString)
 import Utils.EmailHelper as UniMailChecker
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -238,83 +238,107 @@ view sharedState model =
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
                               -- First element
                               <|
-                                inputElement 
+                                inputElement
                                     { label = "First name"
                                     , placeholder = "First name"
                                     , fieldType = "text"
-                                    , value = model.firstName 
-                                    } FirstName model.errors SetField
+                                    , value = model.firstName
+                                    }
+                                    FirstName
+                                    model.errors
+                                    SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement 
+                                inputElement
                                     { label = "Last name"
-                                    , placeholder = "Last name" 
-                                    , fieldType = "text" 
-                                    , value = model.lastName 
-                                    } LastName model.errors SetField
+                                    , placeholder = "Last name"
+                                    , fieldType = "text"
+                                    , value = model.lastName
+                                    }
+                                    LastName
+                                    model.errors
+                                    SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Second Row (Subject, Semester number)
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_70_ns ] ]
                               -- First element
                               <|
-                                inputElement 
-                                    { label = "Subject" 
-                                    , placeholder = "Subject" 
+                                inputElement
+                                    { label = "Subject"
+                                    , placeholder = "Subject"
                                     , fieldType = "text"
                                     , value = model.subject
-                                    } Subject model.errors SetField
+                                    }
+                                    Subject
+                                    model.errors
+                                    SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_30_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement 
-                                    { label = "Semester" 
+                                inputElement
+                                    { label = "Semester"
                                     , placeholder = "Semester"
                                     , fieldType = "number"
-                                    , value = model.semester 
-                                    } Semester model.errors SetField
+                                    , value = model.semester
+                                    }
+                                    Semester
+                                    model.errors
+                                    SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Thrid Row (Student Number)
                             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                                inputElement 
-                                    { label = "Student Number" 
-                                    , placeholder = "Student Number" 
-                                    , fieldType = "number" 
-                                    , value = model.studentNumber 
-                                    } StudentNumber model.errors SetField
+                                inputElement
+                                    { label = "Student Number"
+                                    , placeholder = "Student Number"
+                                    , fieldType = "number"
+                                    , value = model.studentNumber
+                                    }
+                                    StudentNumber
+                                    model.errors
+                                    SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Fourth Row (Email)
                             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                                inputElement 
+                                inputElement
                                     { label = "Email address"
-                                    , placeholder = "Email" 
+                                    , placeholder = "Email"
                                     , fieldType = "email"
                                     , value = model.email
-                                    } Email model.errors SetField
+                                    }
+                                    Email
+                                    model.errors
+                                    SetField
                             ]
                         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
                             -- Fifth Row (Password, Password)
                             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
                               -- First element
                               <|
-                                inputElement 
+                                inputElement
                                     { label = "Password"
-                                    , placeholder = "Password" 
+                                    , placeholder = "Password"
                                     , fieldType = "password"
                                     , value = model.password
-                                    } Password model.errors SetField
+                                    }
+                                    Password
+                                    model.errors
+                                    SetField
                             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
                               -- Second element
                               <|
-                                inputElement 
-                                    { label = "Repeat Password" 
-                                    , placeholder = "Password" 
+                                inputElement
+                                    { label = "Repeat Password"
+                                    , placeholder = "Password"
                                     , fieldType = "password"
                                     , value = model.passwordRepeat
-                                    } PasswordRepeat model.errors SetField
+                                    }
+                                    PasswordRepeat
+                                    model.errors
+                                    SetField
                             ]
                         ]
                     , button

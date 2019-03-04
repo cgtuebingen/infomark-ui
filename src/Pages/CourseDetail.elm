@@ -42,6 +42,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Dropdown as Dropdown exposing (ToggleEvent(..), drawer, dropdown, toggle)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -58,7 +59,6 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Components.CommonElements exposing (inputElement)
 
 
 type Msg

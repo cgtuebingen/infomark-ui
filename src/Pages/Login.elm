@@ -4,6 +4,7 @@ import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Toasty
 import Decoders
 import Dict
@@ -23,7 +24,6 @@ import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -188,19 +188,25 @@ view sharedState model =
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement 
+                        inputElement
                             { label = "Email address"
                             , placeholder = "Email"
                             , fieldType = "email"
-                            , value = model.email 
-                            } Email model.errors SetField
+                            , value = model.email
+                            }
+                            Email
+                            model.errors
+                            SetField
                     , div [ classes [ TC.mt3 ] ] <|
-                        inputElement 
+                        inputElement
                             { label = "Passwort"
                             , placeholder = "Password"
                             , fieldType = "password"
-                            , value = model.plain_password 
-                            } Password model.errors SetField
+                            , value = model.plain_password
+                            }
+                            Password
+                            model.errors
+                            SetField
                     , viewLoginButtonOrSpinner model.loginProgress model
                     ]
                 , div [ classes [ TC.mt3 ] ]

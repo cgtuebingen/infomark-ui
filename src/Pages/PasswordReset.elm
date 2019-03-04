@@ -3,6 +3,7 @@ module Pages.PasswordReset exposing (Model, Msg(..), init, update, view)
 import Api.Data.UpdatePassword exposing (UpdatePassword)
 import Api.Request.Auth exposing (updatePasswordPost)
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Toasty
 import Decoders
 import Dict
@@ -22,7 +23,6 @@ import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
 import Validate exposing (Validator, ifBlank, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type alias Model =
@@ -166,19 +166,25 @@ view sharedState model =
 
                     -- TODO: Replace with translation
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement 
-                            { label = "Password" 
-                            , placeholder = "Password" 
+                        inputElement
+                            { label = "Password"
+                            , placeholder = "Password"
                             , fieldType = "password"
                             , value = model.password
-                            } Password model.errors SetField
+                            }
+                            Password
+                            model.errors
+                            SetField
                     , div [ classes [ TC.mt4 ] ] <|
-                        inputElement 
-                            { label = "Password repeat" 
-                            , placeholder = "Password" 
+                        inputElement
+                            { label = "Password repeat"
+                            , placeholder = "Password"
                             , fieldType = "password"
                             , value = model.passwordRepeat
-                            } PasswordRepeat model.errors SetField
+                            }
+                            PasswordRepeat
+                            model.errors
+                            SetField
                     , button
                         [ Styles.buttonGreyStyle
                         , classes [ TC.mt4, TC.w_100 ]

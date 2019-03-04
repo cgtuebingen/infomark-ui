@@ -12,6 +12,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (inputElement)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Dict
@@ -36,7 +37,6 @@ import Types
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors, perform)
 import Validate exposing (Validator, ifBlank, ifInvalidEmail, ifNotInt, validate)
-import Components.CommonElements exposing (inputElement)
 
 
 type Msg
@@ -158,10 +158,10 @@ update sharedState msg model =
         RequestInformationUpdate ->
             case model.user of
                 Loading ->
-                    (model, Cmd.none, NoUpdate)
+                    ( model, Cmd.none, NoUpdate )
 
                 _ ->
-                    ( { model | user = Loading }, MeRequests.meGet UserGetResponse, NoUpdate)
+                    ( { model | user = Loading }, MeRequests.meGet UserGetResponse, NoUpdate )
 
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
@@ -265,17 +265,18 @@ checkIfUserChanged model =
     case model.user of
         Success user ->
             let
-                toCompare = 
-                    [ (model.firstname, user.firstname) 
-                    , (model.lastname, user.lastname)
-                    , (model.studentNumber, Maybe.withDefault "" user.studentNumber)
-                    , (model.semester, Maybe.withDefault "" <| Maybe.map String.fromInt user.semester )
-                    , (model.subject, Maybe.withDefault "" user.subject)
+                toCompare =
+                    [ ( model.firstname, user.firstname )
+                    , ( model.lastname, user.lastname )
+                    , ( model.studentNumber, Maybe.withDefault "" user.studentNumber )
+                    , ( model.semester, Maybe.withDefault "" <| Maybe.map String.fromInt user.semester )
+                    , ( model.subject, Maybe.withDefault "" user.subject )
                     ]
             in
-            List.any (\(fromModel, fromUser) -> fromModel /= fromUser) toCompare
+            List.any (\( fromModel, fromUser ) -> fromModel /= fromUser) toCompare
 
-        _ -> False
+        _ ->
+            False
 
 
 checkIfAccountChanged : Model -> Bool
@@ -284,9 +285,9 @@ checkIfAccountChanged model =
         Success user ->
             (model.email /= user.email) || (model.password /= "")
 
-        _ -> False
+        _ ->
+            False
 
-    
 
 updateUserUpdateResponse : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateUserUpdateResponse sharedState model response =
@@ -297,7 +298,7 @@ updateUserUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( newModel, Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate )
+            ( newModel, Cmd.batch [ newCmd, perform RequestInformationUpdate ], NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -325,12 +326,13 @@ updateAccountUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( 
-                { newModel 
-                    | password = ""
-                    , passwordRepeat = ""
-                    , oldPassword = ""  }
-                , Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate 
+            ( { newModel
+                | password = ""
+                , passwordRepeat = ""
+                , oldPassword = ""
+              }
+            , Cmd.batch [ newCmd, perform RequestInformationUpdate ]
+            , NoUpdate
             )
 
         Failure err ->
@@ -359,12 +361,14 @@ updateAvatarUpdateResponse sharedState model response =
                     ( model, Cmd.none )
                         |> addToast (Components.Toasty.Success "Success" "Profile updated!")
             in
-            ( 
-                { newModel 
-                    | avatarChanged = False
-                    , preview = ""
-                    , avatar = Nothing 
-                }, Cmd.batch [newCmd, perform RequestInformationUpdate], NoUpdate )
+            ( { newModel
+                | avatarChanged = False
+                , preview = ""
+                , avatar = Nothing
+              }
+            , Cmd.batch [ newCmd, perform RequestInformationUpdate ]
+            , NoUpdate
+            )
 
         Failure err ->
             handleLogoutErrors model
@@ -438,46 +442,59 @@ viewForm sharedState model =
                     ]
                 ]
               <|
-                (
-                    inputElement 
-                        { label = "First Name" 
-                        , placeholder = "First Name" 
-                        , fieldType = "text" 
-                        , value = model.firstname 
-                        } FirstName model.userErrors SetField
-                ++ 
-                    inputElement 
-                        { label = "Last Name" 
-                        , placeholder = "Last Name" 
-                        , fieldType = "text" 
+                (inputElement
+                    { label = "First Name"
+                    , placeholder = "First Name"
+                    , fieldType = "text"
+                    , value = model.firstname
+                    }
+                    FirstName
+                    model.userErrors
+                    SetField
+                    ++ inputElement
+                        { label = "Last Name"
+                        , placeholder = "Last Name"
+                        , fieldType = "text"
                         , value = model.lastname
-                        } LastName model.userErrors SetField
+                        }
+                        LastName
+                        model.userErrors
+                        SetField
                 )
             ]
         , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_70_ns ] ] <|
-                inputElement 
-                    { label = "Subject" 
-                    , placeholder = "Subject" 
+                inputElement
+                    { label = "Subject"
+                    , placeholder = "Subject"
                     , fieldType = "text"
                     , value = model.subject
-                    } Subject model.userErrors SetField
+                    }
+                    Subject
+                    model.userErrors
+                    SetField
             , div [ classes [ TC.fl, TC.w_100, TC.w_30_ns, TC.pl2_ns ] ] <|
-                inputElement 
+                inputElement
                     { label = "Semester"
-                    , placeholder = "Semester" 
+                    , placeholder = "Semester"
                     , fieldType = "number"
                     , value = model.semester
-                    } Semester model.userErrors SetField
+                    }
+                    Semester
+                    model.userErrors
+                    SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement 
+                inputElement
                     { label = "Student Number"
                     , placeholder = "Student Number"
                     , fieldType = "number"
                     , value = model.studentNumber
-                    } StudentNumber model.userErrors SetField
+                    }
+                    StudentNumber
+                    model.userErrors
+                    SetField
             ]
         , h2
             [ Styles.sectionStyle
@@ -486,37 +503,49 @@ viewForm sharedState model =
             [ text "Account" ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement 
-                    { label = "Email" 
+                inputElement
+                    { label = "Email"
                     , placeholder = "Email"
                     , fieldType = "email"
                     , value = model.email
-                    } Email model.accountErrors SetField
+                    }
+                    Email
+                    model.accountErrors
+                    SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                inputElement 
+                inputElement
                     { label = "New Password"
-                    , placeholder = "Password" 
+                    , placeholder = "Password"
                     , fieldType = "password"
-                    , value = model.password 
-                    } Password model.accountErrors SetField
+                    , value = model.password
+                    }
+                    Password
+                    model.accountErrors
+                    SetField
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                inputElement 
-                    { label = "New Password Repeat" 
-                    , placeholder = "Password" 
+                inputElement
+                    { label = "New Password Repeat"
+                    , placeholder = "Password"
                     , fieldType = "password"
                     , value = model.passwordRepeat
-                    } PasswordRepeat model.accountErrors SetField
+                    }
+                    PasswordRepeat
+                    model.accountErrors
+                    SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                inputElement 
-                    { label = "Old Password" 
-                    , placeholder = "Password" 
+                inputElement
+                    { label = "Old Password"
+                    , placeholder = "Password"
                     , fieldType = "password"
                     , value = model.oldPassword
-                    } OldPassword model.accountErrors SetField
+                    }
+                    OldPassword
+                    model.accountErrors
+                    SetField
             ]
         , div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
             [ button
