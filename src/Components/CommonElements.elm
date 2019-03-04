@@ -4,6 +4,7 @@ module Components.CommonElements exposing
     , dateInputElement
     , textAreaElement
     , timeInputElement
+    , sliderInputElement
     )
 
 
@@ -112,5 +113,28 @@ textAreaElement inputConfig field errors msg =
         , value inputConfig.value
         ] ++ Styles.textAreaReset)
         []
+    , viewFormErrors field errors
+    ]
+
+
+sliderInputElement : { label : String, value : Int, min : Int, max : Int, step : Int, valueLabel : String } -> field -> List (field, String) -> (field -> String -> msg) -> List (Html msg)
+sliderInputElement inputConfig field errors msg =
+    [ label
+        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+        , Styles.labelStyle
+        ]
+        [ text inputConfig.label
+        ]
+    , input 
+        [ type_ "range"
+        , Html.Attributes.min <| String.fromInt inputConfig.min
+        , Html.Attributes.max <| String.fromInt inputConfig.max
+        , value <| String.fromInt inputConfig.value
+        , step <| String.fromInt inputConfig.step
+        , class "slider"
+        , onInput <| msg field
+        , classes [ TC.mt3, TC.bg_black_30 ]
+        ] []
+    , h2 [ Styles.labelStyle ] [ text inputConfig.valueLabel ]
     , viewFormErrors field errors
     ]

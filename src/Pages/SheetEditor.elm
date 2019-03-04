@@ -15,12 +15,13 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
+import Array
 import Utils.Styles as Styles
-import Utils.Utils exposing (handleLogoutErrors)
+import Utils.Utils exposing (handleLogoutErrors, perform)
 import Utils.DateFormatter as DF
 import Utils.DateAndTimeUtils as DTU
 import TimePicker exposing (TimeEvent(..), TimePicker)
-import Components.CommonElements exposing (inputElement, timeInputElement, dateInputElement)
+import Components.CommonElements exposing (inputElement, timeInputElement, dateInputElement, sliderInputElement)
 
 
 type Msg
@@ -29,6 +30,7 @@ type Msg
     | PublishedDatePickerMsg DatePicker.Msg
     | DeadlineTimePickerMsg TimePicker.Msg
     | DeadlineDatePickerMsg DatePicker.Msg
+    | GetRealOffset
     | SetField Field String
 
 
@@ -41,6 +43,7 @@ type alias Model =
     , deadlineTimePicker : TimePicker
     , deadlineDatePicker : DatePicker.DatePicker
     , deadlineAtDate : Maybe Date
+    , utcOffsetPos : Int
     , sheetResponse : WebData Sheet
     , createSheet : Bool
     , errors : List Error
@@ -66,11 +69,13 @@ initModel =
     , deadlineAtDate = Nothing
     , sheetResponse = NotAsked
     , createSheet = True
+    , utcOffsetPos = DTU.utcZeroOffsetIndex
     , errors = []
     }
     , Cmd.batch
         [ Cmd.map PublishedDatePickerMsg publishedDatePickerFx
         , Cmd.map DeadlineDatePickerMsg deadlineDatePickerFx
+        , perform GetRealOffset
         ]
     )
 
@@ -152,6 +157,18 @@ update sharedState msg model =
             , Cmd.none
             , NoUpdate
             )
+
+        GetRealOffset ->
+            ( 
+                { model 
+                    | utcOffsetPos = 
+                        Debug.log "TimeZone Index" <| Maybe.withDefault DTU.utcZeroOffsetIndex <|
+                            DTU.timeZoneToIndex <| 
+                                Maybe.withDefault Time.utc sharedState.timezone
+                }
+            , Cmd.none
+            , NoUpdate 
+            )
             
 
         SetField field value ->
@@ -195,6 +212,9 @@ viewFormLoadingOrError sharedState model =
 
 viewForm : SharedState -> Model -> Html Msg
 viewForm sharedState model =
+    let
+        offsetLabelsArray = Array.fromList DTU.utcOffsetLabelsList
+    in
     div
         [ classes [ TC.w_100 ] ]
         [ h1 
@@ -219,21 +239,21 @@ viewForm sharedState model =
                     , settings = (datePickerSettings sharedState) 
                     } PublishedDate model.errors PublishedDatePickerMsg
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                dateInputElement
-                    { label = "Deadline date"
-                    , value = model.deadlineAtDate
-                    , datePicker = model.deadlineDatePicker
-                    , settings = (datePickerSettings sharedState) 
-                    } DeadlineDate model.errors DeadlineDatePickerMsg
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
                 timeInputElement
                     { label = "Published time"
                     , placeholder = "Select time..."
                     , timePicker = model.publishedTimePicker
                     , settings = timePickerSettings 
                     } PublishedTime model.errors PublishedTimePickerMsg
+            ]
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
+                dateInputElement
+                    { label = "Deadline date"
+                    , value = model.deadlineAtDate
+                    , datePicker = model.deadlineDatePicker
+                    , settings = (datePickerSettings sharedState) 
+                    } DeadlineDate model.errors DeadlineDatePickerMsg
             , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
                 timeInputElement
                     { label = "Deadline time"
@@ -242,8 +262,19 @@ viewForm sharedState model =
                     , settings = timePickerSettings 
                     } DeadlineTime model.errors DeadlineTimePickerMsg
             ]
+        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+                sliderInputElement
+                    { label = "UTC Offset"
+                    , value = model.utcOffsetPos
+                    , min = 0
+                    , max = (Array.length offsetLabelsArray) - 1
+                    , step = 1
+                    , valueLabel = Maybe.withDefault "Z" <| Array.get model.utcOffsetPos offsetLabelsArray
+                    } UtcOffset model.errors SetField
+            ]
         ]
-
+   
 
 timePickerSettings : TimePicker.Settings
 timePickerSettings =
@@ -278,13 +309,25 @@ type Field
     | PublishedDate
     | DeadlineTime
     | DeadlineDate
+    | UtcOffset
 
 
 setField : Model -> Field -> String -> Model
 setField model field value =
+    let
+        _ = Debug.log "setField" (field, value)
+    in
+    
     case field of
         Name ->
             { model | name = value }
+
+        UtcOffset ->
+            { model 
+                | utcOffsetPos = 
+                    Maybe.withDefault DTU.utcZeroOffsetIndex <| 
+                        String.toInt value
+            }
 
 
         _ -> -- times are set by TimePicker

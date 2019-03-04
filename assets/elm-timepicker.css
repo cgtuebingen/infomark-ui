@@ -39,17 +39,18 @@
 }
 
 .default-time-picker .elm-time-picker-open-up .elm-time-picker-active .elm-time-picker-input-container {
-    border-top: 1px solid #e9e9e9;
     border-bottom: 0;
 }
 
 .default-time-picker .elm-time-picker-active .elm-time-picker-input-container {
-    border-bottom: 1px solid #e9e9e9;
+    border-bottom: 0;
 }
 
 .default-time-picker .elm-time-picker-input-container {
     box-sizing: border-box;
     position: relative;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
 }
 
 .default-time-picker .elm-time-picker-input-container input {
@@ -67,6 +68,11 @@
     font-size: 1rem;
     color: rgba(0,0,0,.8);
     border-bottom-style: solid;
+}
+
+.default-time-picker .elm-time-picker-input-container input:hover,
+.default-time-picker .elm-time-picker-input-container input:focus {
+    border-color: #A51E37;
 }
 
 .default-time-picker .elm-time-picker-input-container input[disabled] {
@@ -119,7 +125,8 @@
     height: 144px;
     margin-bottom: 6px;
     background-color: #fff;
-    box-shadow:4px 4px 8px 0px rgba( 0, 0, 0, 0.2 )
+    box-shadow:4px 4px 8px 0px rgba( 0, 0, 0, 0.2 );
+    margin-top: -1rem;
 }
 
 .default-time-picker .elm-time-picker-panel-select {
