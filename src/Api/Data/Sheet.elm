@@ -13,7 +13,7 @@ import Time exposing (Posix)
 type alias Sheet =
     { id : Int
     , name : String
-    , published_at : Posix
+    , publish_at : Posix
     , due_at : Posix
     , tasks : Maybe (List Task)
     }
@@ -24,7 +24,7 @@ decoder =
     Decode.succeed Sheet
         |> required "id" Decode.int
         |> required "name" Decode.string
-        |> required "published_at" Iso8601.decoder
+        |> required "publish_at" Iso8601.decoder
         |> required "due_at" Iso8601.decoder
         |> optional "tasks" (Decode.nullable <| Decode.list Task.decoder) Nothing
 
@@ -34,7 +34,7 @@ encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
         , ( "name", Encode.string model.name )
-        , ( "published_at", Iso8601.encode model.published_at )
+        , ( "publish_at", Iso8601.encode model.publish_at )
         , ( "due_at", Iso8601.encode model.due_at )
         , ( "tasks", maybe (Encode.list Task.encoder) model.tasks )
         ]

@@ -14,6 +14,7 @@ module Utils.DateAndTimeUtils exposing
     , timeZoneToIndex
     , utcZeroOffsetIndex
     , joinDateTimeAndOffset
+    , splitPosixInDateTimeAndOffset
     , OffsetParts
     )
 
@@ -90,6 +91,21 @@ joinDateTimeAndOffset date time offset =
     in
     Time.millisToPosix (dateMillis + timeMillis)
 
+
+splitPosixInDateTimeAndOffset : Time.Zone -> Time.Posix -> (Date, TP.Time, OffsetParts)
+splitPosixInDateTimeAndOffset zone posix =
+    let
+        
+        hour = Time.toHour zone posix
+        minute = Time.toMinute zone posix
+        second = Time.toSecond zone posix
+        
+        offsetParts = timeZoneToUtcOffsetMinutes zone |> offsetToParts
+    in
+    ( Date.fromPosix zone posix
+    , { hours = hour, minutes = minute, seconds = second }
+    , offsetParts 
+    )
     
 
 -- Time Zone Offset Calculations

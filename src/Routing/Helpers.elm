@@ -12,7 +12,7 @@ type Route
     | CreateCourseRoute
     | EditCourseRoute Int
     | CourseDetailRoute Int
-    | CreateSheetRoute
+    | CreateSheetRoute Int
     | EditSheetRoute Int
     | SheetDetailRoute Int
     | CreateTaskRoute
@@ -52,8 +52,8 @@ reverseRoute route =
                 CourseDetailRoute id ->
                     [ "course", String.fromInt id ]
 
-                CreateSheetRoute ->
-                    [ "sheet", "create" ]
+                CreateSheetRoute courseId ->
+                    [ "course", String.fromInt courseId, "sheet", "create" ]
 
                 EditSheetRoute id ->
                     [ "sheet", String.fromInt id, "edit" ]
@@ -101,7 +101,7 @@ routeParser =
         , Url.Parser.map CreateCourseRoute (Url.Parser.s "course" </> Url.Parser.s "create")
         , Url.Parser.map EditCourseRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map SheetDetailRoute (Url.Parser.s "sheet" </> Url.Parser.int)
-        , Url.Parser.map CreateSheetRoute (Url.Parser.s "sheet" </> Url.Parser.s "create")
+        , Url.Parser.map CreateSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.s "create")
         , Url.Parser.map EditSheetRoute (Url.Parser.s "sheet" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map CreateTaskRoute (Url.Parser.s "task" </> Url.Parser.s "create")
         , Url.Parser.map EditTaskRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "edit")

@@ -1,6 +1,8 @@
 module Pages.SheetEditor exposing (Model, Msg(..), initCreate, initEdit, update, view)
 
 import Api.Data.Sheet exposing (Sheet)
+import Api.Request.Courses as CoursesRequests
+import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -22,6 +24,9 @@ import Utils.DateFormatter as DF
 import Utils.DateAndTimeUtils as DTU
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Components.CommonElements exposing (inputElement, timeInputElement, dateInputElement, sliderInputElement)
+import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
+import Toasty
+import Components.Toasty
 
 
 type Msg
@@ -31,11 +36,18 @@ type Msg
     | DeadlineTimePickerMsg TimePicker.Msg
     | DeadlineDatePickerMsg DatePicker.Msg
     | GetRealOffset
+    | SheetGetResponse (WebData Sheet)
+    | Create
+    | CreateResponse (WebData Sheet)
+    | Update
+    | UpdateResponse (WebData ())
     | SetField Field String
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
 
 
 type alias Model =
-    { id : Int
+    { course_id : Int
+    , id : Int
     , name : String
     , publishedTimePicker : TimePicker
     , publishedDatePicker : DatePicker.DatePicker
@@ -51,6 +63,7 @@ type alias Model =
     , sheetResponse : WebData Sheet
     , createSheet : Bool
     , errors : List Error
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -63,7 +76,8 @@ initModel =
         ( deadlineDatePicker, deadlineDatePickerFx ) =
             DatePicker.init
     in
-    ({ id = 0
+    ({ course_id = 0
+    , id = 0
     , name = ""
     , publishedTimePicker = TimePicker.init Nothing
     , publishedDatePicker = publishedDatePicker
@@ -75,10 +89,11 @@ initModel =
     , deadlineAtDate = Nothing
     , deadlineAtTime = Nothing
     , deadlinePosix = Nothing
+    , utcOffsetPos = DTU.utcZeroOffsetIndex
     , sheetResponse = NotAsked
     , createSheet = True
-    , utcOffsetPos = DTU.utcZeroOffsetIndex
     , errors = []
+    , toasties = Toasty.initialState
     }
     , Cmd.batch
         [ Cmd.map PublishedDatePickerMsg publishedDatePickerFx
@@ -88,8 +103,12 @@ initModel =
     )
 
 
-initCreate : ( Model, Cmd Msg )
-initCreate = initModel
+initCreate : Int -> ( Model, Cmd Msg )
+initCreate courseId = 
+    let
+        ( model, cmd) = initModel
+    in
+    ( { model | course_id = courseId }, cmd)
 
 
 initEdit : Int -> ( Model, Cmd Msg )
@@ -102,15 +121,74 @@ initEdit id =
     { model
         | createSheet = False
     }
-    , cmd
+    , Cmd.batch [ cmd, SheetRequests.sheetGet id SheetGetResponse ]
     )
+
+
+createRequest : Model -> (Model, Cmd Msg)
+createRequest model =
+    case (model.publishedPosix, model.deadlinePosix) of
+        (Just publish, Just deadline) -> 
+            ( model
+            , CoursesRequests.courseSheetsPost model.course_id (setupSheet model.name publish deadline) CreateResponse)
+
+        (_, _) -> 
+            ( model, Cmd.none )
+                    |> addToast (Components.Toasty.Error "Error" "There was an error with the data provided.")
+
+
+updateRequest : Model -> (Model, Cmd Msg)
+updateRequest model =
+    case (model.publishedPosix, model.deadlinePosix) of
+        (Just publish, Just deadline) -> 
+            ( model
+            , SheetRequests.sheetPut model.id (setupSheet model.name publish deadline) UpdateResponse)
+
+        (_, _) -> 
+            ( model, Cmd.none )
+                |> addToast (Components.Toasty.Error "Error" "There was an error with the data provided.")
+
+
+fillModelFromRequest : SharedState -> Model -> Sheet -> Model
+fillModelFromRequest sharedState model sheet =
+    let
+        timezone = Maybe.withDefault Time.utc sharedState.timezone
+
+        (publishedDate, publishedTime, _) = DTU.splitPosixInDateTimeAndOffset timezone sheet.publish_at
+        (deadlineDate, deadlineTime, offset) = DTU.splitPosixInDateTimeAndOffset timezone sheet.due_at
+
+        utcOffsetPos = Maybe.withDefault DTU.utcZeroOffsetIndex <| DTU.findIndexFromParts offset
+    in
+    { model
+        | id = sheet.id
+        , name = sheet.name 
+        , publishedTimePicker = TimePicker.init (Just publishedTime)
+        , publishedAtTime = Just publishedTime
+        , publishedAtDate = Just publishedDate
+        , publishedPosix = Just sheet.publish_at
+        , deadlineTimePicker = TimePicker.init (Just deadlineTime)
+        , deadlineAtTime = Just deadlineTime
+        , deadlineAtDate = Just deadlineDate
+        , deadlinePosix = Just sheet.due_at
+        , utcOffsetPos = utcOffsetPos
+    }
+
+
+setupSheet : String -> Time.Posix -> Time.Posix -> Sheet
+setupSheet name publish deadline =
+    { id = 0
+    , name = name
+    , publish_at = publish
+    , due_at = deadline
+    , tasks = Nothing
+    }
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         PublishedTimePickerMsg subMsg ->
             let
@@ -124,7 +202,7 @@ update sharedState msg model =
             ( { model 
                 | publishedTimePicker = updatedPicker
                 , publishedAtTime = newTime
-                , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime model.utcOffsetPos }, Cmd.none, NoUpdate )
+                , publishedPosix = testIfTimeIsReady model.publishedAtDate newTime model.utcOffsetPos }, Cmd.none, NoUpdate )
 
         PublishedDatePickerMsg subMsg ->
             let
@@ -141,7 +219,7 @@ update sharedState msg model =
             ( { model
                 | publishedAtDate = newDate
                 , publishedDatePicker = newDatePicker
-                , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime model.utcOffsetPos
+                , publishedPosix = testIfTimeIsReady newDate model.publishedAtTime model.utcOffsetPos
               }
             , Cmd.none
             , NoUpdate
@@ -159,7 +237,7 @@ update sharedState msg model =
             ( { model 
                 | deadlineTimePicker = updatedPicker
                 , deadlineAtTime = newTime
-                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate model.deadlineAtTime model.utcOffsetPos
+                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate newTime model.utcOffsetPos
                }, Cmd.none, NoUpdate)
 
         DeadlineDatePickerMsg subMsg ->
@@ -177,7 +255,7 @@ update sharedState msg model =
             ( { model
                 | deadlineAtDate = newDate
                 , deadlineDatePicker = newDatePicker
-                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate model.deadlineAtTime model.utcOffsetPos
+                , deadlinePosix = testIfTimeIsReady newDate model.deadlineAtTime model.utcOffsetPos
               }
             , Cmd.none
             , NoUpdate
@@ -195,10 +273,107 @@ update sharedState msg model =
             , NoUpdate 
             )
             
+        SheetGetResponse response ->
+            updateHandleGetSheet sharedState model response
+
+        Create ->
+            case validate modelValidator model of
+                Err errors -> 
+                    ( { model | errors = errors }, Cmd.none, NoUpdate )
+
+                Ok _ ->
+                    let
+                        (newModel, newCmd) = createRequest model
+                    in
+                    ( { newModel | errors = [] }, newCmd, NoUpdate )
+        
+        CreateResponse response ->
+            updateHandleSend sharedState model response
+        
+        Update ->
+            case validate modelValidator model of
+                Err errors -> 
+                    ( { model | errors = errors }, Cmd.none, NoUpdate )
+
+                Ok _ ->
+                    let
+                        (newModel, newCmd) = updateRequest model
+                    in
+                    ( { newModel | errors = [] }, newCmd, NoUpdate )
+
+        UpdateResponse response ->
+            updateHandleSend sharedState model response
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
+        ToastyMsg subMsg ->
+            let
+                ( newModel, newCmd ) =
+                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
+            in
+            ( newModel, newCmd, NoUpdate )
+
+
+updateHandleGetSheet : SharedState -> Model -> WebData Sheet -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleGetSheet sharedState model response =
+    case response of
+        Success sheet ->
+            let
+                newModel = fillModelFromRequest sharedState model sheet
+            in
+            ( { newModel
+                | sheetResponse = response }, Cmd.none, NoUpdate)
+
+        Failure err ->
+            handleLogoutErrors model sharedState 
+            (\e ->
+                let
+                    ( newModel, newCmd ) =
+                                ( model, Cmd.none )
+                                    |> addToast (Components.Toasty.Error "Error" "Error receiving sheet data")
+                in
+                ( { newModel | sheetResponse = response }, newCmd, NoUpdate)
+            ) err
+
+        _ ->
+            ( {model | sheetResponse = response }, Cmd.none, NoUpdate )
+
+
+updateHandleSend : SharedState -> Model -> WebData ret -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleSend sharedState model response =
+    case response of
+        Success _ ->
+            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
+
+        Failure err ->  
+            handleLogoutErrors model sharedState 
+                (\e ->
+                    let
+                        errorString =
+                            case e of
+                                Http.BadStatus 400 ->
+                                    "Bad Data. Something is off in the data."
+
+                                Http.BadStatus 403 ->
+                                    "You are not allowed to do this!"
+
+                                Http.BadBody message ->
+                                    "Bad return: " ++ message
+
+                                _ ->
+                                    "Something other went wrong"
+
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" errorString)
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                )
+                err
+
+        _ ->
+            ( model, Cmd.none, NoUpdate )
 
 joinTime : Date -> TimePicker.Time -> Int -> Time.Posix
 joinTime date time utcOffsetPos =
@@ -220,7 +395,8 @@ testIfTimeIsReady maybeDate maybeTime offset =
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-        [ div
+        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        , div
             [ classes
                 [ TC.mw8
                 , TC.ph4
@@ -315,6 +491,19 @@ viewForm sharedState model =
                     , valueLabel = Maybe.withDefault "Z" <| Array.get model.utcOffsetPos offsetLabelsArray
                     } UtcOffset model.errors SetField
             ]
+        , button
+            [ Styles.buttonGreyStyle
+            , classes [ TC.mt4, TC.w_100 ]
+            , onClick <| if model.createSheet then Create else Update
+            ]
+            [ text <|
+                case model.createSheet of
+                    True ->
+                        "Erstellen"
+
+                    False ->
+                        "Bearbeiten"
+            ]
         ]
    
 
@@ -356,11 +545,7 @@ type Field
 
 
 setField : Model -> Field -> String -> Model
-setField model field value =
-    let
-        _ = Debug.log "setField" (field, value)
-    in
-    
+setField model field value =   
     case field of
         Name ->
             { model | name = value }
@@ -377,6 +562,48 @@ setField model field value =
                 , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime newPos
             }
 
-
         _ -> -- times are set by TimePicker
             model
+
+
+modelValidator : Validator Error Model
+modelValidator =
+    Validate.all
+        [ ifBlank .name (Name, "Bitte gib einen Blattnamen ein.")
+        , Validate.firstError
+            [ ifNothing .publishedAtTime (PublishedTime, "Bitte gib eine Startzeit ein.")
+            , ifFirstPosixNotOlder .publishedPosix .deadlinePosix (PublishedTime, "Die Startzeit muss vor der Endzeit liegen.")
+            ]
+        , Validate.firstError 
+            [ ifNothing .publishedAtDate (PublishedDate, "Bitte gib ein Startdatum ein.")
+            , ifFirstPosixNotOlder .publishedPosix .deadlinePosix (PublishedDate, "Die Startzeit muss vor der Endzeit liegen.")
+            ]
+        , Validate.firstError 
+            [ ifNothing .deadlineAtTime (DeadlineTime, "Bitte gib eine Endzeit ein.")
+            , ifFirstPosixNotOlder .publishedPosix .deadlinePosix (DeadlineTime, "Die Startzeit muss vor der Endzeit liegen.")
+            ]
+        , Validate.firstError 
+            [ ifNothing .deadlineAtDate (DeadlineDate, "Bitte gib ein Enddatum ein.")
+            , ifFirstPosixNotOlder .publishedPosix .deadlinePosix (DeadlineDate, "Die Startzeit muss vor der Endzeit liegen.")
+            ]
+        ]
+
+
+ifFirstPosixNotOlder : (subject -> Maybe Time.Posix) -> (subject -> Maybe Time.Posix) -> error -> Validator error subject
+ifFirstPosixNotOlder subjectToMaybePosix1 subjectToMaybePosix2 error =
+    Validate.ifFalse (\subject -> isFirstDateOlder (subjectToMaybePosix1 subject) (subjectToMaybePosix2 subject)) error
+
+
+isFirstDateOlder : Maybe Time.Posix -> Maybe Time.Posix -> Bool
+isFirstDateOlder maybeFirstPosix maybeSecondPosix =
+    case ( maybeFirstPosix, maybeSecondPosix ) of
+        ( Just firstPosix, Just secondPosix ) ->
+            (Time.posixToMillis firstPosix) < (Time.posixToMillis secondPosix)
+
+        ( _, _ ) -> -- Don't show when some fields are not set. Add a manual ifNothing with firstError
+            True
+
+
+addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToast toast ( model, cmd ) =
+    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )

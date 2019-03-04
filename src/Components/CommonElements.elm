@@ -93,7 +93,7 @@ timeInputElement inputConfig field errors msg =
             updatedConfig
             inputConfig.timePicker 
         ]
-    , viewFormErrors field errors
+    , div [ classes [TC.mt4, TC.pt2 ] ] [ viewFormErrors field errors ]
     ]
 
 

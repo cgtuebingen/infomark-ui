@@ -308,8 +308,8 @@ navigateTo route model =
         CourseDetailRoute id ->
             CourseDetail.init id |> initWith CourseDetailModel CourseDetailMsg model NoUpdate
 
-        CreateSheetRoute ->
-            SheetEditor.initCreate |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
+        CreateSheetRoute courseId ->
+            SheetEditor.initCreate courseId |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
         EditSheetRoute id ->
             SheetEditor.initEdit id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
@@ -377,7 +377,7 @@ view msgMapper sharedState model =
                 CourseDetailRoute _ ->
                     "page-title-course"
 
-                CreateSheetRoute ->
+                CreateSheetRoute _ ->
                     "page-title-create-sheet"
 
                 EditSheetRoute _ ->

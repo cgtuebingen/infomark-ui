@@ -17,6 +17,9 @@ module Api.Endpoint exposing
     , me
     , requestPasswordReset
     , sessions
+    , sheet
+    , sheetFile
+    , sheetTasks
     , unwrap
     , updatePassword
     , user
