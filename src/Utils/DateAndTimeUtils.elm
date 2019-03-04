@@ -7,11 +7,13 @@ module Utils.DateAndTimeUtils exposing
     , dateToPosix
     , utcOffsetLabelsList
     , utcOffsetMinutesList
+    , utcOffsetsPartsList
     , findIndexFromParts
     , offsetToParts
     , timeZoneToUtcOffsetMinutes
     , timeZoneToIndex
     , utcZeroOffsetIndex
+    , joinDateTimeAndOffset
     , OffsetParts
     )
 
@@ -50,7 +52,16 @@ pickerTimeToMillis zone time =
         timeInSeconds = (time.hours * 60 * 60) + (time.minutes * 60) + (time.seconds)
         offsetInSeconds = (timeZoneToUtcOffsetMinutes zone) * 60
     in
-    ( timeInSeconds + offsetInSeconds ) * 1000
+    ( timeInSeconds - offsetInSeconds ) * 1000
+
+
+pickerTimeWithOffsetToMillis : OffsetParts -> TP.Time -> Int
+pickerTimeWithOffsetToMillis offset time =
+    let
+        timeInSeconds = (time.hours * 60 * 60) + (time.minutes * 60) + (time.seconds)
+        offsetInSeconds = (partsToMinutes offset) * 60
+    in
+    ( timeInSeconds - offsetInSeconds ) * 1000
 
 
 addPickerTimeToPosix : Time.Posix -> Time.Zone -> TP.Time -> Time.Posix
@@ -67,6 +78,19 @@ dateToPosix date =
 
         Ok time ->
             Ok time
+
+
+joinDateTimeAndOffset : Date -> TP.Time -> OffsetParts -> Time.Posix
+joinDateTimeAndOffset date time offset =
+    let
+        dateMillis = Debug.log "DateMillis" <| Time.posixToMillis <|
+                Maybe.withDefault (Time.millisToPosix 0) <|
+                    Result.toMaybe <| dateToPosix date
+        timeMillis = Debug.log "TimeMillis" <| pickerTimeWithOffsetToMillis offset time
+    in
+    Time.millisToPosix (dateMillis + timeMillis)
+
+    
 
 -- Time Zone Offset Calculations
 

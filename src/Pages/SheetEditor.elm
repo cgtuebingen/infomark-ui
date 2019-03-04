@@ -40,9 +40,13 @@ type alias Model =
     , publishedTimePicker : TimePicker
     , publishedDatePicker : DatePicker.DatePicker
     , publishedAtDate : Maybe Date
+    , publishedAtTime : Maybe TimePicker.Time
+    , publishedPosix : Maybe Time.Posix
     , deadlineTimePicker : TimePicker
     , deadlineDatePicker : DatePicker.DatePicker
     , deadlineAtDate : Maybe Date
+    , deadlineAtTime : Maybe TimePicker.Time
+    , deadlinePosix : Maybe Time.Posix
     , utcOffsetPos : Int
     , sheetResponse : WebData Sheet
     , createSheet : Bool
@@ -64,9 +68,13 @@ initModel =
     , publishedTimePicker = TimePicker.init Nothing
     , publishedDatePicker = publishedDatePicker
     , publishedAtDate = Nothing
+    , publishedAtTime = Nothing
+    , publishedPosix = Nothing
     , deadlineTimePicker = TimePicker.init Nothing
     , deadlineDatePicker = deadlineDatePicker
     , deadlineAtDate = Nothing
+    , deadlineAtTime = Nothing
+    , deadlinePosix = Nothing
     , sheetResponse = NotAsked
     , createSheet = True
     , utcOffsetPos = DTU.utcZeroOffsetIndex
@@ -108,8 +116,15 @@ update sharedState msg model =
             let
                 ( updatedPicker, timeEvent ) =
                     TimePicker.update timePickerSettings subMsg model.publishedTimePicker
+
+                newTime = case timeEvent of
+                    NoChange -> model.publishedAtTime
+                    Changed time -> time
             in
-            ( { model | publishedTimePicker = updatedPicker }, Cmd.none, NoUpdate )
+            ( { model 
+                | publishedTimePicker = updatedPicker
+                , publishedAtTime = newTime
+                , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime model.utcOffsetPos }, Cmd.none, NoUpdate )
 
         PublishedDatePickerMsg subMsg ->
             let
@@ -126,6 +141,7 @@ update sharedState msg model =
             ( { model
                 | publishedAtDate = newDate
                 , publishedDatePicker = newDatePicker
+                , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime model.utcOffsetPos
               }
             , Cmd.none
             , NoUpdate
@@ -135,8 +151,16 @@ update sharedState msg model =
             let
                 ( updatedPicker, timeEvent ) =
                     TimePicker.update timePickerSettings subMsg model.deadlineTimePicker
+
+                newTime = case timeEvent of
+                    NoChange -> model.deadlineAtTime
+                    Changed time -> time
             in
-            ( { model | deadlineTimePicker = updatedPicker }, Cmd.none, NoUpdate)
+            ( { model 
+                | deadlineTimePicker = updatedPicker
+                , deadlineAtTime = newTime
+                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate model.deadlineAtTime model.utcOffsetPos
+               }, Cmd.none, NoUpdate)
 
         DeadlineDatePickerMsg subMsg ->
             let
@@ -153,6 +177,7 @@ update sharedState msg model =
             ( { model
                 | deadlineAtDate = newDate
                 , deadlineDatePicker = newDatePicker
+                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate model.deadlineAtTime model.utcOffsetPos
               }
             , Cmd.none
             , NoUpdate
@@ -162,7 +187,7 @@ update sharedState msg model =
             ( 
                 { model 
                     | utcOffsetPos = 
-                        Debug.log "TimeZone Index" <| Maybe.withDefault DTU.utcZeroOffsetIndex <|
+                        Maybe.withDefault DTU.utcZeroOffsetIndex <|
                             DTU.timeZoneToIndex <| 
                                 Maybe.withDefault Time.utc sharedState.timezone
                 }
@@ -173,6 +198,23 @@ update sharedState msg model =
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
+
+
+joinTime : Date -> TimePicker.Time -> Int -> Time.Posix
+joinTime date time utcOffsetPos =
+    let
+        offsetPartsArray = Array.fromList DTU.utcOffsetsPartsList
+        offset = Maybe.withDefault {multiplier = 1, hours = 0, minutes = 0} <|
+            Array.get utcOffsetPos offsetPartsArray
+    in
+    DTU.joinDateTimeAndOffset date time offset
+    
+
+testIfTimeIsReady : Maybe Date -> Maybe TimePicker.Time -> Int -> Maybe Time.Posix
+testIfTimeIsReady maybeDate maybeTime offset =
+    case (maybeDate, maybeTime) of
+        (Just date, Just time) -> Just <| joinTime date time offset
+        (_, _) -> Nothing
 
 
 view : SharedState -> Model -> Html Msg
@@ -284,6 +326,7 @@ timePickerSettings =
     in
         { defaultSettings | showSeconds = False, minuteStep = 15, use24Hours = True }
 
+
 datePickerSettings : SharedState -> DatePicker.Settings
 datePickerSettings sharedState =
     let
@@ -323,10 +366,15 @@ setField model field value =
             { model | name = value }
 
         UtcOffset ->
+            let
+                newPos = Maybe.withDefault DTU.utcZeroOffsetIndex <| 
+                    String.toInt value
+            in
+            
             { model 
-                | utcOffsetPos = 
-                    Maybe.withDefault DTU.utcZeroOffsetIndex <| 
-                        String.toInt value
+                | utcOffsetPos = newPos
+                , deadlinePosix = testIfTimeIsReady model.deadlineAtDate model.deadlineAtTime newPos
+                , publishedPosix = testIfTimeIsReady model.publishedAtDate model.publishedAtTime newPos
             }
 
 
