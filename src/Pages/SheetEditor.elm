@@ -50,6 +50,7 @@ type Msg
     | Pick
     | DragEnter
     | DragLeave
+    | FileUploadResponse (WebData ())
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
 
 
@@ -361,6 +362,9 @@ update sharedState msg model =
             , NoUpdate
             )
 
+        FileUploadResponse response ->
+            updateHandleFileUpload sharedState model response
+
         ToastyMsg subMsg ->
             let
                 ( newModel, newCmd ) =
@@ -405,7 +409,15 @@ updateHandleSend : SharedState -> Model -> WebData ret -> ( Model, Cmd Msg, Shar
 updateHandleSend sharedState model response =
     case response of
         Success _ ->
-            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
+            case (model.fileChanged, model.file) of
+                (True, Just file) ->
+                    ( model, SheetRequests.sheetFilePost model.id file FileUploadResponse, NoUpdate)
+
+                (True, Nothing) ->
+                    (model, Cmd.none, NoUpdate) -- File deleted?
+
+                (False, _) ->
+                    ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -436,6 +448,43 @@ updateHandleSend sharedState model response =
 
         _ ->
             ( model, Cmd.none, NoUpdate )
+
+
+updateHandleFileUpload : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleFileUpload sharedState model response =
+    case response of
+        Success _ ->
+            (model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate)
+
+        Failure err ->
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    let
+                        errorString =
+                            case e of
+                                Http.BadStatus 400 ->
+                                    "Bad Data. Something is off in the data."
+
+                                Http.BadStatus 403 ->
+                                    "You are not allowed to do this!"
+
+                                Http.BadBody message ->
+                                    "Bad return: " ++ message
+
+                                _ ->
+                                    "Something other went wrong"
+
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" errorString)
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                ) 
+                err
+
+        _ ->
+            (model, Cmd.none, NoUpdate)
 
 
 joinTime : Date -> TimePicker.Time -> Int -> Time.Posix
