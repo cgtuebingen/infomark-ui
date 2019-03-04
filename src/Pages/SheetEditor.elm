@@ -6,7 +6,7 @@ import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, onSubmit)
+import Html.Events exposing (onClick, onInput, onSubmit, preventDefaultOn)
 import Date exposing (Date, day, month, weekday, year)
 import DatePicker exposing (DateEvent(..), defaultSettings)
 import Http
@@ -27,6 +27,10 @@ import Components.CommonElements exposing (inputElement, timeInputElement, dateI
 import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
 import Toasty
 import Components.Toasty
+import File exposing (File)
+import File.Select as Select
+import Task
+import Json.Decode as Decode exposing (Decoder)
 
 
 type Msg
@@ -42,6 +46,10 @@ type Msg
     | Update
     | UpdateResponse (WebData ())
     | SetField Field String
+    | GotFiles File (List File)
+    | Pick
+    | DragEnter
+    | DragLeave
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
 
 
@@ -62,6 +70,9 @@ type alias Model =
     , utcOffsetPos : Int
     , sheetResponse : WebData Sheet
     , createSheet : Bool
+    , hover : Bool
+    , file : Maybe File
+    , fileChanged : Bool
     , errors : List Error
     , toasties : Toasty.Stack Components.Toasty.Toast
     }
@@ -92,6 +103,9 @@ initModel =
     , utcOffsetPos = DTU.utcZeroOffsetIndex
     , sheetResponse = NotAsked
     , createSheet = True
+    , hover = False
+    , file = Nothing
+    , fileChanged = False
     , errors = []
     , toasties = Toasty.initialState
     }
@@ -307,6 +321,21 @@ update sharedState msg model =
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
+        Pick ->
+            ( model, Select.files [ "application/zip" ] GotFiles, NoUpdate )
+
+        DragEnter ->
+            ( { model | hover = True }, Cmd.none, NoUpdate )
+
+        DragLeave ->
+            ( { model | hover = False }, Cmd.none, NoUpdate )
+
+        GotFiles file files ->
+            ( { model | hover = False, file = Just file, fileChanged = True }
+            , Cmd.none
+            , NoUpdate
+            )
+
         ToastyMsg subMsg ->
             let
                 ( newModel, newCmd ) =
@@ -375,6 +404,7 @@ updateHandleSend sharedState model response =
         _ ->
             ( model, Cmd.none, NoUpdate )
 
+
 joinTime : Date -> TimePicker.Time -> Int -> Time.Posix
 joinTime date time utcOffsetPos =
     let
@@ -440,7 +470,9 @@ viewForm sharedState model =
             [ text <|
                 if model.createSheet then "Blatt erstellen" else "Blatt bearbeiten" 
             ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+        , div [ classes [TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ fileUploader model ]
+        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
             [ div [ classes [ TC.fl, TC.w_100 ] ] <|
                 inputElement 
                     { label = "Sheet Name"
@@ -506,6 +538,48 @@ viewForm sharedState model =
             ]
         ]
    
+
+fileUploader : Model -> Html Msg
+fileUploader model =
+    div
+        [ classes
+            [ TC.pa4
+            , TC.ba
+            , TC.b__dashed
+            , if model.hover then
+                TC.b__dark_red
+
+              else
+                TC.b__black_40
+            , TC.bw2
+            , TC.br3
+            , TC.w_100
+            , TC.flex
+            , TC.flex_column
+            , TC.justify_center
+            , TC.items_center
+            , TC.fl
+            ]
+        , hijackOn "dragenter" (Decode.succeed DragEnter)
+        , hijackOn "dragover" (Decode.succeed DragEnter)
+        , hijackOn "dragleave" (Decode.succeed DragLeave)
+        , hijackOn "drop" dropDecoder
+        ]
+        [ span
+            [ Styles.labelStyle
+            ]
+            [ text <| Maybe.withDefault "" <| Maybe.map File.name model.file]
+        , button
+            [ Styles.buttonGreyStyle
+            , classes
+                [ TC.w_100
+                , TC.mt4
+                ]
+            , onClick Pick
+            ]
+            [ text "Pick file" ]
+        ]
+
 
 timePickerSettings : TimePicker.Settings
 timePickerSettings =
@@ -607,3 +681,18 @@ isFirstDateOlder maybeFirstPosix maybeSecondPosix =
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
+
+
+dropDecoder : Decoder Msg
+dropDecoder =
+    Decode.at [ "dataTransfer", "files" ] (Decode.oneOrMore GotFiles File.decoder)
+
+
+hijackOn : String -> Decoder msg -> Attribute msg
+hijackOn event decoder =
+    preventDefaultOn event (Decode.map hijack decoder)
+
+
+hijack : msg -> ( msg, Bool )
+hijack msg =
+    ( msg, True )
