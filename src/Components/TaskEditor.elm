@@ -15,8 +15,13 @@ module Components.TaskEditor exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Task as TaskRequests
 import Html exposing (..)
+import Html.Events exposing (onClick, onInput, onSubmit, preventDefaultOn)
+import Tachyons exposing (classes, tachyons)
+import Tachyons.Classes as TC
+import Utils.Styles as Styles
 import File exposing (File)
 import File.Select as Select
+import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 
@@ -136,16 +141,19 @@ update sharedState msg model =
             (model, Cmd.none, NoUpdate)
 
         GotFiles fileType file files ->
-            (model, Cmd.none, NoUpdate)
+            ( model |>
+                updateHover fileType False |>
+                    updateFile fileType (Just file)
+            , Cmd.none, NoUpdate)
 
         Pick fileType ->
-            (model, Cmd.none, NoUpdate)
+            (model, Select.files [ "application/zip" ] (GotFiles fileType), NoUpdate)
         
         DragEnter fileType ->
-            (model, Cmd.none, NoUpdate)
+            (updateHover fileType True model, Cmd.none, NoUpdate)
         
         DragLeave fileType ->
-            (model, Cmd.none, NoUpdate)
+            (updateHover fileType False model, Cmd.none, NoUpdate)
     
         FileUploadResponse fileType response ->
             (model, Cmd.none, NoUpdate)
@@ -159,4 +167,96 @@ update sharedState msg model =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [] [ text <| (String.fromInt model.id) ++ "/" ++(String.fromInt model.max_points)]
+    div [ classes [TC.w_100] ]
+        [ div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+            [ fileUploader model Public
+            , fileUploader model Private
+            ]
+        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
+            [ text <| (String.fromInt model.id) ++ "/" ++(String.fromInt model.max_points)]
+        ]
+        
+
+chooseHover : FileType -> (Model -> Bool)
+chooseHover fileType =
+    case fileType of
+        Public -> .public_test_hover
+        Private -> .private_test_hover 
+
+
+chooseFile : FileType -> (Model -> Maybe File)
+chooseFile fileType =
+    case fileType of
+        Public -> .public_test_file
+        Private -> .private_test_file
+
+
+updateHover : FileType -> Bool -> Model -> Model
+updateHover fileType val model =
+    case fileType of
+        Public -> {model | public_test_hover = val }
+        Private -> {model | private_test_hover = val }
+
+
+updateFile : FileType -> Maybe File -> Model -> Model
+updateFile fileType val model =
+    case fileType of
+        Public -> {model | public_test_file = val }
+        Private -> {model | private_test_file = val }
+
+
+fileUploader : Model -> FileType -> Html Msg
+fileUploader model fileType =
+    div
+        [ classes
+            [ TC.pa4
+            , TC.ba
+            , TC.b__dashed
+            , if chooseHover fileType model then
+                TC.b__dark_red
+              else
+                TC.b__black_40
+            , TC.bw2
+            , TC.br3
+            , TC.w_100
+            , TC.w_50_ns
+
+            , TC.flex
+            , TC.flex_column
+            , TC.justify_center
+            , TC.items_center
+            , TC.fl
+            ]
+        , hijackOn "dragenter" (Decode.succeed <| DragEnter fileType)
+        , hijackOn "dragover" (Decode.succeed <| DragEnter fileType)
+        , hijackOn "dragleave" (Decode.succeed <| DragLeave fileType)
+        , hijackOn "drop" (dropDecoder fileType)
+        ]
+        [ span
+            [ Styles.labelStyle
+            ]
+            [ text <| Maybe.withDefault "" <| Maybe.map File.name <| chooseFile fileType model ]
+        , button
+            [ Styles.buttonGreyStyle
+            , classes
+                [ TC.w_100
+                , TC.mt4
+                ]
+            , onClick <| Pick fileType
+            ]
+            [ text "Pick file" ]
+        ]
+
+dropDecoder : FileType -> Decoder Msg
+dropDecoder fileType =
+    Decode.at [ "dataTransfer", "files" ] (Decode.oneOrMore (GotFiles fileType) File.decoder)
+
+
+hijackOn : String -> Decoder msg -> Attribute msg
+hijackOn event decoder =
+    preventDefaultOn event (Decode.map hijack decoder)
+
+
+hijack : msg -> ( msg, Bool )
+hijack msg =
+    ( msg, True )

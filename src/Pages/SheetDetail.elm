@@ -53,7 +53,7 @@ type Msg
 
 
 type alias Model =
-    {  tasks : Dict Int TaskEditor.Model
+    { tasks : Dict Int TaskEditor.Model -- Only for admins
     }
 
 
