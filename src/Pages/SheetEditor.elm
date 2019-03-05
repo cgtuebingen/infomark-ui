@@ -202,7 +202,6 @@ setupSheet name publish deadline =
     , name = name
     , publish_at = publish
     , due_at = deadline
-    , tasks = Nothing
     }
 
 

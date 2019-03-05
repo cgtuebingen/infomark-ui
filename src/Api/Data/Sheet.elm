@@ -15,7 +15,6 @@ type alias Sheet =
     , name : String
     , publish_at : Posix
     , due_at : Posix
-    , tasks : Maybe (List Task)
     }
 
 
@@ -26,7 +25,6 @@ decoder =
         |> required "name" Decode.string
         |> required "publish_at" Iso8601.decoder
         |> required "due_at" Iso8601.decoder
-        |> optional "tasks" (Decode.nullable <| Decode.list Task.decoder) Nothing
 
 
 encoder : Sheet -> Encode.Value
@@ -36,5 +34,4 @@ encoder model =
         , ( "name", Encode.string model.name )
         , ( "publish_at", Iso8601.encode model.publish_at )
         , ( "due_at", Iso8601.encode model.due_at )
-        , ( "tasks", maybe (Encode.list Task.encoder) model.tasks )
         ]

@@ -25,7 +25,7 @@ taskGet id msg =
 
 
 taskPut : Int -> Task -> (WebData () -> msg) -> Cmd msg
-taskPut id taskUpdate =
+taskPut id taskUpdate msg =
     patchExpectNothing (unwrap <| task id)
         (Http.jsonBody <| Task.encoder taskUpdate)
         msg

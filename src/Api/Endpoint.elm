@@ -20,6 +20,9 @@ module Api.Endpoint exposing
     , sheet
     , sheetFile
     , sheetTasks
+    , task
+    , taskPrivateFiles
+    , taskPublicFiles
     , unwrap
     , updatePassword
     , user
