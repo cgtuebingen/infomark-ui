@@ -11,6 +11,7 @@ module Components.CommonElements exposing
     , normalPage
     , rContainer
     , rRow
+    , rRowButton
     , rRowExtraSpacing
     , r1Column
     , r2Column
@@ -190,9 +191,15 @@ rRow childs =
 
 
 rRowExtraSpacing : List (Html msg) -> Html msg
-rRowExtraSpacing childs =
-    div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
+rRowExtraSpacing childs = 
+    div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
         childs
+
+
+rRowButton : Html msg -> Html msg
+rRowButton child =
+    div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
+        [ child ]
 
 r2Column : List (Html msg) -> List (Html msg) -> List (Html msg)
 r2Column child1 child2 =
@@ -232,7 +239,7 @@ fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =
                 TC.b__black_40
             , TC.bw2
             , TC.br3
-            , TC.w_70
+            , TC.w_100
             , TC.flex
             , TC.flex_column
             , TC.justify_center

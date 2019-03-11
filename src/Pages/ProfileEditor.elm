@@ -12,7 +12,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement, pageContainer, normalPage, rContainer, rRow, rRowExtraSpacing, r1Column, r2Column)
+import Components.CommonElements exposing (inputElement, pageContainer, normalPage, rContainer, rRow, rRowExtraSpacing, rRowButton, r1Column, r2Column)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Dict
@@ -454,7 +454,7 @@ viewForm sharedState model =
                         SetField
                 )
             ]
-        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ] <|
+        , rRowExtraSpacing <|
             r2Column 
                 (inputElement
                     { label = "Subject"
@@ -533,8 +533,8 @@ viewForm sharedState model =
                     OldPassword
                     model.accountErrors
                     SetField
-        , rRowExtraSpacing
-            [ button
+        , rRowButton <|
+            button
                 ( classes [ TC.w_100 ] ::
                     (if checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged then
                         [ Styles.buttonGreenStyle
@@ -546,7 +546,6 @@ viewForm sharedState model =
                     )
                 )
                 [ text "Save" ]
-            ]
         , h2
             [ Styles.sectionStyle
             , classes [ TC.mt5, TC.bt, TC.b__dark_gray, TC.bw2, TC.pt4 ]

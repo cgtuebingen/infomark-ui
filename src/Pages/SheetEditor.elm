@@ -5,24 +5,22 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Sheet as SheetRequests
 import Array
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (dateInputElement, inputElement, sliderInputElement, timeInputElement)
+import Components.CommonElements exposing (dateInputElement, inputElement, sliderInputElement, timeInputElement, pageContainer, normalPage, rRow, rRowButton, rRowExtraSpacing, rContainer, r1Column, r2Column, fileUploader)
 import Components.Toasty
-import Date exposing (Date, day, month, weekday, year)
+import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, onSubmit, preventDefaultOn)
+import Html.Events exposing (onClick, preventDefaultOn)
 import Http
 import I18n
-import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Tachyons exposing (classes, tachyons)
+import Tachyons exposing (classes)
 import Tachyons.Classes as TC
-import Task
 import Time
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Toasty
@@ -30,7 +28,7 @@ import Utils.DateAndTimeUtils as DTU
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors, perform)
-import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
+import Validate exposing (Validator, ifBlank, ifNothing, validate)
 
 
 type Msg
@@ -512,16 +510,9 @@ testIfTimeIsReady maybeDate maybeTime offset =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+    pageContainer
         [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-        , div
-            [ classes
-                [ TC.mw8
-                , TC.ph4
-                , TC.ph5_ns
-                , TC.center
-                ]
-            ]
+        , normalPage
             [ viewFormLoadingOrError sharedState model ]
         ]
 
@@ -553,8 +544,7 @@ viewForm sharedState model =
         offsetLabelsArray =
             Array.fromList DTU.utcOffsetLabelsList
     in
-    div
-        [ classes [ TC.w_100 ] ]
+    rContainer
         [ h1
             [ Styles.headerStyle ]
             [ text <|
@@ -564,10 +554,10 @@ viewForm sharedState model =
                 else
                     "Blatt bearbeiten"
             ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ fileUploader model ]
-        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+        , rRow 
+            [ fileUploader model.hover model.file DragEnter DragLeave Pick GotFiles ]
+        , rRowExtraSpacing <|
+            r1Column <|
                 inputElement
                     { label = "Sheet Name"
                     , placeholder = "Name"
@@ -577,10 +567,9 @@ viewForm sharedState model =
                     Name
                     model.errors
                     SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                dateInputElement
+        , rRow <|
+            r2Column
+                (dateInputElement
                     { label = "Published date"
                     , value = model.publishedAtDate
                     , datePicker = model.publishedDatePicker
@@ -588,9 +577,8 @@ viewForm sharedState model =
                     }
                     PublishedDate
                     model.errors
-                    PublishedDatePickerMsg
-            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                timeInputElement
+                    PublishedDatePickerMsg)
+                (timeInputElement
                     { label = "Published time"
                     , placeholder = "Select time..."
                     , timePicker = model.publishedTimePicker
@@ -598,11 +586,10 @@ viewForm sharedState model =
                     }
                     PublishedTime
                     model.errors
-                    PublishedTimePickerMsg
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                dateInputElement
+                    PublishedTimePickerMsg)
+        , rRow <|
+            r2Column
+                (dateInputElement
                     { label = "Deadline date"
                     , value = model.deadlineAtDate
                     , datePicker = model.deadlineDatePicker
@@ -610,9 +597,8 @@ viewForm sharedState model =
                     }
                     DeadlineDate
                     model.errors
-                    DeadlineDatePickerMsg
-            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                timeInputElement
+                    DeadlineDatePickerMsg)
+                (timeInputElement
                     { label = "Deadline time"
                     , placeholder = "Select time..."
                     , timePicker = model.deadlineTimePicker
@@ -620,10 +606,9 @@ viewForm sharedState model =
                     }
                     DeadlineTime
                     model.errors
-                    DeadlineTimePickerMsg
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+                    DeadlineTimePickerMsg)
+        , rRow <|
+            r1Column <|
                 sliderInputElement
                     { label = "UTC Offset"
                     , value = model.utcOffsetPos
@@ -635,67 +620,23 @@ viewForm sharedState model =
                     UtcOffset
                     model.errors
                     SetField
-            ]
-        , button
-            [ Styles.buttonGreyStyle
-            , classes [ TC.mt4, TC.w_100 ]
-            , onClick <|
-                if model.createSheet then
-                    Create
+        , rRowButton <|
+            button
+                [ Styles.buttonGreyStyle
+                , classes [ TC.mt4, TC.w_100 ]
+                , onClick <|
+                    if model.createSheet then
+                        Create
 
-                else
-                    Update
-            ]
-            [ text <|
-                case model.createSheet of
-                    True ->
-                        "Erstellen"
-
-                    False ->
-                        "Bearbeiten"
-            ]
-        ]
-
-
-fileUploader : Model -> Html Msg
-fileUploader model =
-    div
-        [ classes
-            [ TC.pa4
-            , TC.ba
-            , TC.b__dashed
-            , if model.hover then
-                TC.b__dark_red
-
-              else
-                TC.b__black_40
-            , TC.bw2
-            , TC.br3
-            , TC.w_100
-            , TC.flex
-            , TC.flex_column
-            , TC.justify_center
-            , TC.items_center
-            , TC.fl
-            ]
-        , hijackOn "dragenter" (Decode.succeed DragEnter)
-        , hijackOn "dragover" (Decode.succeed DragEnter)
-        , hijackOn "dragleave" (Decode.succeed DragLeave)
-        , hijackOn "drop" dropDecoder
-        ]
-        [ span
-            [ Styles.labelStyle
-            ]
-            [ text <| Maybe.withDefault "" <| Maybe.map File.name model.file ]
-        , button
-            [ Styles.buttonGreyStyle
-            , classes
-                [ TC.w_100
-                , TC.mt4
+                    else
+                        Update
                 ]
-            , onClick Pick
-            ]
-            [ text "Pick file" ]
+                [ text <|
+                    if model.createSheet then
+                        "Erstellen"
+                    else
+                        "Bearbeiten"
+                ]
         ]
 
 
@@ -804,18 +745,3 @@ isFirstDateOlder maybeFirstPosix maybeSecondPosix =
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
-
-
-dropDecoder : Decoder Msg
-dropDecoder =
-    Decode.at [ "dataTransfer", "files" ] (Decode.oneOrMore GotFiles File.decoder)
-
-
-hijackOn : String -> Decoder msg -> Attribute msg
-hijackOn event decoder =
-    preventDefaultOn event (Decode.map hijack decoder)
-
-
-hijack : msg -> ( msg, Bool )
-hijack msg =
-    ( msg, True )
