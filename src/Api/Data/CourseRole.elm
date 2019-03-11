@@ -1,8 +1,6 @@
 module Api.Data.CourseRole exposing (CourseRole(..), decoder, encoder, intToRole, roleToInt)
 
-import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 
 

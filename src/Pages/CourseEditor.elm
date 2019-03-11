@@ -5,30 +5,30 @@
 
 module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update, view)
 
-import Api.Data.Course as Course exposing (Course)
+import Api.Data.Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
 import Browser.Navigation exposing (back, pushUrl)
 import Components.CommonElements exposing (dateInputElement, inputElement, textAreaElement, viewFormErrors)
 import Components.Toasty
-import Date exposing (Date, day, month, weekday, year)
+import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, onSubmit)
+import Html.Events exposing (onClick, onInput)
 import Http
 import I18n
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Tachyons exposing (classes, tachyons)
+import Tachyons exposing (classes)
 import Tachyons.Classes as TC
-import Time exposing (Posix)
 import Toasty
+import Time
 import Utils.DateAndTimeUtils as DTU
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors)
-import Validate exposing (Validator, ifBlank, ifNotInt, ifNothing, ifTrue, validate)
+import Validate exposing (Validator, ifBlank, ifNothing, validate)
 
 
 type Msg
@@ -465,12 +465,15 @@ fillModelFromResponse sharedState course model =
         , description = course.description
         , beginsAtDate = Just <| beginDate
         , endsAtDate = Just <| endDate
-        , required_percentage = (\num -> 
-            if num == 0 then 
-                Nothing 
-            else 
-                Just <| String.fromInt num
-            ) course.required_percentage
+        , required_percentage =
+            (\num ->
+                if num == 0 then
+                    Nothing
+
+                else
+                    Just <| String.fromInt num
+            )
+                course.required_percentage
     }
 
 
@@ -501,10 +504,10 @@ fillRequestFromModel model =
     , description = model.description
     , begins_at = beginPosix
     , ends_at = endPosix
-    , required_percentage = Maybe.withDefault 0 <|
-        String.toInt <| 
-            Maybe.withDefault "0" model.required_percentage
-                
+    , required_percentage =
+        Maybe.withDefault 0 <|
+            String.toInt <|
+                Maybe.withDefault "0" model.required_percentage
     }
 
 

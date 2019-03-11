@@ -1,6 +1,5 @@
 module Api.Data.User exposing (User, decoder, encoder)
 
-import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
@@ -48,5 +47,5 @@ encoder model =
         , ( "semester", Encode.int model.semester )
         , ( "subject", Encode.string model.subject )
         , ( "language", Encode.string model.language )
-        , ( "root", maybe Encode.bool model.root)
+        , ( "root", maybe Encode.bool model.root )
         ]

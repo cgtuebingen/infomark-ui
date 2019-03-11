@@ -3,15 +3,10 @@ module Api.Request.Me exposing
     , mePut
     )
 
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
 import Api.Endpoint exposing (me, unwrap)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
-import File exposing (File)
+import Api.Helper exposing (get, putExpectNothing)
 import Http
-import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 
 

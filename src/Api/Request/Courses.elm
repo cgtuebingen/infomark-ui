@@ -15,21 +15,20 @@ module Api.Request.Courses exposing
     , coursesEnrollmentPost
     , coursesGet
     , coursesPost
+    , coursesBidsGet
+    , coursesBidsPost
     )
 
 import Api.Data.Course as Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.Sheet as Sheet exposing (Sheet)
-import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Endpoint
     exposing
         ( course
         , courseEnrollment
-        , courseEnrollmentUserDetail
         , courseGroup
         , courseGroupBids
         , courseGroups
@@ -37,12 +36,9 @@ import Api.Endpoint
         , courses
         , unwrap
         )
-import Api.Helper exposing (..)
-import Decoders
-import Dict
+import Api.Helper exposing (post, get, putExpectNothing, deleteExpectNothing, postExpectNothing)
 import Http
 import Json.Decode as Decode
-import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
 import Url.Builder exposing (QueryParameter)
 

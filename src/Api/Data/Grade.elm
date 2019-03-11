@@ -1,10 +1,8 @@
 module Api.Data.Grade exposing (Grade, decoder, encoder)
 
-import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
-import Json.Encode.Extra exposing (maybe)
 
 
 type alias Grade =
@@ -37,8 +35,9 @@ decoder =
         |> required "tutor_id" Decode.int
         |> required "submission_id" Decode.string
 
+
 encoder : Grade -> Encode.Value
-encoder model = 
+encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
         , ( "public_execution_state", Encode.int model.public_execution_state )

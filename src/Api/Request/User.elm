@@ -4,13 +4,9 @@ module Api.Request.User exposing
     , usersGet
     )
 
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
 import Api.Endpoint exposing (unwrap, user, users)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
-import File exposing (File)
+import Api.Helper exposing (get, patchExpectNothing)
 import Http
 import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)

@@ -1,7 +1,7 @@
 module I18n exposing (get)
 
 import Dict
-import Types exposing (..)
+import Types exposing (Translations)
 
 
 get : Translations -> String -> String

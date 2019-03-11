@@ -5,16 +5,12 @@ module Api.Request.Account exposing
     , accountPost
     )
 
-import Api.Data.Account as Account exposing (Account)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.AccountUpdate as AccountUpdate exposing (AccountUpdate)
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserAccount as UserAccount exposing (UserAccount)
 import Api.Endpoint exposing (account, accountAvatar, accountEnrollment, unwrap)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
+import Api.Helper exposing (post, patchExpectNothing, get, postFile)
 import File exposing (File)
 import Http
 import Json.Decode as Decode

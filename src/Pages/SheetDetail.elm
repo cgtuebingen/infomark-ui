@@ -26,11 +26,12 @@
 
 module Pages.SheetDetail exposing (Model, Msg(..), init, update, view)
 
-import Api.Data.Task exposing (Task)
 import Api.Data.Sheet exposing (Sheet)
+import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
-import Components.TaskEditor as TaskEditor
 import Browser.Navigation exposing (pushUrl)
+import Components.TaskEditor as TaskEditor
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -43,7 +44,6 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
-import Dict exposing (Dict)
 
 
 type Msg
@@ -60,12 +60,11 @@ type alias Model =
 
 init : Int -> ( Model, Cmd Msg )
 init id =
-    ( 
-        { id = id
-        , tasks = Dict.empty 
-        }
-    , 
-        SheetRequests.sheetTasksGet id GetTaskFetchResponse )
+    ( { id = id
+      , tasks = Dict.empty
+      }
+    , SheetRequests.sheetTasksGet id GetTaskFetchResponse
+    )
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -75,44 +74,45 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         GetTaskFetchResponse (Success tasks) ->
-            (fillModelTaskDict model tasks, Cmd.none, NoUpdate)
+            ( fillModelTaskDict model tasks, Cmd.none, NoUpdate )
 
         GetTaskFetchResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         TaskMsg id subMsg ->
             case Dict.get id model.tasks of
                 Just taskModel ->
                     let
-                        (newTaskModel, newTaskCmd, newTaskSharedState) = 
+                        ( newTaskModel, newTaskCmd, newTaskSharedState ) =
                             TaskEditor.update sharedState subMsg taskModel
                     in
-                    ( 
-                        { model 
-                            | tasks = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasks
-                        }
+                    ( { model
+                        | tasks = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasks
+                      }
                     , Cmd.map (TaskMsg id) newTaskCmd
                     , newTaskSharedState
                     )
 
                 Nothing ->
-                    (model, Cmd.none, NoUpdate)
+                    ( model, Cmd.none, NoUpdate )
 
 
 fillModelTaskDict : Model -> List Task -> Model
 fillModelTaskDict model tasks =
-    { model | tasks = (
-        tasks |>
-            List.map (\task -> (task.id, Tuple.first <| TaskEditor.initFromTask task)) |>
-                List.append [(0, Tuple.first <| TaskEditor.initCreate model.id)] |>
-                    Dict.fromList)
+    { model
+        | tasks =
+            tasks
+                |> List.map (\task -> ( task.id, Tuple.first <| TaskEditor.initFromTask task ))
+                |> List.append [ ( 0, Tuple.first <| TaskEditor.initCreate model.id ) ]
+                |> Dict.fromList
     }
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
         [ --Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-         div
+          div
             [ classes
                 [ TC.mw8
                 , TC.ph4
@@ -122,12 +122,12 @@ view sharedState model =
             ]
             [ viewTasksForAdmin sharedState model ]
         ]
-    
+
 
 viewTasksForAdmin : SharedState -> Model -> Html Msg
 viewTasksForAdmin sharedState model =
-    div [] 
-        (Dict.values model.tasks |> 
-            List.map (\task -> (task.id, TaskEditor.view sharedState task)) |>
-                List.map (\(id, task) -> Html.map (TaskMsg id) task)
+    div []
+        (Dict.values model.tasks
+            |> List.map (\task -> ( task.id, TaskEditor.view sharedState task ))
+            |> List.map (\( id, task ) -> Html.map (TaskMsg id) task)
         )

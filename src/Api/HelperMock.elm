@@ -2,7 +2,7 @@ module Api.HelperMock exposing (delete, get, patch, post)
 
 import Http
 import Http.Mock
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 
 

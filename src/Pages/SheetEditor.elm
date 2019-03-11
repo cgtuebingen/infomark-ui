@@ -408,14 +408,15 @@ updateHandleSend : SharedState -> Model -> WebData ret -> ( Model, Cmd Msg, Shar
 updateHandleSend sharedState model response =
     case response of
         Success _ ->
-            case (model.fileChanged, model.file) of
-                (True, Just file) ->
-                    ( model, SheetRequests.sheetFilePost model.id file FileUploadResponse, NoUpdate)
+            case ( model.fileChanged, model.file ) of
+                ( True, Just file ) ->
+                    ( model, SheetRequests.sheetFilePost model.id file FileUploadResponse, NoUpdate )
 
-                (True, Nothing) ->
-                    (model, Cmd.none, NoUpdate) -- File deleted?
+                ( True, Nothing ) ->
+                    ( model, Cmd.none, NoUpdate )
 
-                (False, _) ->
+                -- File deleted?
+                ( False, _ ) ->
                     ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
 
         Failure err ->
@@ -449,11 +450,11 @@ updateHandleSend sharedState model response =
             ( model, Cmd.none, NoUpdate )
 
 
-updateHandleFileUpload : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleFileUpload : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleFileUpload sharedState model response =
     case response of
         Success _ ->
-            (model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate)
+            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -479,11 +480,11 @@ updateHandleFileUpload sharedState model response =
                                 |> addToast (Components.Toasty.Error "Error" errorString)
                     in
                     ( newModel, newCmd, NoUpdate )
-                ) 
+                )
                 err
 
         _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
 joinTime : Date -> TimePicker.Time -> Int -> Time.Posix

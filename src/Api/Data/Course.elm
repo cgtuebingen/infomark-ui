@@ -1,13 +1,9 @@
 module Api.Data.Course exposing (Course, decoder, encoder)
 
-import Api.Data.Material as Material exposing (Material)
-import Api.Data.Sheet as Sheet exposing (Sheet)
-import Dict exposing (Dict)
 import Iso8601
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
-import Json.Encode.Extra exposing (maybe)
 import Time exposing (Posix)
 
 
@@ -30,7 +26,6 @@ decoder =
         |> required "begins_at" Iso8601.decoder
         |> required "ends_at" Iso8601.decoder
         |> required "required_percentage" Decode.int
-       
 
 
 encoder : Course -> Encode.Value

@@ -3,17 +3,12 @@ module Api.Request.Auth exposing (confirmMailPost, requestPasswordResetPost, ses
 --import Api.Helper exposing (..)
 
 import Api.Data.Account as Account exposing (Account)
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.MailConfirmation as MailConfirmation exposing (MailConfirmation)
 import Api.Data.Role as Role exposing (Role)
 import Api.Data.UpdatePassword as UpdatePassword exposing (UpdatePassword)
 import Api.Endpoint exposing (confirmEmail, requestPasswordReset, sessions, unwrap, updatePassword)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
+import Api.Helper exposing (post, deleteExpectNothing, postExpectNothing)
 import Http
-import Http.Mock
-import Json.Decode as Decode
 import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
 

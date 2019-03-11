@@ -1,8 +1,7 @@
 module Api.Data.Account exposing (Account, decoder, encoder)
 
-import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode.Pipeline exposing (optional)
 import Json.Encode as Encode
 import Json.Encode.Extra exposing (maybe)
 

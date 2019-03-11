@@ -12,7 +12,7 @@ import DatePicker
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Tachyons exposing (classes, tachyons)
+import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Utils.Styles as Styles

@@ -5,15 +5,11 @@ module Api.Request.Task exposing
     , taskPut
     )
 
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.Task as Task exposing (Task)
 import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, unwrap)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
+import Api.Helper exposing (get, patchExpectNothing, postFile)
 import File exposing (File)
 import Http
-import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 
 
@@ -33,9 +29,9 @@ taskPut id taskUpdate msg =
 
 taskPublicFilesPost : Int -> File -> (WebData () -> msg) -> Cmd msg
 taskPublicFilesPost id file msg =
-    postFile (unwrap <| task id) file msg
+    postFile (unwrap <| taskPublicFiles id) file msg
 
 
 taskPrivateFilesPost : Int -> File -> (WebData () -> msg) -> Cmd msg
 taskPrivateFilesPost id file msg =
-    postFile (unwrap <| task id) file msg
+    postFile (unwrap <| taskPrivateFiles id) file msg

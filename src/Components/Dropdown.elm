@@ -66,9 +66,9 @@ Basic example of usage:
    Taken from https://github.com/circuithub/elm-dropdown/blob/master/src/Dropdown.elm
 -}
 
-import Html exposing (Html, button, div, s, text)
-import Html.Attributes exposing (attribute, id, property, style, tabindex)
-import Html.Events exposing (custom, keyCode, on, onClick, onFocus, onMouseEnter, onMouseOut)
+import Html exposing (Html)
+import Html.Attributes exposing (property, style, tabindex)
+import Html.Events exposing (custom, keyCode, on, onFocus, onMouseEnter)
 import Json.Decode as JD
 import Json.Decode.Extra as JD
 import Json.Encode as JE
@@ -136,8 +136,8 @@ dropdown element attributes children isOpen config =
                     [ on "focusout" (handleFocusChanged isOpen config) ]
     in
     element
-        ([ on "keydown" (handleKeyDown isOpen config) ]
-            ++ toggleEvents
+        ( (on "keydown" (handleKeyDown isOpen config) )
+            :: toggleEvents
             ++ [ anchor config.identifier
                , tabindex -1
                , pRelative

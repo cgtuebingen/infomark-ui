@@ -2,11 +2,9 @@ module Components.Dialog exposing (Config, State, dialog, modalDialog)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (custom, onClick, stopPropagationOn)
+import Html.Events exposing (custom)
 import Json.Decode as Decode
 import Json.Decode.Extra as Decode
-import Json.Encode as Encode
-
 
 {-| Indicates whether the dialog is visible or not
 -}
@@ -77,7 +75,6 @@ modalDialog element attributes child isVisible config =
     in
     element
         (visiblity ++ clickEvent ++ attributes)
-        -- TODO check if we need more attributes
         [ child isVisible config ]
 
 

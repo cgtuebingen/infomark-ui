@@ -1,6 +1,5 @@
 module Api.Data.Material exposing (Material, decoder, encoder)
 
-import Dict exposing (Dict)
 import Iso8601
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
@@ -18,7 +17,7 @@ type alias Material =
     { id : Int
     , file_url : Maybe String
     , name : String
-    , material_type : MaterialType -- TODO enum? supplementary or slide
+    , material_type : MaterialType
     , published_at : Posix
     , lecture_at : Posix
     }

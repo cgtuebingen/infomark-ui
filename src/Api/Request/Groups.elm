@@ -6,16 +6,12 @@ module Api.Request.Groups exposing
     , groupsPut
     )
 
-import Api.Data.Error as Error exposing (Error)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
 import Api.Endpoint exposing (groups, groupsEnrollment, unwrap)
-import Api.Helper exposing (..)
-import Decoders
-import Dict
+import Api.Helper exposing (get, put, delete, post)
 import Http
 import Json.Decode as Decode
-import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
 
 

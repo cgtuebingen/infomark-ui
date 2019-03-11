@@ -13,7 +13,7 @@ module Api.Helper exposing
 
 import File exposing (File)
 import Http
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 
 

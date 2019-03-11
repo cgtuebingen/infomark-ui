@@ -1,12 +1,9 @@
 module Api.Data.Sheet exposing (Sheet, decoder, encoder)
 
-import Api.Data.Task as Task exposing (Task)
-import Dict exposing (Dict)
 import Iso8601
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
-import Json.Encode.Extra exposing (maybe)
 import Time exposing (Posix)
 
 

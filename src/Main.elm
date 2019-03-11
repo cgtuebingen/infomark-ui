@@ -14,7 +14,6 @@ import Task
 import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
-import Utils.DateFormatter as DF
 import Utils.PersistantState as PersistantState
 
 

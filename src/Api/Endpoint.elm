@@ -29,8 +29,6 @@ module Api.Endpoint exposing
     , users
     )
 
-import Api.Data.Course exposing (Course)
-import Http
 import Url.Builder exposing (QueryParameter)
 
 

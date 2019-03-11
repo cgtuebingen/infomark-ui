@@ -1,9 +1,8 @@
 module Api.Data.AccountEnrollment exposing (AccountEnrollment, decoder, encoder)
 
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
-import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
 
 
