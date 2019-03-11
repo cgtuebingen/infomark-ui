@@ -242,7 +242,7 @@ viewCourseInfo sharedState model =
                         , TC.mt0_ns
                         ]
                     ]
-                    [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description
+                    [ MD.toHtml [ Styles.textStyle ] <| course.description
                     ]
                 ]
             ]

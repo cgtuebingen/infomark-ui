@@ -53,14 +53,16 @@ type Msg
 
 
 type alias Model =
-    { tasks : Dict Int TaskEditor.Model -- Only for admins
+    { id : Int
+    , tasks : Dict Int TaskEditor.Model -- Only for admins
     }
 
 
 init : Int -> ( Model, Cmd Msg )
 init id =
     ( 
-        { tasks = Dict.empty 
+        { id = id
+        , tasks = Dict.empty 
         }
     , 
         SheetRequests.sheetTasksGet id GetTaskFetchResponse )
@@ -99,17 +101,33 @@ update sharedState msg model =
 
 fillModelTaskDict : Model -> List Task -> Model
 fillModelTaskDict model tasks =
-    { model | tasks = (tasks |>
-        List.map (\task -> (task.id, Tuple.first <| TaskEditor.initFromTask task)) |>
-            Dict.fromList)
+    { model | tasks = (
+        tasks |>
+            List.map (\task -> (task.id, Tuple.first <| TaskEditor.initFromTask task)) |>
+                List.append [(0, Tuple.first <| TaskEditor.initCreate model.id)] |>
+                    Dict.fromList)
     }
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
+    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+        [ --Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+         div
+            [ classes
+                [ TC.mw8
+                , TC.ph4
+                , TC.ph5_ns
+                , TC.center
+                ]
+            ]
+            [ viewTasksForAdmin sharedState model ]
+        ]
+    
+
+viewTasksForAdmin : SharedState -> Model -> Html Msg
+viewTasksForAdmin sharedState model =
     div [] 
         (Dict.values model.tasks |> 
             List.map (\task -> (task.id, TaskEditor.view sharedState task)) |>
                 List.map (\(id, task) -> Html.map (TaskMsg id) task)
         )
-
-

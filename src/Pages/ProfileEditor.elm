@@ -268,9 +268,9 @@ checkIfUserChanged model =
                 toCompare =
                     [ ( model.firstname, user.firstname )
                     , ( model.lastname, user.lastname )
-                    , ( model.studentNumber, Maybe.withDefault "" user.studentNumber )
-                    , ( model.semester, Maybe.withDefault "" <| Maybe.map String.fromInt user.semester )
-                    , ( model.subject, Maybe.withDefault "" user.subject )
+                    , ( model.studentNumber, user.studentNumber )
+                    , ( model.semester, String.fromInt user.semester )
+                    , ( model.subject, user.subject )
                     ]
             in
             List.any (\( fromModel, fromUser ) -> fromModel /= fromUser) toCompare
@@ -688,10 +688,11 @@ modelToUser sharedState model =
                 , lastname = model.lastname
                 , avatarUrl = Nothing
                 , email = model.email
-                , studentNumber = Just model.studentNumber
-                , semester = String.toInt model.semester
-                , subject = Just model.subject
-                , language = Just <| Types.languageToBackendString sharedState.selectedLanguage
+                , studentNumber = model.studentNumber
+                , semester = Maybe.withDefault 1 <| String.toInt model.semester
+                , subject = model.subject
+                , language = Types.languageToBackendString sharedState.selectedLanguage
+                , root = Nothing
                 }
 
         _ ->
@@ -723,9 +724,9 @@ userToModel model user =
     { model
         | firstname = user.firstname
         , lastname = user.lastname
-        , studentNumber = Maybe.withDefault "" user.studentNumber
-        , semester = Maybe.withDefault "" <| Maybe.map String.fromInt user.semester
-        , subject = Maybe.withDefault "" user.subject
+        , studentNumber = user.studentNumber
+        , semester = String.fromInt user.semester
+        , subject = user.subject
         , email = user.email
         , preview =
             case user.avatarUrl of

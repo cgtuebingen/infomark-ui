@@ -8,7 +8,8 @@ import Json.Encode as Encode
 
 
 type alias AccountEnrollment =
-    { course_id : Int
+    { id : Int
+    , course_id : Int
     , role : CourseRole
     }
 
@@ -16,6 +17,7 @@ type alias AccountEnrollment =
 decoder : Decoder AccountEnrollment
 decoder =
     Decode.succeed AccountEnrollment
+        |> required "id" Decode.int
         |> required "course_id" Decode.int
         |> required "role" CourseRole.decoder
 
@@ -23,6 +25,7 @@ decoder =
 encoder : AccountEnrollment -> Encode.Value
 encoder model =
     Encode.object
-        [ ( "course_id", Encode.int model.course_id )
+        [ ( "id", Encode.int model.id )
+        , ( "course_id", Encode.int model.course_id )
         , ( "role", CourseRole.encoder model.role )
         ]

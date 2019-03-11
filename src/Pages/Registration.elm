@@ -48,10 +48,11 @@ modelToBody sharedState model =
         , lastname = model.lastName
         , avatarUrl = Nothing
         , email = model.email
-        , studentNumber = Just model.studentNumber
-        , semester = String.toInt model.semester
-        , language = Just <| languageToBackendString sharedState.selectedLanguage
-        , subject = Just model.subject
+        , studentNumber = model.studentNumber
+        , semester = Maybe.withDefault 1 <| String.toInt model.semester
+        , language = languageToBackendString sharedState.selectedLanguage
+        , subject = model.subject
+        , root = Nothing
         }
     , account =
         { email = Just model.email

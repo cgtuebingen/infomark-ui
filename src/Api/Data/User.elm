@@ -13,10 +13,11 @@ type alias User =
     , lastname : String
     , avatarUrl : Maybe String
     , email : String
-    , studentNumber : Maybe String
-    , semester : Maybe Int
-    , subject : Maybe String
-    , language : Maybe String
+    , studentNumber : String
+    , semester : Int
+    , subject : String
+    , language : String
+    , root : Maybe Bool
     }
 
 
@@ -28,10 +29,11 @@ decoder =
         |> required "last_name" Decode.string
         |> optional "avatar_url" (Decode.nullable Decode.string) Nothing
         |> required "email" Decode.string
-        |> optional "student_number" (Decode.nullable Decode.string) Nothing
-        |> optional "semester" (Decode.nullable Decode.int) Nothing
-        |> optional "subject" (Decode.nullable Decode.string) Nothing
-        |> optional "language" (Decode.nullable Decode.string) Nothing
+        |> required "student_number" Decode.string
+        |> required "semester" Decode.int
+        |> required "subject" Decode.string
+        |> required "language" Decode.string
+        |> optional "root" (Decode.nullable Decode.bool) Nothing
 
 
 encoder : User -> Encode.Value
@@ -42,8 +44,9 @@ encoder model =
         , ( "last_name", Encode.string model.lastname )
         , ( "avatar_url", maybe Encode.string model.avatarUrl )
         , ( "email", Encode.string model.email )
-        , ( "student_number", maybe Encode.string model.studentNumber )
-        , ( "semester", maybe Encode.int model.semester )
-        , ( "subject", maybe Encode.string model.subject )
-        , ( "language", maybe Encode.string model.language )
+        , ( "student_number", Encode.string model.studentNumber )
+        , ( "semester", Encode.int model.semester )
+        , ( "subject", Encode.string model.subject )
+        , ( "language", Encode.string model.language )
+        , ( "root", maybe Encode.bool model.root)
         ]

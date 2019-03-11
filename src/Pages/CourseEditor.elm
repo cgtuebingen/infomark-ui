@@ -462,10 +462,15 @@ fillModelFromResponse sharedState course model =
     in
     { model
         | courseName = course.name
-        , description = Maybe.withDefault "" course.description
+        , description = course.description
         , beginsAtDate = Just <| beginDate
         , endsAtDate = Just <| endDate
-        , required_percentage = Maybe.map String.fromInt course.required_percentage
+        , required_percentage = (\num -> 
+            if num == 0 then 
+                Nothing 
+            else 
+                Just <| String.fromInt num
+            ) course.required_percentage
     }
 
 
@@ -490,18 +495,16 @@ fillRequestFromModel model =
 
         endPosix =
             DTU.dateToPosix endDate |> Result.toMaybe |> Maybe.withDefault defaultPosix
-
-        perc =
-            Maybe.map String.toInt model.required_percentage |> Maybe.withDefault Nothing
     in
     { id = model.id
     , name = model.courseName
-    , description = Just model.description
+    , description = model.description
     , begins_at = beginPosix
     , ends_at = endPosix
-    , required_percentage = perc
-    , sheets = Nothing
-    , materials = Nothing
+    , required_percentage = Maybe.withDefault 0 <|
+        String.toInt <| 
+            Maybe.withDefault "0" model.required_percentage
+                
     }
 
 

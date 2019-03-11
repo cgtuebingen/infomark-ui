@@ -626,7 +626,7 @@ viewRenderCourse sharedState course enrollment =
                 ]
             ]
         , div [ classes [ TC.measure ] ] <|
-            [ MD.toHtml [ Styles.textStyle ] <| Maybe.withDefault "" course.description -- Normal paragraph
+            [ MD.toHtml [ Styles.textStyle ] <| course.description -- Normal paragraph
             ]
                 ++ buttonsHtml
         ]
