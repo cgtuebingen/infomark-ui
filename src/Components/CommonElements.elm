@@ -13,6 +13,7 @@ module Components.CommonElements exposing
     , rRow
     , rRowButton
     , rRowExtraSpacing
+    , rCollapsable
     , r1Column
     , r2Column
     , r3Column
@@ -201,6 +202,28 @@ rRowButton child =
     div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
         [ child ]
 
+
+rCollapsable : String -> Bool -> msg -> (String, String) -> List (Html msg) -> List (Html msg)
+rCollapsable title collapsed collapseMsg (show, hide) childs =
+    div [ classes
+            [ TC.w_100
+            , TC.flex
+            , TC.flex_row
+            , TC.justify_between
+            , TC.items_center
+            , if collapsed then TC.mb3 else TC.mb0
+            ]
+        ] 
+        [ h1 [ Styles.listHeadingStyle ] [ text title ]
+        , button
+            [ Styles.buttonGreyStyle
+            , Styles.pillStyle
+            , onClick collapseMsg
+            ]
+            [ text <| if collapsed then show else hide ]
+        ] :: if collapsed then [ text "" ] else childs
+    
+
 r2Column : List (Html msg) -> List (Html msg) -> List (Html msg)
 r2Column child1 child2 =
     [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
@@ -224,6 +247,7 @@ r3Column child1 child2 child3 =
     , div [ classes [ TC.fl, TC.w_100, TC.w_50_m, TC.w_33_l, TC.pl2_ns ] ]
         child3
     ]
+
 
 --Same for image uploader?
 fileUploader : Bool -> Maybe File -> msg -> msg -> msg -> (File -> List File -> msg) -> Html msg

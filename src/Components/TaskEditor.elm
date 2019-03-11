@@ -14,7 +14,7 @@ module Components.TaskEditor exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing (inputElement)
+import Components.CommonElements exposing (inputElement, fileUploader, rContainer, rRow, rRowButton, rCollapsable, rRowExtraSpacing, r1Column, r2Column)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
@@ -242,105 +242,68 @@ update sharedState msg model =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [ classes [ TC.w_100 ] ] <|
-        [ div
-            [ classes
-                [ TC.w_100
-                , TC.flex
-                , TC.flex_row
-                , TC.justify_between
-                , TC.items_center
-                , if model.collapse then
-                    TC.mb3
-
-                  else
-                    TC.mb0
-                ]
-            ]
-            [ h1 [ Styles.listHeadingStyle ] [ text ("Task " ++ String.fromInt model.id) ]
-            , button
-                [ Styles.buttonGreyStyle
-                , Styles.pillStyle
-                , onClick ToggleCollapse
-                ]
-                [ text <|
-                    if model.collapse then
-                        "Show"
-
-                    else
-                        "Collapse"
-                ]
-            ]
-        ]
-            ++ (if model.collapse then
-                    [ text "" ]
-
-                else
-                    [ div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-                        [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
-                            [ label
-                                [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                                , Styles.labelStyle
-                                ]
-                                [ text "Public Tests" ]
-                            , fileUploader model Public
-                            ]
-                        , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
-                            [ label
-                                [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                                , Styles.labelStyle
-                                ]
-                                [ text "Private Tests" ]
-                            , fileUploader model Private
-                            ]
+    rContainer <|
+        rCollapsable ("Task " ++ String.fromInt model.id) model.collapse ToggleCollapse ("Show", "Hide")
+            [ rRow <|
+                r2Column
+                    [ label
+                        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+                        , Styles.labelStyle
                         ]
-                    , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
-                        [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                            inputElement
-                                { label = "Public Tests Docker Image"
-                                , placeholder = "Image Name"
-                                , fieldType = "text"
-                                , value = model.public_docker_image
-                                }
-                                PublicDockerImage
-                                model.errors
-                                SetField
-                        , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                            inputElement
-                                { label = "Private Tests Docker Image"
-                                , placeholder = "Image Name"
-                                , fieldType = "text"
-                                , value = model.private_docker_image
-                                }
-                                PrivateDockerImage
-                                model.errors
-                                SetField
-                        ]
-                    , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-                        [ div [ classes [ TC.fl, TC.w_100 ] ] <|
-                            inputElement
-                                { label = "Max Points"
-                                , placeholder = "Points"
-                                , fieldType = "number"
-                                , value = model.max_points
-                                }
-                                MaxPoints
-                                model.errors
-                                SetField
-                        ]
-                    , button
-                        [ Styles.buttonGreyStyle
-                        , classes [ TC.mb4, TC.mt3, TC.w_100 ]
-                        , onClick SendTask
-                        ]
-                        [ text <|
-                            if model.createTask then
-                                "Erstellen"
-                            else
-                                "Bearbeiten"
-                        ]
+                        [ text "Public Tests" ]
+                    , fileUploader model Public
                     ]
-               )
+                    [ label
+                        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
+                        , Styles.labelStyle
+                        ]
+                        [ text "Private Tests" ]
+                    , fileUploader model Private
+                    ]
+            , rRowExtraSpacing <|
+                r2Column
+                    (inputElement
+                        { label = "Public Tests Docker Image"
+                        , placeholder = "Image Name"
+                        , fieldType = "text"
+                        , value = model.public_docker_image
+                        }
+                        PublicDockerImage
+                        model.errors
+                        SetField)
+                    (inputElement
+                        { label = "Private Tests Docker Image"
+                        , placeholder = "Image Name"
+                        , fieldType = "text"
+                        , value = model.private_docker_image
+                        }
+                        PrivateDockerImage
+                        model.errors
+                        SetField)
+            , rRow <|
+                r1Column <|
+                    inputElement
+                        { label = "Max Points"
+                        , placeholder = "Points"
+                        , fieldType = "number"
+                        , value = model.max_points
+                        }
+                        MaxPoints
+                        model.errors
+                        SetField
+            , rRowButton <|
+                button
+                    [ Styles.buttonGreyStyle
+                    , classes [ TC.mb4, TC.mt3, TC.w_100 ]
+                    , onClick SendTask
+                    ]
+                    [ text <|
+                        if model.createTask then
+                            "Erstellen"
+                        else
+                            "Bearbeiten"
+                    ]
+            ]
 
 
 fileUploader : Model -> FileType -> Html Msg
