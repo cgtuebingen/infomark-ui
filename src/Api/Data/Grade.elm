@@ -33,7 +33,7 @@ decoder =
         |> required "acquired_points" Decode.int
         |> required "feedback" Decode.string
         |> required "tutor_id" Decode.int
-        |> required "submission_id" Decode.string
+        |> required "submission_id" Decode.int
 
 
 encoder : Grade -> Encode.Value

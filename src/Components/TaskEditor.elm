@@ -260,7 +260,7 @@ view sharedState model =
             [ h1 [ Styles.listHeadingStyle ] [ text ("Task " ++ String.fromInt model.id) ]
             , button
                 [ Styles.buttonGreyStyle
-                , classes [ TC.br_pill, TC.ph3, TC.pv3 ]
+                , Styles.pillStyle
                 , onClick ToggleCollapse
                 ]
                 [ text <|

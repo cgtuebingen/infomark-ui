@@ -12,7 +12,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement)
+import Components.CommonElements exposing (inputElement, pageContainer, normalPage, rContainer, rRow, rRowExtraSpacing, r1Column, r2Column)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Dict
@@ -389,16 +389,9 @@ updateAvatarUpdateResponse sharedState model response =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+    pageContainer
         [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-        , div
-            [ classes
-                [ TC.mw8
-                , TC.ph4
-                , TC.ph5_ns
-                , TC.center
-                ]
-            ]
+        , normalPage
             [ viewFormLoadingOrError sharedState model ]
         ]
 
@@ -420,15 +413,14 @@ viewFormLoadingOrError sharedState model =
 
 viewForm : SharedState -> Model -> Html Msg
 viewForm sharedState model =
-    div
-        [ classes [ TC.w_100 ] ]
+    rContainer
         [ h1
             [ Styles.headerStyle
 
             --, classes [TC.bl_0, TC.br_0, TC.bt_0, TC.bb, TC.bw2, TC.b__black]
             ]
             [ text "Profil bearbeiten" ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+        , rRow
             -- First Rows (Avatar uploader & Name)
             [ avatarUploader model
             , div
@@ -462,9 +454,9 @@ viewForm sharedState model =
                         SetField
                 )
             ]
-        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_70_ns ] ] <|
-                inputElement
+        , div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ] <|
+            r2Column 
+                (inputElement
                     { label = "Subject"
                     , placeholder = "Subject"
                     , fieldType = "text"
@@ -472,9 +464,8 @@ viewForm sharedState model =
                     }
                     Subject
                     model.userErrors
-                    SetField
-            , div [ classes [ TC.fl, TC.w_100, TC.w_30_ns, TC.pl2_ns ] ] <|
-                inputElement
+                    SetField)
+                (inputElement
                     { label = "Semester"
                     , placeholder = "Semester"
                     , fieldType = "number"
@@ -482,10 +473,9 @@ viewForm sharedState model =
                     }
                     Semester
                     model.userErrors
-                    SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+                    SetField)
+        , rRow <|
+            r1Column <|
                 inputElement
                     { label = "Student Number"
                     , placeholder = "Student Number"
@@ -495,14 +485,13 @@ viewForm sharedState model =
                     StudentNumber
                     model.userErrors
                     SetField
-            ]
         , h2
             [ Styles.sectionStyle
             , classes [ TC.mb3, TC.mt0 ]
             ]
             [ text "Account" ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+        , rRow <|
+            r1Column <|
                 inputElement
                     { label = "Email"
                     , placeholder = "Email"
@@ -512,10 +501,10 @@ viewForm sharedState model =
                     Email
                     model.accountErrors
                     SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                inputElement
+            
+        , rRow <|
+            r2Column
+                (inputElement
                     { label = "New Password"
                     , placeholder = "Password"
                     , fieldType = "password"
@@ -523,9 +512,8 @@ viewForm sharedState model =
                     }
                     Password
                     model.accountErrors
-                    SetField
-            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                inputElement
+                    SetField)
+                (inputElement
                     { label = "New Password Repeat"
                     , placeholder = "Password"
                     , fieldType = "password"
@@ -533,10 +521,9 @@ viewForm sharedState model =
                     }
                     PasswordRepeat
                     model.accountErrors
-                    SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+                    SetField)
+        , rRow <|
+            r1Column <|
                 inputElement
                     { label = "Old Password"
                     , placeholder = "Password"
@@ -546,19 +533,17 @@ viewForm sharedState model =
                     OldPassword
                     model.accountErrors
                     SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
+        , rRowExtraSpacing
             [ button
-                ([ classes [ TC.w_100 ]
-                 ]
-                    ++ (if checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged then
-                            [ Styles.buttonGreenStyle
-                            , onClick Save
-                            ]
+                ( classes [ TC.w_100 ] ::
+                    (if checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged then
+                        [ Styles.buttonGreenStyle
+                        , onClick Save
+                        ]
 
-                        else
-                            [ Styles.buttonDisabled ]
-                       )
+                    else
+                        [ Styles.buttonDisabled ]
+                    )
                 )
                 [ text "Save" ]
             ]

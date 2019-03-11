@@ -5,13 +5,25 @@ module Components.CommonElements exposing
     , textAreaElement
     , timeInputElement
     , viewFormErrors
+    , fileUploader
+    , pageContainer
+    , widePage
+    , normalPage
+    , rContainer
+    , rRow
+    , rRowExtraSpacing
+    , r1Column
+    , r2Column
+    , r3Column
     )
 
 import Date exposing (Date)
 import DatePicker
+import File exposing (File)
+import Json.Decode as Decode exposing (Decoder)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput, preventDefaultOn)
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
@@ -146,3 +158,118 @@ sliderInputElement inputConfig field errors msg =
     , h2 [ Styles.labelStyle ] [ text inputConfig.valueLabel ]
     , viewFormErrors field errors
     ]
+
+
+pageContainer : List (Html msg) -> Html msg
+pageContainer childs =
+    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+        childs
+
+
+widePage : List (Html msg) -> Html msg
+widePage childs =
+    div [ classes [ TC.w_75_l, TC.w_100, TC.ph5, TC.ph0_l, TC.center, TC.mw9_ns ] ]
+        childs
+
+
+normalPage : List (Html msg) -> Html msg
+normalPage childs =
+    div [ classes [ TC.mw8, TC.ph4, TC.ph5_ns, TC.center ] ] 
+        childs
+
+
+rContainer : List (Html msg) -> Html msg
+rContainer childs =
+    div [ classes [ TC.w_100 ] ]
+        childs
+
+rRow : List (Html msg) -> Html msg
+rRow childs =
+    div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
+        childs
+
+
+rRowExtraSpacing : List (Html msg) -> Html msg
+rRowExtraSpacing childs =
+    div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
+        childs
+
+r2Column : List (Html msg) -> List (Html msg) -> List (Html msg)
+r2Column child1 child2 =
+    [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ]
+        child1
+    , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ]
+        child2
+    ]
+
+
+r1Column : List (Html msg) -> List (Html msg)
+r1Column child =
+    child
+
+
+r3Column : List (Html msg) -> List (Html msg) -> List (Html msg) -> List (Html msg)
+r3Column child1 child2 child3 =
+    [ div [ classes [ TC.fl, TC.w_100, TC.w_50_m, TC.w_33_l ] ]
+        child1
+    , div [ classes [ TC.fl, TC.w_100, TC.w_50_m, TC.w_33_l, TC.pl2_ns ] ]
+        child2
+    , div [ classes [ TC.fl, TC.w_100, TC.w_50_m, TC.w_33_l, TC.pl2_ns ] ]
+        child3
+    ]
+
+--Same for image uploader?
+fileUploader : Bool -> Maybe File -> msg -> msg -> msg -> (File -> List File -> msg) -> Html msg
+fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =
+    div
+        [ classes
+            [ TC.pa4
+            , TC.ba
+            , TC.b__dashed
+            , if hover then
+                TC.b__dark_red
+              else
+                TC.b__black_40
+            , TC.bw2
+            , TC.br3
+            , TC.w_70
+            , TC.flex
+            , TC.flex_column
+            , TC.justify_center
+            , TC.items_center
+            , TC.fl
+            ]
+        , hijackOn "dragenter" (Decode.succeed <| enterMsg)
+        , hijackOn "dragover" (Decode.succeed <| enterMsg)
+        , hijackOn "dragleave" (Decode.succeed <| exitMsg)
+        , hijackOn "drop" (dropDecoder gotFileMsg)
+        ]
+        [ span
+            [ Styles.labelStyle
+            ]
+            [ text <| Maybe.withDefault "" <| Maybe.map File.name <| file ]
+        , button
+            [ Styles.buttonGreyStyle
+            , classes
+                [ TC.w_100
+                , TC.mt4
+                ]
+            , onClick pickMsg
+            ]
+            [ text "Pick file" ]
+        ]
+
+
+dropDecoder : (File -> List File -> msg) -> Decoder msg
+dropDecoder msg =
+    Decode.at [ "dataTransfer", "files" ] (Decode.oneOrMore msg File.decoder)
+
+
+hijackOn : String -> Decoder msg -> Attribute msg
+hijackOn event decoder =
+    preventDefaultOn event (Decode.map hijack decoder)
+
+
+hijack : msg -> ( msg, Bool )
+hijack msg =
+    ( msg, True )

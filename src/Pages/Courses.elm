@@ -18,6 +18,7 @@ import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.Dialog as Dialog
 import Components.Toasty
+import Components.CommonElements exposing (pageContainer, widePage)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -400,25 +401,15 @@ view sharedState model =
                     else
                         cTemp
             in
-            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+            pageContainer
                 [ viewDisenrollCourseDialog sharedState model
                 , viewDeleteCourseDialog sharedState model
                 , Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-                , div
-                    [ classes
-                        [ TC.w_75_l
-                        , TC.w_100
-                        , TC.ph5
-                        , TC.ph0_l
-                        , TC.center
-                        , TC.mw9_ns
-                        ]
-                    ]
-                    content
+                , widePage content
                 ]
 
         ( _, _ ) ->
-            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.w_100 ] ] []
+            widePage []
 
 
 viewDeleteCourseDialog : SharedState -> Model -> Html Msg

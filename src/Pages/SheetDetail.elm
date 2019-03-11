@@ -31,6 +31,7 @@ import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.TaskEditor as TaskEditor
+import Components.TaskViewer as TaskViewer
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)

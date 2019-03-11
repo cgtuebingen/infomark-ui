@@ -3,10 +3,12 @@ module Api.Request.Task exposing
     , taskPrivateFilesPost
     , taskPublicFilesPost
     , taskPut
+    , taskResultGet
     )
 
 import Api.Data.Task as Task exposing (Task)
-import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, unwrap)
+import Api.Data.Grade as Grade exposing (Grade)
+import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, taskResult, unwrap)
 import Api.Helper exposing (get, patchExpectNothing, postFile)
 import File exposing (File)
 import Http
@@ -35,3 +37,10 @@ taskPublicFilesPost id file msg =
 taskPrivateFilesPost : Int -> File -> (WebData () -> msg) -> Cmd msg
 taskPrivateFilesPost id file msg =
     postFile (unwrap <| taskPrivateFiles id) file msg
+
+
+taskResultGet : Int -> (WebData Grade -> msg) -> Cmd msg
+taskResultGet id msg =
+    get (unwrap <| taskResult id)
+        msg
+        Grade.decoder

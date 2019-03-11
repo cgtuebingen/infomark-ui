@@ -23,6 +23,7 @@ module Api.Endpoint exposing
     , task
     , taskPrivateFiles
     , taskPublicFiles
+    , taskResult
     , unwrap
     , updatePassword
     , user
@@ -188,3 +189,8 @@ taskPublicFiles id =
 taskPrivateFiles : Int -> Endpoint
 taskPrivateFiles id =
     url [ "tasks", String.fromInt id, "private_files" ] []
+
+
+taskResult : Int -> Endpoint
+taskResult id =
+    url [ "tasks", String.fromInt id, "result" ] []
