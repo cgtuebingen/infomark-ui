@@ -125,14 +125,15 @@ initCreate courseId =
     ( { model | course_id = courseId }, cmd )
 
 
-initEdit : Int -> ( Model, Cmd Msg )
-initEdit id =
+initEdit : Int -> Int -> ( Model, Cmd Msg )
+initEdit courseId id =
     let
         ( model, cmd ) =
             initModel
     in
     ( { model
         | createSheet = False
+        , course_id = courseId
       }
     , Cmd.batch [ cmd, SheetRequests.sheetGet id SheetGetResponse ]
     )
@@ -415,7 +416,7 @@ updateHandleSend sharedState model response =
 
                 -- File deleted?
                 ( False, _ ) ->
-                    ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
+                    ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.course_id model.id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -452,7 +453,7 @@ updateHandleFileUpload : SharedState -> Model -> WebData () -> ( Model, Cmd Msg,
 updateHandleFileUpload sharedState model response =
     case response of
         Success _ ->
-            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.id), NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.course_id model.id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model

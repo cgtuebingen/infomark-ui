@@ -26,8 +26,11 @@
 
 module Pages.SheetDetail exposing (Model, Msg(..), init, update, view)
 
+import Api.Data.AccountEnrollment exposing (AccountEnrollment)
+import Api.Data.CourseRole exposing (CourseRole(..))
 import Api.Data.Sheet exposing (Sheet)
 import Api.Data.Task exposing (Task)
+import Api.Request.Account as AccountRequests
 import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.TaskEditor as TaskEditor
@@ -41,30 +44,42 @@ import I18n
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Tachyons exposing (classes, tachyons)
+import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
+import Utils.Utils as Utils
 
 
 type Msg
     = NavigateTo Route
-    | TaskMsg Int TaskEditor.Msg
+    | AdminTaskMsg Int TaskEditor.Msg
+    | StudentTaskMsg Int TaskViewer.Msg
     | GetTaskFetchResponse (WebData (List Task))
+    | GetEnrollmentResponse (WebData (List AccountEnrollment))
 
 
 type alias Model =
     { id : Int
-    , tasks : Dict Int TaskEditor.Model -- Only for admins
+    , course_id : Int
+    , role : Maybe CourseRole
+    , tasksAdmins : Dict Int TaskEditor.Model -- Only for admins
+    , tasksStudents : Dict Int TaskViewer.Model -- Only for students
     }
 
 
-init : Int -> ( Model, Cmd Msg )
-init id =
+init : Int -> Int -> ( Model, Cmd Msg )
+init course_id id =
     ( { id = id
-      , tasks = Dict.empty
+      , course_id = course_id
+      , role = Nothing
+      , tasksAdmins = Dict.empty
+      , tasksStudents = Dict.empty
       }
-    , SheetRequests.sheetTasksGet id GetTaskFetchResponse
+    , Cmd.batch 
+        [ SheetRequests.sheetTasksGet id GetTaskFetchResponse
+        , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
+        ]
     )
 
 
@@ -72,7 +87,7 @@ update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         GetTaskFetchResponse (Success tasks) ->
             ( fillModelTaskDict model tasks, Cmd.none, NoUpdate )
@@ -80,20 +95,52 @@ update sharedState msg model =
         GetTaskFetchResponse response ->
             ( model, Cmd.none, NoUpdate )
 
-        TaskMsg id subMsg ->
-            case Dict.get id model.tasks of
+        GetEnrollmentResponse (Success roles) ->
+            let
+                maybeRole = roles |>
+                    List.filter (\enrollment -> model.course_id == enrollment.course_id) |>
+                    List.map (\enrollment -> enrollment.role) |>
+                    List.head
+            in
+            case maybeRole of 
+                Just role ->
+                    ( { model | role = maybeRole }, Cmd.none, NoUpdate)
+                
+                Nothing ->
+                    ( model, Utils.perform <| NavigateTo CoursesRoute, NoUpdate )
+
+        GetEnrollmentResponse response ->
+            ( model, Cmd.none, NoUpdate )
+
+        AdminTaskMsg id subMsg ->
+            case Dict.get id model.tasksAdmins of
                 Just taskModel ->
                     let
-                        ( newTaskModel, newTaskCmd, newTaskSharedState ) =
+                        ( newTaskModel, newTaskCmd, newTaskSharedState ) = 
                             TaskEditor.update sharedState subMsg taskModel
                     in
-                    ( { model
-                        | tasks = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasks
-                      }
-                    , Cmd.map (TaskMsg id) newTaskCmd
+                    ({ model 
+                        | tasksAdmins = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasksAdmins }
+                    , Cmd.map (AdminTaskMsg id) newTaskCmd
                     , newTaskSharedState
                     )
+                    
+                Nothing ->
+                    ( model, Cmd.none, NoUpdate )
 
+        StudentTaskMsg id subMsg ->
+            case Dict.get id model.tasksStudents of
+                Just taskModel ->
+                    let
+                        ( newTaskModel, newTaskCmd, newTaskSharedState ) = 
+                            TaskViewer.update sharedState subMsg taskModel
+                    in
+                    ({ model 
+                        | tasksStudents = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasksStudents }
+                    , Cmd.map (StudentTaskMsg id) newTaskCmd
+                    , newTaskSharedState
+                    )
+                    
                 Nothing ->
                     ( model, Cmd.none, NoUpdate )
 
@@ -101,10 +148,14 @@ update sharedState msg model =
 fillModelTaskDict : Model -> List Task -> Model
 fillModelTaskDict model tasks =
     { model
-        | tasks =
+        | tasksAdmins =
             tasks
                 |> List.map (\task -> ( task.id, Tuple.first <| TaskEditor.initFromTask task ))
-                |> List.append [ ( 0, Tuple.first <| TaskEditor.initCreate model.id ) ]
+                |> List.append [ ( -1, Tuple.first <| TaskEditor.initCreate model.id ) ]
+                |> Dict.fromList
+        , tasksStudents =
+            tasks
+                |> List.map (\task -> ( task.id, Tuple.first <| TaskViewer.init task ))
                 |> Dict.fromList
     }
 
@@ -121,14 +172,26 @@ view sharedState model =
                 , TC.center
                 ]
             ]
-            [ viewTasksForAdmin sharedState model ]
+            [ case model.role of
+                Just Admin -> viewTasksForAdmin sharedState model
+                Just Student -> viewTasksForStudents sharedState model
+                _ -> text ""
+            ]
         ]
 
 
 viewTasksForAdmin : SharedState -> Model -> Html Msg
 viewTasksForAdmin sharedState model =
     div []
-        (Dict.values model.tasks
+        (Dict.values model.tasksAdmins
             |> List.map (\task -> ( task.id, TaskEditor.view sharedState task ))
-            |> List.map (\( id, task ) -> Html.map (TaskMsg id) task)
+            |> List.map (\( id, task ) -> Html.map (AdminTaskMsg id) task)
+        )
+
+viewTasksForStudents : SharedState -> Model -> Html Msg
+viewTasksForStudents sharedState model =
+    div []
+        (Dict.values model.tasksStudents
+            |> List.map (\task -> ( task.id, TaskViewer.view sharedState task ))
+            |> List.map (\( id, task ) -> Html.map (StudentTaskMsg id) task)
         )

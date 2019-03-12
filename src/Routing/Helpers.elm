@@ -13,10 +13,8 @@ type Route
     | EditCourseRoute Int
     | CourseDetailRoute Int
     | CreateSheetRoute Int
-    | EditSheetRoute Int
-    | SheetDetailRoute Int
-    | CreateTaskRoute
-    | EditTaskRoute Int
+    | EditSheetRoute Int Int
+    | SheetDetailRoute Int Int
     | SubmissionGradingRoute Int Int
     | AdminRoute
     | ProfileEditorRoute
@@ -55,17 +53,11 @@ reverseRoute route =
                 CreateSheetRoute courseId ->
                     [ "course", String.fromInt courseId, "sheet", "create" ]
 
-                EditSheetRoute id ->
-                    [ "sheet", String.fromInt id, "edit" ]
+                EditSheetRoute courseId id ->
+                    [ "course", String.fromInt courseId, "sheet", String.fromInt id, "edit" ]
 
-                SheetDetailRoute id ->
-                    [ "sheet", String.fromInt id ]
-
-                CreateTaskRoute ->
-                    [ "task", "create" ]
-
-                EditTaskRoute id ->
-                    [ "task", String.fromInt id, "edit" ]
+                SheetDetailRoute courseId id ->
+                    [ "course", String.fromInt courseId, "sheet", String.fromInt id ]
 
                 SubmissionGradingRoute taskId groupId ->
                     [ "task", String.fromInt taskId, "grade", "group", String.fromInt groupId ]
@@ -100,11 +92,9 @@ routeParser =
         , Url.Parser.map CourseDetailRoute (Url.Parser.s "course" </> Url.Parser.int)
         , Url.Parser.map CreateCourseRoute (Url.Parser.s "course" </> Url.Parser.s "create")
         , Url.Parser.map EditCourseRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "edit")
-        , Url.Parser.map SheetDetailRoute (Url.Parser.s "sheet" </> Url.Parser.int)
+        , Url.Parser.map SheetDetailRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int)
         , Url.Parser.map CreateSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.s "create")
-        , Url.Parser.map EditSheetRoute (Url.Parser.s "sheet" </> Url.Parser.int </> Url.Parser.s "edit")
-        , Url.Parser.map CreateTaskRoute (Url.Parser.s "task" </> Url.Parser.s "create")
-        , Url.Parser.map EditTaskRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "edit")
+        , Url.Parser.map EditSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")

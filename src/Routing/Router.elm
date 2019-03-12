@@ -29,7 +29,6 @@ import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
-import Pages.TaskEditor as TaskEditor
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -65,7 +64,6 @@ type CurrentModel
     | SheetDetailModel SheetDetail.Model
     | SheetEditorModel SheetEditor.Model
     | SubmissionGradingEditorModel SubmissionGradingEditor.Model
-    | TaskEditorModel TaskEditor.Model
     | ProfileEditorModel ProfileEditor.Model
     | MailConfirmationModel MailConfirmation.Model
     | RequestPasswordResetModel RequestPasswordReset.Model
@@ -96,7 +94,6 @@ type Msg
     | SheetDetailMsg SheetDetail.Msg
     | SheetEditorMsg SheetEditor.Msg
     | SubmissionGradingEditorMsg SubmissionGradingEditor.Msg
-    | TaskEditorMsg TaskEditor.Msg
     | ProfileEditorMsg ProfileEditor.Msg
     | MailConfirmationMsg MailConfirmation.Msg
     | RequestPasswordResetMsg RequestPasswordReset.Msg
@@ -213,10 +210,6 @@ update sharedState msg model =
             SheetDetail.update sharedState sheetDetailMsg sheetDetail
                 |> updateWith SheetDetailModel SheetDetailMsg model
 
-        ( TaskEditorMsg taskEditorMsg, TaskEditorModel taskEditor ) ->
-            TaskEditor.update sharedState taskEditorMsg taskEditor
-                |> updateWith TaskEditorModel TaskEditorMsg model
-
         ( SubmissionGradingEditorMsg submissionEditorMsg, SubmissionGradingEditorModel submissionEditor ) ->
             SubmissionGradingEditor.update sharedState submissionEditorMsg submissionEditor
                 |> updateWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model
@@ -311,17 +304,11 @@ navigateTo route model =
         CreateSheetRoute courseId ->
             SheetEditor.initCreate courseId |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
-        EditSheetRoute id ->
-            SheetEditor.initEdit id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
+        EditSheetRoute courseId id ->
+            SheetEditor.initEdit courseId id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
-        SheetDetailRoute id ->
-            SheetDetail.init id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
-
-        CreateTaskRoute ->
-            TaskEditor.initCreate |> initWith TaskEditorModel TaskEditorMsg model NoUpdate
-
-        EditTaskRoute id ->
-            TaskEditor.initEdit id |> initWith TaskEditorModel TaskEditorMsg model NoUpdate
+        SheetDetailRoute  courseId id ->
+            SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
 
         SubmissionGradingRoute taskId groupId ->
             SubmissionGradingEditor.init taskId groupId |> initWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model NoUpdate
@@ -380,17 +367,11 @@ view msgMapper sharedState model =
                 CreateSheetRoute _ ->
                     "page-title-create-sheet"
 
-                EditSheetRoute _ ->
+                EditSheetRoute _ _ ->
                     "page-title-edit-sheet"
 
-                SheetDetailRoute _ ->
+                SheetDetailRoute _ _ ->
                     "page-title-sheet"
-
-                CreateTaskRoute ->
-                    "page-title-create-task"
-
-                EditTaskRoute _ ->
-                    "page-title-edit-task"
 
                 SubmissionGradingRoute _ _ ->
                     "page-title-grade"
@@ -696,10 +677,6 @@ pageView sharedState model =
         SheetDetailModel sheetDetail ->
             SheetDetail.view sharedState sheetDetail
                 |> Html.map SheetDetailMsg
-
-        TaskEditorModel taskEditor ->
-            TaskEditor.view sharedState taskEditor
-                |> Html.map TaskEditorMsg
 
         SubmissionGradingEditorModel submissionEditor ->
             SubmissionGradingEditor.view sharedState submissionEditor

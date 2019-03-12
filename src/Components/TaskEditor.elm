@@ -14,7 +14,7 @@ module Components.TaskEditor exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing (inputElement, fileUploader, rContainer, rRow, rRowButton, rCollapsable, rRowExtraSpacing, r1Column, r2Column)
+import Components.CommonElements exposing (inputLabel, inputElement, fileUploader, rContainer, rRow, rRowButton, rCollapsable, rRowExtraSpacing, r1Column, r2Column)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
@@ -246,19 +246,11 @@ view sharedState model =
         rCollapsable ("Task " ++ String.fromInt model.id) model.collapse ToggleCollapse ("Show", "Hide")
             [ rRow <|
                 r2Column
-                    [ label
-                        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                        , Styles.labelStyle
-                        ]
-                        [ text "Public Tests" ]
-                    , fileUploader model Public
+                    [ inputLabel "Public Tests"
+                    , fileUploader (chooseHover Public model) (chooseFile Public model) (DragEnter Public) (DragLeave Public) (Pick Public) (GotFiles Public)
                     ]
-                    [ label
-                        [ classes [ TC.db, TC.lh_copy, TC.mb1 ]
-                        , Styles.labelStyle
-                        ]
-                        [ text "Private Tests" ]
-                    , fileUploader model Private
+                    [ inputLabel "Private Tests"
+                    , fileUploader (chooseHover Private model) (chooseFile Private model) (DragEnter Private) (DragLeave Private) (Pick Private) (GotFiles Private)
                     ]
             , rRowExtraSpacing <|
                 r2Column
@@ -304,48 +296,6 @@ view sharedState model =
                             "Bearbeiten"
                     ]
             ]
-
-
-fileUploader : Model -> FileType -> Html Msg
-fileUploader model fileType =
-    div
-        [ classes
-            [ TC.pa4
-            , TC.ba
-            , TC.b__dashed
-            , if chooseHover fileType model then
-                TC.b__dark_red
-
-              else
-                TC.b__black_40
-            , TC.bw2
-            , TC.br3
-            , TC.w_70
-            , TC.flex
-            , TC.flex_column
-            , TC.justify_center
-            , TC.items_center
-            , TC.fl
-            ]
-        , hijackOn "dragenter" (Decode.succeed <| DragEnter fileType)
-        , hijackOn "dragover" (Decode.succeed <| DragEnter fileType)
-        , hijackOn "dragleave" (Decode.succeed <| DragLeave fileType)
-        , hijackOn "drop" (dropDecoder fileType)
-        ]
-        [ span
-            [ Styles.labelStyle
-            ]
-            [ text <| Maybe.withDefault "" <| Maybe.map File.name <| chooseFile fileType model ]
-        , button
-            [ Styles.buttonGreyStyle
-            , classes
-                [ TC.w_100
-                , TC.mt4
-                ]
-            , onClick <| Pick fileType
-            ]
-            [ text "Pick file" ]
-        ]
 
 
 setField : Model -> Field -> String -> Model
@@ -419,21 +369,6 @@ updateFile fileType val model =
 
         Private ->
             { model | private_test_file = val }
-
-
-dropDecoder : FileType -> Decoder Msg
-dropDecoder fileType =
-    Decode.at [ "dataTransfer", "files" ] (Decode.oneOrMore (GotFiles fileType) File.decoder)
-
-
-hijackOn : String -> Decoder msg -> Attribute msg
-hijackOn event decoder =
-    preventDefaultOn event (Decode.map hijack decoder)
-
-
-hijack : msg -> ( msg, Bool )
-hijack msg =
-    ( msg, True )
 
 
 type alias Error =
