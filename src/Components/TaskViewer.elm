@@ -48,6 +48,7 @@ type Msg
 
 type alias Model =
     { id : Int
+    , courseId : Int
     , task : Task 
     , gradeResponse : WebData Grade
     , rating : Int
@@ -57,10 +58,11 @@ type alias Model =
     }
 
 
-init : Task -> (Model, Cmd Msg)
-init task =
+init : Int -> Task -> (Model, Cmd Msg)
+init courseId task =
     ( 
         { id = task.id
+        , courseId = courseId
         , task = task 
         , gradeResponse = Loading
         , rating = 0
@@ -68,7 +70,7 @@ init task =
         , collapse = True
         , hover = False
         }
-    , TaskRequests.taskResultGet task.id GetGradeResponse
+    , TaskRequests.taskResultGet courseId task.id GetGradeResponse
     )
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )

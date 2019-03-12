@@ -15,39 +15,39 @@ import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 
 
-groupsGet : Int -> (WebData Group -> msg) -> Cmd msg
-groupsGet id msg =
-    get (unwrap <| groups id)
+groupsGet : Int -> Int -> (WebData Group -> msg) -> Cmd msg
+groupsGet courseId id msg =
+    get (unwrap <| groups courseId id)
         msg
         Group.decoder
 
 
-groupsPut : Int -> Group -> (WebData String -> msg) -> Cmd msg
-groupsPut id group msg =
-    put (unwrap <| groups id)
+groupsPut : Int -> Int -> Group -> (WebData String -> msg) -> Cmd msg
+groupsPut courseId id group msg =
+    put (unwrap <| groups courseId id)
         (Http.jsonBody (Group.encoder group))
         msg
         Decode.string
 
 
-groupsDelete : Int -> (WebData String -> msg) -> Cmd msg
-groupsDelete id msg =
-    delete (unwrap <| groups id)
+groupsDelete : Int -> Int -> (WebData String -> msg) -> Cmd msg
+groupsDelete courseId id msg =
+    delete (unwrap <| groups courseId id)
         msg
         Decode.string
 
 
-groupsEnrollmentPut : Int -> GroupEnrollmentChange -> (WebData String -> msg) -> Cmd msg
-groupsEnrollmentPut id groupEnrollment msg =
-    put (unwrap <| groupsEnrollment id)
+groupsEnrollmentPut : Int -> Int -> GroupEnrollmentChange -> (WebData String -> msg) -> Cmd msg
+groupsEnrollmentPut courseId id groupEnrollment msg =
+    put (unwrap <| groupsEnrollment courseId id)
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
         Decode.string
 
 
-groupsEnrollmentPost : Int -> GroupEnrollmentChange -> (WebData Group -> msg) -> Cmd msg
-groupsEnrollmentPost id groupEnrollment msg =
-    post (unwrap <| groupsEnrollment id)
+groupsEnrollmentPost : Int -> Int -> GroupEnrollmentChange -> (WebData Group -> msg) -> Cmd msg
+groupsEnrollmentPost courseId id groupEnrollment msg =
+    post (unwrap <| groupsEnrollment courseId id)
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
         Group.decoder

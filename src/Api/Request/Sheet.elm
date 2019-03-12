@@ -17,39 +17,39 @@ import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 
 
-sheetGet : Int -> (WebData Sheet -> msg) -> Cmd msg
-sheetGet id msg =
-    get (unwrap <| sheet id) msg Sheet.decoder
+sheetGet : Int -> Int -> (WebData Sheet -> msg) -> Cmd msg
+sheetGet courseId id msg =
+    get (unwrap <| sheet courseId id) msg Sheet.decoder
 
 
-sheetPut : Int -> Sheet -> (WebData () -> msg) -> Cmd msg
-sheetPut id sheetUpdate msg =
-    putExpectNothing (unwrap <| sheet id)
+sheetPut : Int -> Int -> Sheet -> (WebData () -> msg) -> Cmd msg
+sheetPut courseId id sheetUpdate msg =
+    putExpectNothing (unwrap <| sheet courseId id)
         (Http.jsonBody <| Sheet.encoder sheetUpdate)
         msg
 
 
-sheetDelete : Int -> (WebData () -> msg) -> Cmd msg
-sheetDelete id msg =
-    deleteExpectNothing (unwrap <| sheet id) msg
+sheetDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
+sheetDelete courseId id msg =
+    deleteExpectNothing (unwrap <| sheet courseId id) msg
 
 
-sheetFilePost : Int -> File -> (WebData () -> msg) -> Cmd msg
-sheetFilePost id file msg =
-    postFile (unwrap <| sheetFile id) file msg
+sheetFilePost : Int -> Int -> File -> (WebData () -> msg) -> Cmd msg
+sheetFilePost courseId id file msg =
+    postFile (unwrap <| sheetFile courseId id) file msg
 
 
-sheetTasksPost : Int -> Task -> (WebData Task -> msg) -> Cmd msg
-sheetTasksPost id taskNew msg =
-    post (unwrap <| sheetTasks id)
+sheetTasksPost : Int -> Int -> Task -> (WebData Task -> msg) -> Cmd msg
+sheetTasksPost courseId id taskNew msg =
+    post (unwrap <| sheetTasks courseId id)
         (Http.jsonBody <| Task.encoder taskNew)
         msg
         Task.decoder
 
 
-sheetTasksGet : Int -> (WebData (List Task) -> msg) -> Cmd msg
-sheetTasksGet id msg =
-    get (unwrap <| sheetTasks id)
+sheetTasksGet : Int -> Int -> (WebData (List Task) -> msg) -> Cmd msg
+sheetTasksGet courseId id msg =
+    get (unwrap <| sheetTasks courseId id)
         msg
     <|
         Decode.list Task.decoder

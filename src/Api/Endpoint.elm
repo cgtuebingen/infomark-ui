@@ -151,46 +151,46 @@ courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
 
 
-groups : Int -> Endpoint
-groups id =
-    url [ "groups", String.fromInt id ] []
+groups : Int -> Int -> Endpoint
+groups courseId id =
+    url [ "courses", String.fromInt courseId, "groups", String.fromInt id ] []
 
 
-groupsEnrollment : Int -> Endpoint
-groupsEnrollment id =
-    url [ "groups", String.fromInt id, "enrollments" ] []
+groupsEnrollment : Int -> Int -> Endpoint
+groupsEnrollment courseId id =
+    url [ "courses", String.fromInt courseId, "groups", String.fromInt id, "enrollments" ] []
 
 
-sheet : Int -> Endpoint
-sheet id =
-    url [ "sheets", String.fromInt id ] []
+sheet : Int -> Int -> Endpoint
+sheet courseId id =
+    url [ "courses", String.fromInt courseId, "sheets", String.fromInt id ] []
 
 
-sheetFile : Int -> Endpoint
-sheetFile id =
-    url [ "sheets", String.fromInt id, "file" ] []
+sheetFile : Int -> Int -> Endpoint
+sheetFile courseId id =
+    url [ "courses", String.fromInt courseId, "sheets", String.fromInt id, "file" ] []
 
 
-sheetTasks : Int -> Endpoint
-sheetTasks id =
-    url [ "sheets", String.fromInt id, "tasks" ] []
+sheetTasks : Int -> Int -> Endpoint
+sheetTasks courseId id =
+    url [ "courses", String.fromInt courseId, "sheets", String.fromInt id, "tasks" ] []
 
 
-task : Int -> Endpoint
-task id =
-    url [ "tasks", String.fromInt id ] []
+task : Int -> Int -> Endpoint
+task courseId id =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id ] []
 
 
-taskPublicFiles : Int -> Endpoint
-taskPublicFiles id =
-    url [ "tasks", String.fromInt id, "public_files" ] []
+taskPublicFiles : Int -> Int -> Endpoint
+taskPublicFiles courseId id =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "public_files" ] []
 
 
-taskPrivateFiles : Int -> Endpoint
-taskPrivateFiles id =
-    url [ "tasks", String.fromInt id, "private_files" ] []
+taskPrivateFiles : Int -> Int -> Endpoint
+taskPrivateFiles courseId id =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "private_files" ] []
 
 
-taskResult : Int -> Endpoint
-taskResult id =
-    url [ "tasks", String.fromInt id, "result" ] []
+taskResult : Int -> Int -> Endpoint
+taskResult courseId id =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "result" ] []

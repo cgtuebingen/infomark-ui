@@ -135,7 +135,7 @@ initEdit courseId id =
         | createSheet = False
         , course_id = courseId
       }
-    , Cmd.batch [ cmd, SheetRequests.sheetGet id SheetGetResponse ]
+    , Cmd.batch [ cmd, SheetRequests.sheetGet courseId id SheetGetResponse ]
     )
 
 
@@ -157,7 +157,7 @@ updateRequest model =
     case ( model.publishedPosix, model.deadlinePosix ) of
         ( Just publish, Just deadline ) ->
             ( model
-            , SheetRequests.sheetPut model.id (setupSheet model.name publish deadline) UpdateResponse
+            , SheetRequests.sheetPut model.course_id model.id (setupSheet model.name publish deadline) UpdateResponse
             )
 
         ( _, _ ) ->
@@ -409,7 +409,7 @@ updateHandleSend sharedState model response =
         Success _ ->
             case ( model.fileChanged, model.file ) of
                 ( True, Just file ) ->
-                    ( model, SheetRequests.sheetFilePost model.id file FileUploadResponse, NoUpdate )
+                    ( model, SheetRequests.sheetFilePost model.course_id model.id file FileUploadResponse, NoUpdate )
 
                 ( True, Nothing ) ->
                     ( model, Cmd.none, NoUpdate )

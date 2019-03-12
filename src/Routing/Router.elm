@@ -310,7 +310,7 @@ navigateTo route model =
         SheetDetailRoute  courseId id ->
             SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
 
-        SubmissionGradingRoute taskId groupId ->
+        SubmissionGradingRoute courseId taskId groupId ->
             SubmissionGradingEditor.init taskId groupId |> initWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model NoUpdate
 
         AdminRoute ->
@@ -373,7 +373,7 @@ view msgMapper sharedState model =
                 SheetDetailRoute _ _ ->
                     "page-title-sheet"
 
-                SubmissionGradingRoute _ _ ->
+                SubmissionGradingRoute _ _ _ ->
                     "page-title-grade"
 
                 AdminRoute ->

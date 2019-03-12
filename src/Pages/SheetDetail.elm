@@ -77,7 +77,7 @@ init course_id id =
       , tasksStudents = Dict.empty
       }
     , Cmd.batch 
-        [ SheetRequests.sheetTasksGet id GetTaskFetchResponse
+        [ SheetRequests.sheetTasksGet course_id id GetTaskFetchResponse
         , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
         ]
     )
@@ -150,12 +150,12 @@ fillModelTaskDict model tasks =
     { model
         | tasksAdmins =
             tasks
-                |> List.map (\task -> ( task.id, Tuple.first <| TaskEditor.initFromTask task ))
-                |> List.append [ ( -1, Tuple.first <| TaskEditor.initCreate model.id ) ]
+                |> List.map (\task -> ( task.id, Tuple.first <| TaskEditor.initFromTask model.course_id task ))
+                |> List.append [ ( -1, Tuple.first <| TaskEditor.initCreate model.course_id model.id ) ]
                 |> Dict.fromList
         , tasksStudents =
             tasks
-                |> List.map (\task -> ( task.id, Tuple.first <| TaskViewer.init task ))
+                |> List.map (\task -> ( task.id, Tuple.first <| TaskViewer.init model.course_id task ))
                 |> Dict.fromList
     }
 

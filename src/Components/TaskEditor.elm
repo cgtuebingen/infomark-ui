@@ -55,6 +55,7 @@ type Msg
 
 type alias Model =
     { id : Int
+    , courseId : Int
     , sheet_id : Int
     , max_points : String
     , public_tests_url : String
@@ -75,6 +76,7 @@ type alias Model =
 initModel : ( Model, Cmd Msg )
 initModel =
     ( { id = 0
+      , courseId = 0
       , sheet_id = 0
       , max_points = "0"
       , public_tests_url = ""
@@ -94,34 +96,36 @@ initModel =
     )
 
 
-initCreate : Int -> ( Model, Cmd Msg )
-initCreate sheetId =
+initCreate : Int -> Int -> ( Model, Cmd Msg )
+initCreate courseId sheetId =
     let
         ( model, cmds ) =
             initModel
     in
-    ( { model | sheet_id = sheetId, createTask = True }, cmds )
+    ( { model | sheet_id = sheetId, courseId = courseId, createTask = True }, cmds )
 
 
-initFromId : Int -> ( Model, Cmd Msg )
-initFromId id =
+initFromId : Int -> Int -> ( Model, Cmd Msg )
+initFromId courseId id =
     let
         ( model, cmds ) =
             initModel
     in
-    ( { model | id = id }
+    ( { model | id = id, courseId = courseId }
     , Cmd.batch
         [ cmds
-        , TaskRequests.taskGet id TaskGetRequest
+        , TaskRequests.taskGet courseId id TaskGetRequest
         ]
     )
 
 
-initFromTask : Task -> ( Model, Cmd Msg )
-initFromTask task =
+initFromTask : Int -> Task -> ( Model, Cmd Msg )
+initFromTask courseId task =
     let
-        ( model, cmds ) =
+        ( inital, cmds ) =
             initModel
+        
+        model = { inital | courseId = courseId}
     in
     ( fillModelFromTask model task
     , cmds
@@ -180,21 +184,21 @@ update sharedState msg model =
                 ( Just public, Just private ) ->
                     ( { model | toUpload = [ Public, Private ] }
                     , Cmd.batch
-                        [ TaskRequests.taskPublicFilesPost task.id public (FileUploadResponse Public)
-                        , TaskRequests.taskPrivateFilesPost task.id private (FileUploadResponse Private)
+                        [ TaskRequests.taskPublicFilesPost model.courseId task.id public (FileUploadResponse Public)
+                        , TaskRequests.taskPrivateFilesPost model.courseId task.id private (FileUploadResponse Private)
                         ]
                     , NoUpdate
                     )
 
                 ( Just public, _ ) ->
                     ( { model | toUpload = [ Public ] }
-                    , TaskRequests.taskPublicFilesPost task.id public (FileUploadResponse Public)
+                    , TaskRequests.taskPublicFilesPost model.courseId task.id public (FileUploadResponse Public)
                     , NoUpdate
                     )
 
                 ( _, Just private ) ->
                     ( { model | toUpload = [ Private ] }
-                    , TaskRequests.taskPrivateFilesPost task.id private (FileUploadResponse Private)
+                    , TaskRequests.taskPrivateFilesPost model.courseId task.id private (FileUploadResponse Private)
                     , NoUpdate
                     )
 
@@ -209,21 +213,21 @@ update sharedState msg model =
                 ( Just public, Just private ) ->
                     ( { model | toUpload = [ Public, Private ] }
                     , Cmd.batch
-                        [ TaskRequests.taskPublicFilesPost model.id public (FileUploadResponse Public)
-                        , TaskRequests.taskPrivateFilesPost model.id private (FileUploadResponse Private)
+                        [ TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public)
+                        , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
                         ]
                     , NoUpdate
                     )
 
                 ( Just public, _ ) ->
                     ( { model | toUpload = [ Public ] }
-                    , TaskRequests.taskPublicFilesPost model.id public (FileUploadResponse Public)
+                    , TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public)
                     , NoUpdate
                     )
 
                 ( _, Just private ) ->
                     ( { model | toUpload = [ Private ] }
-                    , TaskRequests.taskPrivateFilesPost model.id private (FileUploadResponse Private)
+                    , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
                     , NoUpdate
                     )
 
@@ -314,10 +318,10 @@ setField model field value =
 createOrUpdate : Model -> Cmd Msg
 createOrUpdate model =
     if model.createTask then
-        SheetRequests.sheetTasksPost model.sheet_id (fillTaskFromModel model) TaskCreateRequest
+        SheetRequests.sheetTasksPost model.courseId model.sheet_id (fillTaskFromModel model) TaskCreateRequest
 
     else
-        TaskRequests.taskPut model.id (fillTaskFromModel model) TaskUpdateRequest
+        TaskRequests.taskPut model.courseId model.id (fillTaskFromModel model) TaskUpdateRequest
 
 
 fillTaskFromModel : Model -> Task

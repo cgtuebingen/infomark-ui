@@ -15,7 +15,7 @@ type Route
     | CreateSheetRoute Int
     | EditSheetRoute Int Int
     | SheetDetailRoute Int Int
-    | SubmissionGradingRoute Int Int
+    | SubmissionGradingRoute Int Int Int
     | AdminRoute
     | ProfileEditorRoute
     | MailConfirmationRoute String String
@@ -59,8 +59,8 @@ reverseRoute route =
                 SheetDetailRoute courseId id ->
                     [ "course", String.fromInt courseId, "sheet", String.fromInt id ]
 
-                SubmissionGradingRoute taskId groupId ->
-                    [ "task", String.fromInt taskId, "grade", "group", String.fromInt groupId ]
+                SubmissionGradingRoute courseId taskId groupId ->
+                    [ "course", String.fromInt courseId, "task", String.fromInt taskId, "grade", "group", String.fromInt groupId ]
 
                 AdminRoute ->
                     [ "admin" ]
@@ -95,7 +95,7 @@ routeParser =
         , Url.Parser.map SheetDetailRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int)
         , Url.Parser.map CreateSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.s "create")
         , Url.Parser.map EditSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int </> Url.Parser.s "edit")
-        , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
+        , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")
         , Url.Parser.map MailConfirmationRoute (Url.Parser.s "confirmation" </> Url.Parser.string </> Url.Parser.string)
