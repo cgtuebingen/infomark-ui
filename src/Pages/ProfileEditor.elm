@@ -533,19 +533,10 @@ viewForm sharedState model =
                     OldPassword
                     model.accountErrors
                     SetField
-        , rRowButton <|
-            button
-                ( classes [ TC.w_100 ] ::
-                    (if checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged then
-                        [ Styles.buttonGreenStyle
-                        , onClick Save
-                        ]
-
-                    else
-                        [ Styles.buttonDisabled ]
-                    )
-                )
-                [ text "Save" ]
+        , rRowButton
+            "Save"
+            Save <|
+            checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged
         , h2
             [ Styles.sectionStyle
             , classes [ TC.mt5, TC.bt, TC.b__dark_gray, TC.bw2, TC.pt4 ]

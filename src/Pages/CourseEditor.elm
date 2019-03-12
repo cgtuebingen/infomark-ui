@@ -8,7 +8,20 @@ module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update
 import Api.Data.Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
 import Browser.Navigation exposing (back, pushUrl)
-import Components.CommonElements exposing (dateInputElement, inputElement, textAreaElement, viewFormErrors)
+import Components.CommonElements exposing 
+    ( dateInputElement
+    , inputElement
+    , textAreaElement
+    , viewFormErrors
+    , pageContainer
+    , normalPage
+    , rContainer
+    , rRow
+    , rRowHeader
+    , rRowButton
+    , r1Column
+    , r2Column
+    )
 import Components.Toasty
 import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -291,16 +304,9 @@ updateHandleCreateOrEditResponse sharedState model response =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
+    pageContainer
         [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-        , div
-            [ classes
-                [ TC.mw8
-                , TC.ph4
-                , TC.ph5_ns
-                , TC.center
-                ]
-            ]
+        , normalPage
             [ viewFormLoadingOrError sharedState model ]
         ]
 
@@ -328,19 +334,14 @@ viewFormLoadingOrError sharedState model =
 
 viewForm : SharedState -> Model -> Html Msg
 viewForm sharedState model =
-    div
-        [ classes [ TC.w_100 ] ]
-        [ h1
-            [ Styles.headerStyle ]
-            [ text <|
-                if model.createCourse then
-                    "Kurs erstellen"
-
-                else
-                    "Kurs bearbeiten"
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            [ div [ classes [ TC.fl, TC.w_100 ] ] <|
+    rContainer
+        [ rRowHeader <|
+            if model.createCourse then
+                "Kurs erstellen"
+            else
+                "Kurs bearbeiten"
+        , rRow <|
+            r1Column <|
                 inputElement
                     { label = "Course Name"
                     , placeholder = "Name"
@@ -350,12 +351,9 @@ viewForm sharedState model =
                     Name
                     model.errors
                     SetField
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
-            -- Second Row (Start date, End date)
-            [ div [ classes [ TC.fl, TC.w_100, TC.w_50_ns ] ] <|
-                -- First element
-                dateInputElement
+        , rRow <|
+            r2Column
+                (dateInputElement
                     { label = "Start"
                     , value = model.beginsAtDate
                     , datePicker = model.beginsAtDatepicker
@@ -363,10 +361,8 @@ viewForm sharedState model =
                     }
                     BeginsAtDate
                     model.errors
-                    BeginDatePicker
-            , div [ classes [ TC.fl, TC.w_100, TC.w_50_ns, TC.pl2_ns ] ] <|
-                -- Second element
-                dateInputElement
+                    BeginDatePicker)
+                (dateInputElement
                     { label = "Ende"
                     , value = model.endsAtDate
                     , datePicker = model.endsAtDatepicker
@@ -374,37 +370,26 @@ viewForm sharedState model =
                     }
                     EndsAtDate
                     model.errors
-                    EndDatePicker
-            ]
-        , div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ] <|
-            textAreaElement
-                { label = "Beschreibung"
-                , placeholder = "Beschreibung"
-                , value = model.description
-                }
-                Description
-                model.errors
-                SetField
-        , div [ classes [ TC.mt3, TC.ph2_ns ] ]
+                    EndDatePicker)
+        , rRow <|
+            r1Column <|
+                textAreaElement
+                    { label = "Beschreibung"
+                    , placeholder = "Beschreibung"
+                    , value = model.description
+                    }
+                    Description
+                    model.errors
+                    SetField
+        , rRow
             [ div [ classes [ TC.h3, TC.flex, TC.justify_between, TC.items_center ] ] <|
                 viewRequiredPercentage model
             , viewFormErrors RequiredPercentage model.errors
             ]
-        , button
-            [ Styles.buttonGreyStyle
-            , classes [ TC.mt4, TC.w_100 ]
-            , onClick CreateOrEdit
-            ]
-            [ text <|
-                case model.createCourse of
-                    True ->
-                        "Erstellen"
-
-                    False ->
-                        "Bearbeiten"
-            ]
-
-        -- TODO check if edit or create AND use translations
+        , rRowButton 
+            (if model.createCourse then "Erstellen" else "Bearbeiten") 
+            CreateOrEdit 
+            True
         ]
 
 

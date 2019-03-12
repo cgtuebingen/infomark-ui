@@ -38,6 +38,7 @@ import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
+import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
@@ -73,6 +74,7 @@ type Msg
     | GroupBidResponse (WebData GroupBid) -- Response for a group bid (only students)
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
+    | SheetRequestResponse (WebData (List Sheet))
     | SetField Field String
     | SearchUserForEnrollment
     | SearchUserForGroup

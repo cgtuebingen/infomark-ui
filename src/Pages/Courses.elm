@@ -7,7 +7,7 @@
 -}
 
 
-module Pages.Courses exposing (Model, Msg(..), init, update, view, viewCoursesHeader, viewRenderCourse)
+module Pages.Courses exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
@@ -18,7 +18,7 @@ import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.Dialog as Dialog
 import Components.Toasty
-import Components.CommonElements exposing (pageContainer, widePage)
+import Components.CommonElements exposing (pageContainer, widePage, rRowHeaderActionButtons)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -377,7 +377,10 @@ view sharedState model =
                     Maybe.withDefault { root = False } sharedState.role
 
                 cTemp =
-                    [ viewCoursesHeader "Aktuell" False userRole.root model
+                    [ rRowHeaderActionButtons "Aktuell"
+                        [
+                            ( "+", NavigateTo CreateCourseRoute, Styles.buttonGreenStyle)
+                        ]
                     , div
                         [ classes
                             [ TC.flex
@@ -394,7 +397,13 @@ view sharedState model =
                 content =
                     if List.length oldCourses > 0 then
                         cTemp
-                            ++ [ viewCoursesHeader "Archiv" True False model
+                            ++ [ rRowHeaderActionButtons "Archiv" 
+                                    [ 
+                                        (if model.showArchive then "Hide" else "Show"
+                                        , ToggleArchive
+                                        , Styles.buttonGreyStyle
+                                        )
+                                    ]
                                , displayCourseOrNot
                                ]
 
@@ -494,57 +503,6 @@ viewDisenrollCourseDialog sharedState model =
 
         Nothing ->
             text ""
-
-
-viewCoursesHeader : String -> Bool -> Bool -> Model -> Html Msg
-viewCoursesHeader lbl toggable creatable model =
-    let
-        toggleText =
-            if model.showArchive then
-                text "Hide"
-
-            else
-                text "Show"
-
-        toggle =
-            if toggable then
-                button
-                    [ Styles.buttonGreyStyle
-                    , classes [ TC.br_pill, TC.ph3, TC.pv3 ]
-                    , onClick ToggleArchive
-                    ]
-                    [ toggleText ]
-
-            else
-                text ""
-
-        create =
-            if creatable then
-                button
-                    [ Styles.buttonGreenStyle
-                    , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
-                    , onClick <| NavigateTo CreateCourseRoute
-                    ]
-                    [ text "+" ]
-
-            else
-                text ""
-    in
-    div
-        [ classes
-            [ TC.w_100
-            , TC.flex
-            , TC.flex_row
-            , TC.justify_between
-            , TC.items_center
-            , TC.bb
-            , TC.bw2
-            ]
-        ]
-        [ h1 [ Styles.headerStyle ] [ text lbl ]
-        , toggle
-        , create
-        ]
 
 
 viewRenderCourse : SharedState -> Course -> Maybe AccountEnrollment -> Html Msg

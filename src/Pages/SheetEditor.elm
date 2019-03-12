@@ -621,23 +621,10 @@ viewForm sharedState model =
                     UtcOffset
                     model.errors
                     SetField
-        , rRowButton <|
-            button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.mt4, TC.w_100 ]
-                , onClick <|
-                    if model.createSheet then
-                        Create
-
-                    else
-                        Update
-                ]
-                [ text <|
-                    if model.createSheet then
-                        "Erstellen"
-                    else
-                        "Bearbeiten"
-                ]
+        , rRowButton
+            (if model.createSheet then "Erstellen" else "Bearbeiten")
+            (if model.createSheet then Create else Update)
+            True
         ]
 
 

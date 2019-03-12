@@ -148,13 +148,10 @@ view sharedState model =
                         Rating
                         []
                         RateTask
-            , rRowButton <|
-                button
-                    [ Styles.buttonGreyStyle 
-                    , classes [ TC.mt2, TC.mb4, TC.w_100 ]
-                    , onClick UploadSubmission
-                    ] [ text "Upload" ]
-                
+            , rRowButton
+                "Upload"
+                UploadSubmission
+                True
             ]
         
 

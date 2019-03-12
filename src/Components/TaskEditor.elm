@@ -287,18 +287,10 @@ view sharedState model =
                         MaxPoints
                         model.errors
                         SetField
-            , rRowButton <|
-                button
-                    [ Styles.buttonGreyStyle
-                    , classes [ TC.mb4, TC.mt3, TC.w_100 ]
-                    , onClick SendTask
-                    ]
-                    [ text <|
-                        if model.createTask then
-                            "Erstellen"
-                        else
-                            "Bearbeiten"
-                    ]
+            , rRowButton 
+                (if model.createTask then "Erstellen" else "Bearbeiten")
+                SendTask
+                True
             ]
 
 

@@ -12,7 +12,10 @@ module Components.CommonElements exposing
     , normalPage
     , rContainer
     , rRow
+    , rRowHeader
     , rRowButton
+    , rRowHeaderActionButtons
+    , rRowLabelButton
     , rRowExtraSpacing
     , rCollapsable
     , r1Column
@@ -173,6 +176,7 @@ rContainer childs =
     div [ classes [ TC.w_100 ] ]
         childs
 
+
 rRow : List (Html msg) -> Html msg
 rRow childs =
     div [ classes [ TC.mt3, TC.cf, TC.ph2_ns ] ]
@@ -185,10 +189,68 @@ rRowExtraSpacing childs =
         childs
 
 
-rRowButton : Html msg -> Html msg
-rRowButton child =
+rRowHeader : String -> Html msg
+rRowHeader label =
+    rRow <|
+        [ h1 [ Styles.headerStyle ] [ text label ] ]
+
+
+rRowHeaderActionButtons : String -> List (String, msg, Html.Attribute msg) -> Html msg
+rRowHeaderActionButtons label actions =
+    div [ 
+        classes 
+            [ TC.flex
+            , TC.flex_row
+            , TC.justify_between
+            , TC.items_center
+            , TC.bb
+            , TC.bw2 
+            ] 
+        ] <| 
+        h1 [ Styles.headerStyle ] [ text label ] :: 
+            List.map (\(actionLabel, actionMsg, baseStyle) ->
+                button
+                    [ baseStyle
+                    , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
+                    , onClick actionMsg
+                    ] [ text actionLabel ]
+            ) actions
+    
+
+
+rRowButton : String -> msg -> Bool -> Html msg
+rRowButton buttonText msg enabled =
     div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
-        [ child ]
+        [ button
+            (if enabled then
+                [ Styles.buttonGreyStyle
+                , classes [ TC.mb4, TC.mt3, TC.w_100 ]
+                , onClick msg
+                ]
+            else
+                [ Styles.buttonDisabled ]
+            )
+            [ text buttonText ]
+        ]
+
+rRowLabelButton : String -> String -> msg -> Html msg
+rRowLabelButton label buttonText msg =
+    div [ classes
+            [ TC.w_100
+            , TC.flex
+            , TC.flex_row
+            , TC.justify_between
+            , TC.items_center
+            ]
+    ]
+    [ h1 [ Styles.listHeadingStyle] [ text label ]
+    , button 
+        [ Styles.buttonGreyStyle
+        , Styles.pillStyle 
+        , onClick msg
+        ]
+        [ text buttonText ]
+    ]
 
 
 rCollapsable : String -> Bool -> msg -> (String, String) -> List (Html msg) -> List (Html msg)
