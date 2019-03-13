@@ -26,6 +26,8 @@ import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Utils.Styles as Styles
 import Markdown as MD
+import Utils.Utils exposing (perform)
+import Debounce exposing (Debounce)
 
 
 type Field
@@ -38,12 +40,15 @@ type Msg
     | DoneUploading
     | GetGradeResponse (WebData Grade) -- Change return type
     | RateTask Field String
+    | SendRating Int
     | RateResponse (WebData ())
     | ToggleCollapse
     | GotFiles File (List File)
     | Pick
     | DragEnter
     | DragLeave
+    | NoOp
+    | DebounceMsg Debounce.Msg
 
 
 type alias Model =
@@ -55,6 +60,7 @@ type alias Model =
     , submission : Maybe File
     , collapse : Bool
     , hover : Bool
+    , ratingDebounce : Debounce Int
     }
 
 
@@ -69,9 +75,18 @@ init courseId task =
         , submission = Nothing
         , collapse = True
         , hover = False
+        , ratingDebounce = Debounce.init
         }
     , TaskRequests.taskResultGet courseId task.id GetGradeResponse
     )
+
+
+debounceConfig : Debounce.Config Msg
+debounceConfig =
+    { strategy = Debounce.later 2000
+    , transform = DebounceMsg
+    }
+
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
@@ -91,8 +106,13 @@ update sharedState msg model =
         RateTask _ rating ->
             let
                 toInt = Maybe.withDefault 0 <| String.toInt rating
+                ( debounce, cmd ) =
+                    Debounce.push debounceConfig toInt model.ratingDebounce
             in
-            ( { model | rating = toInt }, Cmd.none, NoUpdate)
+            ( { model | rating = toInt, ratingDebounce = debounce }, cmd, NoUpdate)
+
+        SendRating rating -> 
+            (model, Cmd.none, NoUpdate)
 
         RateResponse response ->
             (model, Cmd.none, NoUpdate)
@@ -111,6 +131,23 @@ update sharedState msg model =
 
         DragLeave ->
             ( { model | hover = False }, Cmd.none, NoUpdate )
+
+        DebounceMsg subMsg ->
+            let
+                ( debounce, cmd ) =
+                    Debounce.update
+                        debounceConfig
+                        (Debounce.takeLast (\r -> perform <| SendRating r) )
+                        subMsg
+                        model.ratingDebounce
+            in
+            ( { model | ratingDebounce = debounce }
+            , cmd
+            , NoUpdate 
+            )
+
+        NoOp ->
+            ( model, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
@@ -143,7 +180,9 @@ view sharedState model =
                         , min = 0
                         , max = 5
                         , step = 1
-                        , valueLabel = if model.rating == 0 then "Not rated" else String.fromInt model.rating
+                        , valueLabel = 
+                            if model.rating == 0 then "Not rated" 
+                            else String.fromInt model.rating
                         }
                         Rating
                         []
@@ -161,7 +200,6 @@ displayResults content =
         [ MD.toHtml [ Styles.textStyle ] content
 
         ]
-
 
 type alias Error =
     ( Field, String )
