@@ -221,7 +221,7 @@ rRowButton : String -> msg -> Bool -> Html msg
 rRowButton buttonText msg enabled =
     div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
         [ button
-            ( (classes [ TC.mb4, TC.mt3, TC.w_100 ]) ::
+            ( classes [ TC.mb4, TC.mt3, TC.w_100 ] ::
                 if enabled then
                     [ Styles.buttonGreyStyle
                     , onClick msg
