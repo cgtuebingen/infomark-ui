@@ -53,30 +53,38 @@ import Utils.Utils as Utils
 
 type Msg
     = NavigateTo Route
-    | AdminTaskMsg Int TaskEditor.Msg
-    | StudentTaskMsg Int TaskViewer.Msg
+    | TaskMsg Int TaskMsgTypes
     | GetTaskFetchResponse (WebData (List Task))
     | GetEnrollmentResponse (WebData (List AccountEnrollment))
+
+
+type TaskMsgTypes
+    = AdminTaskMsg TaskEditor.Msg
+    | StudentTaskMsg TaskViewer.Msg
+
+
+type TaskModel
+    = AdminTaskModel TaskEditor.Model
+    | StudentTaskModel TaskViewer.Model
 
 
 type alias Model =
     { id : Int
     , course_id : Int
     , role : Maybe CourseRole
-    , tasksAdmins : Dict Int TaskEditor.Model -- Only for admins
-    , tasksStudents : Dict Int TaskViewer.Model -- Only for students
+    , taskResponse : WebData (List Task)
+    , taskDict : Dict Int TaskModel
     }
-
 
 init : Int -> Int -> ( Model, Cmd Msg )
 init course_id id =
     ( { id = id
       , course_id = course_id
       , role = Nothing
-      , tasksAdmins = Dict.empty
-      , tasksStudents = Dict.empty
+      , taskDict = Dict.empty
+      , taskResponse = Loading
       }
-    , Cmd.batch 
+    , Cmd.batch -- Query the role and all tasks
         [ SheetRequests.sheetTasksGet course_id id GetTaskFetchResponse
         , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
         ]
@@ -89,22 +97,19 @@ update sharedState msg model =
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
-        GetTaskFetchResponse (Success tasks) ->
-            ( fillModelTaskDict model tasks, Cmd.none, NoUpdate )
-
         GetTaskFetchResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            ( fillModelTaskDict { model | taskResponse = response }, Cmd.none, NoUpdate )
 
         GetEnrollmentResponse (Success roles) ->
             let
                 maybeRole = roles |>
                     List.filter (\enrollment -> model.course_id == enrollment.course_id) |>
                     List.map (\enrollment -> enrollment.role) |>
-                    List.head
+                    List.head 
             in
             case maybeRole of 
                 Just role ->
-                    ( { model | role = maybeRole }, Cmd.none, NoUpdate)
+                    ( fillModelTaskDict { model | role = maybeRole }, Cmd.none, NoUpdate)
                 
                 Nothing ->
                     ( model, Utils.perform <| NavigateTo CoursesRoute, NoUpdate )
@@ -112,52 +117,71 @@ update sharedState msg model =
         GetEnrollmentResponse response ->
             ( model, Cmd.none, NoUpdate )
 
-        AdminTaskMsg id subMsg ->
-            case Dict.get id model.tasksAdmins of
-                Just taskModel ->
-                    let
-                        ( newTaskModel, newTaskCmd, newTaskSharedState ) = 
-                            TaskEditor.update sharedState subMsg taskModel
-                    in
-                    ({ model 
-                        | tasksAdmins = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasksAdmins }
-                    , Cmd.map (AdminTaskMsg id) newTaskCmd
-                    , newTaskSharedState
-                    )
-                    
+        TaskMsg id taskMsg ->
+            case getUpdateForTasks sharedState model id taskMsg of
+                Just (newModel, newCmd, newSharedState) ->
+                    ( { model
+                        | taskDict = Dict.update id 
+                            (Maybe.map (\_ -> newModel)) model.taskDict
+                        }
+                    , Cmd.map (TaskMsg id) newCmd
+                    , newSharedState)
+
                 Nothing ->
-                    ( model, Cmd.none, NoUpdate )
-
-        StudentTaskMsg id subMsg ->
-            case Dict.get id model.tasksStudents of
-                Just taskModel ->
-                    let
-                        ( newTaskModel, newTaskCmd, newTaskSharedState ) = 
-                            TaskViewer.update sharedState subMsg taskModel
-                    in
-                    ({ model 
-                        | tasksStudents = Dict.update id (Maybe.map (\_ -> newTaskModel)) model.tasksStudents }
-                    , Cmd.map (StudentTaskMsg id) newTaskCmd
-                    , newTaskSharedState
-                    )
-                    
-                Nothing ->
-                    ( model, Cmd.none, NoUpdate )
+                    (model, Cmd.none, NoUpdate)
 
 
-fillModelTaskDict : Model -> List Task -> Model
-fillModelTaskDict model tasks =
-    { model
-        | tasksAdmins =
-            tasks
-                |> List.map (\task -> ( task.id, Tuple.first <| TaskEditor.initFromTask model.course_id task ))
-                |> List.append [ ( -1, Tuple.first <| TaskEditor.initCreate model.course_id model.id ) ]
-                |> Dict.fromList
-        , tasksStudents =
-            tasks
-                |> List.map (\task -> ( task.id, Tuple.first <| TaskViewer.init model.course_id task ))
-                |> Dict.fromList
-    }
+getUpdateForTasks : SharedState -> Model -> Int -> TaskMsgTypes -> Maybe (TaskModel, Cmd TaskMsgTypes, SharedStateUpdate)
+getUpdateForTasks sharedState model id taskMsg =
+    case (taskMsg, Dict.get id model.taskDict) of
+        (AdminTaskMsg subMsg, Just (AdminTaskModel taskModel)) ->
+            let
+                (newModel, newCmd, newSharedState) = 
+                    TaskEditor.update sharedState subMsg taskModel
+            in
+            Just (AdminTaskModel newModel, Cmd.map AdminTaskMsg newCmd, newSharedState)
+
+        (StudentTaskMsg subMsg, Just (StudentTaskModel taskModel)) ->
+            let
+                (newModel, newCmd, newSharedState) = 
+                    TaskViewer.update sharedState subMsg taskModel
+            in
+            Just (StudentTaskModel newModel, Cmd.map StudentTaskMsg newCmd, newSharedState)
+
+        (_, _) ->
+            Nothing
+
+
+fillModelTaskDict : Model -> Model
+fillModelTaskDict model =
+    case (model.role, model.taskResponse) of
+        (Just role, Success tasks) ->
+            case role of
+                Admin -> { model
+                    | taskDict = tasks
+                        |> List.map (\task -> ( 
+                                task.id, AdminTaskModel <| Tuple.first <| 
+                                    TaskEditor.initFromTask model.course_id task )
+                                )
+                        |> List.append 
+                            [ ( -1, AdminTaskModel <| Tuple.first <| 
+                                        TaskEditor.initCreate model.course_id model.id ) 
+                            ]
+                        |> Dict.fromList
+                    }
+
+                Student -> { model
+                    | taskDict = tasks
+                        |> List.map (\task -> ( 
+                            task.id, StudentTaskModel <| Tuple.first <| 
+                                TaskViewer.init model.course_id task )
+                            )
+                        |> Dict.fromList
+                    }
+
+                Tutor -> model --TODO create tutor view
+
+        (_, _) -> model
 
 
 view : SharedState -> Model -> Html Msg
@@ -172,26 +196,23 @@ view sharedState model =
                 , TC.center
                 ]
             ]
-            [ case model.role of
-                Just Admin -> viewTasksForAdmin sharedState model
-                Just Student -> viewTasksForStudents sharedState model
-                _ -> text ""
+            [ viewTasks sharedState model
             ]
         ]
 
 
-viewTasksForAdmin : SharedState -> Model -> Html Msg
-viewTasksForAdmin sharedState model =
+viewTasks : SharedState -> Model -> Html Msg
+viewTasks sharedState model =
     div []
-        (Dict.values model.tasksAdmins
-            |> List.map (\task -> ( task.id, TaskEditor.view sharedState task ))
-            |> List.map (\( id, task ) -> Html.map (AdminTaskMsg id) task)
-        )
-
-viewTasksForStudents : SharedState -> Model -> Html Msg
-viewTasksForStudents sharedState model =
-    div []
-        (Dict.values model.tasksStudents
-            |> List.map (\task -> ( task.id, TaskViewer.view sharedState task ))
-            |> List.map (\( id, task ) -> Html.map (StudentTaskMsg id) task)
+        (Dict.values model.taskDict
+            |> List.map (\taskModelType ->
+                case taskModelType of
+                    AdminTaskModel taskModel ->
+                        (taskModel.id, Html.map AdminTaskMsg <| 
+                            TaskEditor.view sharedState taskModel)
+                    StudentTaskModel taskModel ->
+                        (taskModel.id, Html.map StudentTaskMsg <|
+                            TaskViewer.view sharedState taskModel)
+            )
+            |> List.map (\(id, taskModel) -> Html.map (TaskMsg id) taskModel)
         )

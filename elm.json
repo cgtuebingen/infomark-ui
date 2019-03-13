@@ -27,6 +27,7 @@
             "elm-community/json-extra": "4.0.0",
             "elm-explorations/markdown": "1.0.0",
             "gampleman/elm-visualization": "2.0.0",
+            "jinjor/elm-debounce": "3.0.0",
             "justgage/tachyons-elm": "4.1.1",
             "justinmimbs/date": "3.1.2",
             "jzxhuang/http-extras": "1.0.2",
