@@ -98,7 +98,10 @@ update sharedState msg model =
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         GetTaskFetchResponse response ->
-            ( fillModelTaskDict { model | taskResponse = response }, Cmd.none, NoUpdate )
+            let
+                (newModel, cmds) = fillModelTaskDict { model | taskResponse = response }
+            in
+            (newModel, cmds, NoUpdate )
 
         GetEnrollmentResponse (Success roles) ->
             let
@@ -109,7 +112,11 @@ update sharedState msg model =
             in
             case maybeRole of 
                 Just role ->
-                    ( fillModelTaskDict { model | role = maybeRole }, Cmd.none, NoUpdate)
+                    let
+                        (newModel, cmds) = fillModelTaskDict { model | role = maybeRole }
+                    in
+                    
+                    (newModel, cmds, NoUpdate)
                 
                 Nothing ->
                     ( model, Utils.perform <| NavigateTo CoursesRoute, NoUpdate )
@@ -152,36 +159,51 @@ getUpdateForTasks sharedState model id taskMsg =
             Nothing
 
 
-fillModelTaskDict : Model -> Model
+fillModelTaskDict : Model -> (Model, Cmd Msg)
 fillModelTaskDict model =
     case (model.role, model.taskResponse) of
         (Just role, Success tasks) ->
             case role of
-                Admin -> { model
-                    | taskDict = tasks
-                        |> List.map (\task -> ( 
-                                task.id, AdminTaskModel <| Tuple.first <| 
-                                    TaskEditor.initFromTask model.course_id task )
-                                )
-                        |> List.append 
-                            [ ( -1, AdminTaskModel <| Tuple.first <| 
-                                        TaskEditor.initCreate model.course_id model.id ) 
-                            ]
-                        |> Dict.fromList
-                    }
-
-                Student -> { model
-                    | taskDict = tasks
-                        |> List.map (\task -> ( 
-                            task.id, StudentTaskModel <| Tuple.first <| 
-                                TaskViewer.init model.course_id task )
+                Admin -> 
+                    let
+                        taskIdModelCmdsList = tasks |>
+                            List.map (\task -> (task.id, 
+                                TaskEditor.initFromTask model.course_id task ) )
+                    in
+                    ( { model
+                    | taskDict = taskIdModelCmdsList
+                            |> List.map (\(id, (taskModel, _)) -> 
+                                (id, AdminTaskModel taskModel)
                             )
-                        |> Dict.fromList
+                            |> Dict.fromList
                     }
+                    , Cmd.batch
+                        (taskIdModelCmdsList |> List.map (\(id, (_, cmd)) -> 
+                            Cmd.map (TaskMsg id) <| Cmd.map AdminTaskMsg cmd)
+                        )
+                    )
 
-                Tutor -> model --TODO create tutor view
+                Student -> 
+                    let
+                        taskIdModelCmdsList = tasks |>
+                            List.map (\task -> (task.id, TaskViewer.init model.course_id task ) )
+                    in
+                    ( { model
+                        | taskDict = taskIdModelCmdsList
+                            |> List.map (\(id, (taskModel, _)) ->
+                                (id, StudentTaskModel taskModel)
+                            )
+                            |> Dict.fromList
+                    }
+                    , Cmd.batch
+                        (taskIdModelCmdsList |> List.map (\(id, (_, cmd)) -> 
+                            Cmd.map (TaskMsg id) <| Cmd.map StudentTaskMsg cmd)
+                        )
+                    )
 
-        (_, _) -> model
+                Tutor -> (model, Cmd.none) --TODO create tutor view
+
+        (_, _) -> (model, Cmd.none)
 
 
 view : SharedState -> Model -> Html Msg

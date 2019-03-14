@@ -14,6 +14,7 @@ public test results.
 
 import Api.Data.Grade exposing (Grade)
 import Api.Data.Task exposing (Task)
+import Api.Data.TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Request.Task as TaskRequests
 import Components.CommonElements exposing (inputLabel, sliderInputElement, fileUploader, rContainer, rRow, rRowExtraSpacing, rRowButton, r1Column, r2Column, rCollapsable)
 import File exposing (File)
@@ -38,6 +39,7 @@ type Msg
     = UploadSubmission
     | UploadSubmissionResponse (WebData ())
     | DoneUploading
+    | GetCurrentRatingResponse (WebData TaskRatingResponse)
     | GetGradeResponse (WebData Grade) -- Change return type
     | RateTask Field String
     | SendRating Int
@@ -77,7 +79,10 @@ init courseId task =
         , hover = False
         , ratingDebounce = Debounce.init
         }
-    , TaskRequests.taskResultGet courseId task.id GetGradeResponse
+    , Cmd.batch 
+        [ TaskRequests.taskResultGet courseId task.id GetGradeResponse
+        , TaskRequests.taskRatingGet courseId task.id GetCurrentRatingResponse
+        ]
     )
 
 
@@ -92,13 +97,24 @@ update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         UploadSubmission ->
-            (model, Cmd.none, NoUpdate)
+            case model.submission of
+                Just file ->
+                    (model, TaskRequests.taskSubmissionPost model.courseId model.id file UploadSubmissionResponse, NoUpdate)
+                
+                Nothing ->
+                    (model, Cmd.none, NoUpdate) -- Should never happen. Upload button disabled without a set file
 
         UploadSubmissionResponse response ->
             (model, Cmd.none, NoUpdate)
         
         DoneUploading ->
             (model, Cmd.none, NoUpdate)
+
+        GetCurrentRatingResponse (Success rating) ->
+            ( { model | rating = rating.own_rating }, Cmd.none, NoUpdate )
+
+        GetCurrentRatingResponse _ ->
+            ( model, Cmd.none, NoUpdate )
     
         GetGradeResponse response ->
             (model, Cmd.none, NoUpdate)
@@ -112,7 +128,7 @@ update sharedState msg model =
             ( { model | rating = toInt, ratingDebounce = debounce }, cmd, NoUpdate)
 
         SendRating rating -> 
-            (model, Cmd.none, NoUpdate)
+            (model, TaskRequests.taskRatingPost model.courseId model.id rating RateResponse, NoUpdate)
 
         RateResponse response ->
             (model, Cmd.none, NoUpdate)
@@ -190,7 +206,10 @@ view sharedState model =
             , rRowButton
                 "Upload"
                 UploadSubmission
-                True
+                (case model.submission of
+                    Just _ -> True
+                    Nothing -> False
+                )
             ]
         
 

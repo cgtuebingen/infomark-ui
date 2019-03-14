@@ -24,6 +24,7 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.Sheet as Sheet exposing (Sheet)
+import Api.Data.Submission as Submission exposing (Submission)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Endpoint
     exposing
@@ -34,6 +35,7 @@ import Api.Endpoint
         , courseGroups
         , courseSheets
         , courses
+        , submissions
         , unwrap
         )
 import Api.Helper exposing (post, get, putExpectNothing, deleteExpectNothing, postExpectNothing)
@@ -181,3 +183,33 @@ courseSheetsPost id sheetNew msg =
         (Http.jsonBody <| Sheet.encoder sheetNew)
         msg
         Sheet.decoder
+
+
+coursesSubmissions : Int -> List QueryParameter -> (WebData (List Submission) -> msg) -> Cmd msg
+coursesSubmissions courseId params msg =
+    get (unwrap <| submissions courseId params)
+        msg
+    <|
+        Decode.list Submission.decoder
+
+
+submissionsForTaskPerGroup : Int -> Int -> Int -> (WebData (List Submission) -> msg) -> Cmd msg
+submissionsForTaskPerGroup courseId taskId groupId msg =
+    let
+        params =
+            [ Url.Builder.int "task_id" taskId
+            , Url.Builder.int "group_id" groupId
+            ]
+    in
+    coursesSubmissions courseId params msg
+
+
+submissionsForUserPerSheet : Int -> Int -> Int -> (WebData (List Submission) -> msg) -> Cmd msg
+submissionsForUserPerSheet courseId userId sheetId msg =
+    let
+        params =
+            [ Url.Builder.int "user_id" userId
+            , Url.Builder.int "sheet_id" sheetId
+            ]
+    in
+    coursesSubmissions courseId params msg

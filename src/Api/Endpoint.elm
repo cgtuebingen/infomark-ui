@@ -24,6 +24,9 @@ module Api.Endpoint exposing
     , taskPrivateFiles
     , taskPublicFiles
     , taskResult
+    , taskRating
+    , taskSubmission
+    , submissions
     , unwrap
     , updatePassword
     , user
@@ -194,3 +197,18 @@ taskPrivateFiles courseId id =
 taskResult : Int -> Int -> Endpoint
 taskResult courseId id =
     url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "result" ] []
+
+
+taskRating : Int -> Int -> Endpoint
+taskRating courseId taskId =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "ratings" ] [] 
+
+
+taskSubmission : Int -> Int -> Endpoint
+taskSubmission courseId taskId =
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "submission"] []
+
+
+submissions : Int -> List QueryParameter -> Endpoint
+submissions courseId params =
+    url [ "courses", String.fromInt courseId, "submissions" ] params
