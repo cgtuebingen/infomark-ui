@@ -21,13 +21,13 @@ module Utils.Styles exposing
     , linkRedStyle
     , linkWhiteStyle
     , listHeadingStyle
+    , pillStyle
     , sectionStyle
     , spinnerGoldStyle
     , spinnerGreyStyle
     , spinnerRedStyle
     , textAreaReset
     , textStyle
-    , pillStyle
     )
 
 import Color exposing (Color)
@@ -189,6 +189,7 @@ buttonGreenStyle =
                , TC.hover_bg_dark_green
                , TC.hover_white
                ]
+
 
 pillStyle =
     classes [ TC.br_pill, TC.ph3, TC.pv3 ]

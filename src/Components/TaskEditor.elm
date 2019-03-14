@@ -14,38 +14,48 @@ module Components.TaskEditor exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing (inputLabel, inputElement, fileUploader, rContainer, rRow, rRowButton, rCollapsable, rRowExtraSpacing, r1Column, r2Column)
+import Components.CommonElements exposing (fileUploader, inputElement, inputLabel, r1Column, r2Column, rCollapsable, rContainer, rRow, rRowButton, rRowExtraSpacing)
+import Dict exposing (Dict)
 import File exposing (File)
 import File.Select as Select
-import Http
 import Html exposing (..)
 import Html.Events exposing (onClick, preventDefaultOn)
+import Http
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Utils.Styles as Styles
-import Dict exposing (Dict)
 
 
 type FileType
     = Public
     | Private
 
+
 {-| Dicts with non comparable types are not allowed
 So for this single instance we convert the types to something
-comparable: https://github.com/elm/compiler/issues/1008#event-797842658
+comparable: <https://github.com/elm/compiler/issues/1008#event-797842658>
 -}
 fileTypeToInt : FileType -> Int
 fileTypeToInt fileType =
     case fileType of
-        Public -> 1
-        Private -> 2
+        Public ->
+            1
+
+        Private ->
+            2
+
 
 intToFileType : Int -> FileType
 intToFileType fileTypeAsInt =
-    if fileTypeAsInt == 1 then Public else Private
+    if fileTypeAsInt == 1 then
+        Public
+
+    else
+        Private
+
 
 type Field
     = MaxPoints
@@ -144,8 +154,9 @@ initFromTask courseId task =
     let
         ( inital, cmds ) =
             initModel
-        
-        model = { inital | courseId = courseId}
+
+        model =
+            { inital | courseId = courseId }
     in
     ( fillModelFromTask model task
     , cmds
@@ -191,38 +202,50 @@ update sharedState msg model =
             ( updateHover fileType False model, Cmd.none, NoUpdate )
 
         FileUploadResponse fileType response ->
-            ( { model 
-                | uploading = Dict.update 
-                    (fileTypeToInt fileType) 
-                    (Maybe.map (\_ -> response)) 
-                    model.uploading
-            }, Cmd.none, NoUpdate )
+            ( { model
+                | uploading =
+                    Dict.update
+                        (fileTypeToInt fileType)
+                        (Maybe.map (\_ -> response))
+                        model.uploading
+              }
+            , Cmd.none
+            , NoUpdate
+            )
 
         UploadProgress progress ->
             let
-                percentage = case progress of
-                    Http.Sending p ->
-                        Http.fractionSent p
-                    _ -> 0.0
-                
-                fileTypes = model.uploading |>
-                    Dict.toList |>
-                        List.filter (\(_, state) -> state == Loading) |>
-                        List.map (\(ftype, _) -> intToFileType ftype)
+                percentage =
+                    case progress of
+                        Http.Sending p ->
+                            Http.fractionSent p
 
-                prog = if List.length fileTypes > 0 then
+                        _ ->
+                            0.0
+
+                fileTypes =
+                    model.uploading
+                        |> Dict.toList
+                        |> List.filter (\( _, state ) -> state == Loading)
+                        |> List.map (\( ftype, _ ) -> intToFileType ftype)
+
+                prog =
+                    if List.length fileTypes > 0 then
                         -- If this particular task editor is uploading we need to calculate
                         -- the average upload progress
                         round <|
-                            (
-                                ( (toFloat model.averaged_progress) + 
-                                    100 * percentage
-                                ) / 2
-                            ) / (toFloat <| List.length fileTypes)
+                            ((toFloat model.averaged_progress
+                                + 100
+                                * percentage
+                             )
+                                / 2
+                            )
+                                / (toFloat <| List.length fileTypes)
+
                     else
                         0
             in
-            ( { model | averaged_progress = prog }, Cmd.none, NoUpdate)
+            ( { model | averaged_progress = prog }, Cmd.none, NoUpdate )
 
         TaskGetRequest (Success task) ->
             ( fillModelFromTask model task, Cmd.none, NoUpdate )
@@ -238,7 +261,7 @@ update sharedState msg model =
 
         TaskUpdateRequest (Success _) ->
             uploadFiles model
-              
+
         TaskUpdateRequest response ->
             ( model, Cmd.none, NoUpdate )
 
@@ -249,10 +272,10 @@ update sharedState msg model =
             ( { model | collapse = not model.collapse }, Cmd.none, NoUpdate )
 
 
-uploadFiles : Model -> (Model, Cmd Msg, SharedStateUpdate)
+uploadFiles : Model -> ( Model, Cmd Msg, SharedStateUpdate )
 uploadFiles model =
     let
-        (fileTypes, cmds) =
+        ( fileTypes, cmds ) =
             case ( model.public_test_file, model.private_test_file ) of
                 ( Just public, Just private ) ->
                     ( [ Public, Private ]
@@ -261,19 +284,20 @@ uploadFiles model =
                         , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
                         ]
                     )
+
                 ( Just public, _ ) ->
-                    ( [Public], TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public))
+                    ( [ Public ], TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public) )
 
                 ( _, Just private ) ->
-                    ( [Private], TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private))
+                    ( [ Private ], TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private) )
 
-                (_, _) ->
-                    ( [], Cmd.none)    
+                ( _, _ ) ->
+                    ( [], Cmd.none )
     in
-    ( { model 
+    ( { model
         | toUpload = fileTypes
-        , uploading = Dict.fromList <| List.map (\ftype -> (fileTypeToInt ftype, Loading)) fileTypes
-    }
+        , uploading = Dict.fromList <| List.map (\ftype -> ( fileTypeToInt ftype, Loading )) fileTypes
+      }
     , cmds
     , NoUpdate
     )
@@ -282,7 +306,10 @@ uploadFiles model =
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     rContainer <|
-        rCollapsable ("Task " ++ String.fromInt model.id) model.collapse ToggleCollapse ("Show", "Hide")
+        rCollapsable ("Task " ++ String.fromInt model.id)
+            model.collapse
+            ToggleCollapse
+            ( "Show", "Hide" )
             [ rRow <|
                 r2Column
                     [ inputLabel "Public Tests"
@@ -301,7 +328,8 @@ view sharedState model =
                         }
                         PublicDockerImage
                         model.errors
-                        SetField)
+                        SetField
+                    )
                     (inputElement
                         { label = "Private Tests Docker Image"
                         , placeholder = "Image Name"
@@ -310,7 +338,8 @@ view sharedState model =
                         }
                         PrivateDockerImage
                         model.errors
-                        SetField)
+                        SetField
+                    )
             , rRow <|
                 r1Column <|
                     inputElement
@@ -322,8 +351,13 @@ view sharedState model =
                         MaxPoints
                         model.errors
                         SetField
-            , rRowButton 
-                (if model.createTask then "Erstellen" else "Bearbeiten")
+            , rRowButton
+                (if model.createTask then
+                    "Erstellen"
+
+                 else
+                    "Bearbeiten"
+                )
                 SendTask
                 (anythingUploading model || Dict.isEmpty model.uploading)
             ]
@@ -331,10 +365,10 @@ view sharedState model =
 
 anythingUploading : Model -> Bool
 anythingUploading model =
-    model.uploading |>
-        Dict.values |>
-            List.any (\state -> state /= Loading)
-    
+    model.uploading
+        |> Dict.values
+        |> List.any (\state -> state /= Loading)
+
 
 setField : Model -> Field -> String -> Model
 setField model field value =

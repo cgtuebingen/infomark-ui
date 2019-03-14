@@ -7,7 +7,7 @@ import Api.Data.MailConfirmation as MailConfirmation exposing (MailConfirmation)
 import Api.Data.Role as Role exposing (Role)
 import Api.Data.UpdatePassword as UpdatePassword exposing (UpdatePassword)
 import Api.Endpoint exposing (confirmEmail, requestPasswordReset, sessions, unwrap, updatePassword)
-import Api.Helper exposing (post, deleteExpectNothing, postExpectNothing)
+import Api.Helper exposing (deleteExpectNothing, post, postExpectNothing)
 import Http
 import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)

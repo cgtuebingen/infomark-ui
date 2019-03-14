@@ -10,7 +10,7 @@ import Api.Data.AccountUpdate as AccountUpdate exposing (AccountUpdate)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserAccount as UserAccount exposing (UserAccount)
 import Api.Endpoint exposing (account, accountAvatar, accountEnrollment, unwrap)
-import Api.Helper exposing (post, patchExpectNothing, get, postFile)
+import Api.Helper exposing (get, patchExpectNothing, post, postFile)
 import File exposing (File)
 import Http
 import Json.Decode as Decode

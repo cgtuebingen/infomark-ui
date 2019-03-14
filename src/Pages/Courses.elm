@@ -16,9 +16,9 @@ import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements exposing (pageContainer, rRowHeaderActionButtons, widePage)
 import Components.Dialog as Dialog
 import Components.Toasty
-import Components.CommonElements exposing (pageContainer, widePage, rRowHeaderActionButtons)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -378,8 +378,7 @@ view sharedState model =
 
                 cTemp =
                     [ rRowHeaderActionButtons "Aktuell"
-                        [
-                            ( "+", NavigateTo CreateCourseRoute, Styles.buttonGreenStyle)
+                        [ ( "+", NavigateTo CreateCourseRoute, Styles.buttonGreenStyle )
                         ]
                     , div
                         [ classes
@@ -397,12 +396,15 @@ view sharedState model =
                 content =
                     if List.length oldCourses > 0 then
                         cTemp
-                            ++ [ rRowHeaderActionButtons "Archiv" 
-                                    [ 
-                                        (if model.showArchive then "Hide" else "Show"
-                                        , ToggleArchive
-                                        , Styles.buttonGreyStyle
-                                        )
+                            ++ [ rRowHeaderActionButtons "Archiv"
+                                    [ ( if model.showArchive then
+                                            "Hide"
+
+                                        else
+                                            "Show"
+                                      , ToggleArchive
+                                      , Styles.buttonGreyStyle
+                                      )
                                     ]
                                , displayCourseOrNot
                                ]

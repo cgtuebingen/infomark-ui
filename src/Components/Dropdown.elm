@@ -136,7 +136,7 @@ dropdown element attributes children isOpen config =
                     [ on "focusout" (handleFocusChanged isOpen config) ]
     in
     element
-        ( (on "keydown" (handleKeyDown isOpen config) )
+        (on "keydown" (handleKeyDown isOpen config)
             :: toggleEvents
             ++ [ anchor config.identifier
                , tabindex -1

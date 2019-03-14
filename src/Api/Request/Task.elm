@@ -3,20 +3,20 @@ module Api.Request.Task exposing
     , taskPrivateFilesPost
     , taskPublicFilesPost
     , taskPut
-    , taskResultGet
     , taskRatingGet
     , taskRatingPost
+    , taskResultGet
     , taskSubmissionPost
     )
 
-import Api.Data.Task as Task exposing (Task)
 import Api.Data.Grade as Grade exposing (Grade)
+import Api.Data.Task as Task exposing (Task)
 import Api.Data.TaskRatingResponse as TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, taskRating, taskResult, taskSubmission, unwrap)
-import Api.Helper exposing (get, patchExpectNothing, postFile, postExpectNothing, putExpectNothing)
-import Json.Encode as Encode
+import Api.Helper exposing (get, patchExpectNothing, postExpectNothing, postFile, putExpectNothing)
 import File exposing (File)
 import Http
+import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
 
 
@@ -54,14 +54,15 @@ taskResultGet courseId id msg =
 taskRatingPost : Int -> Int -> Int -> (WebData () -> msg) -> Cmd msg
 taskRatingPost courseId taskId rating msg =
     postExpectNothing (unwrap <| taskRating courseId taskId)
-        (Http.jsonBody <| Encode.object [ ("rating", Encode.int rating) ])
+        (Http.jsonBody <| Encode.object [ ( "rating", Encode.int rating ) ])
         msg
+
 
 taskRatingGet : Int -> Int -> (WebData TaskRatingResponse -> msg) -> Cmd msg
 taskRatingGet courseId taskId msg =
     get (unwrap <| taskRating courseId taskId)
-    msg
-    TaskRatingResponse.decoder
+        msg
+        TaskRatingResponse.decoder
 
 
 taskSubmissionPost : Int -> Int -> File -> (WebData () -> msg) -> Cmd msg

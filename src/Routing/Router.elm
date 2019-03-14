@@ -312,7 +312,7 @@ navigateTo route model =
         EditSheetRoute courseId id ->
             SheetEditor.initEdit courseId id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
-        SheetDetailRoute  courseId id ->
+        SheetDetailRoute courseId id ->
             SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
 
         SubmissionGradingRoute courseId taskId groupId ->

@@ -6,6 +6,7 @@ import Html.Events exposing (custom)
 import Json.Decode as Decode
 import Json.Decode.Extra as Decode
 
+
 {-| Indicates whether the dialog is visible or not
 -}
 type alias State =

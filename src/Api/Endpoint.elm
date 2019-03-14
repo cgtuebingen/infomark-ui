@@ -20,13 +20,13 @@ module Api.Endpoint exposing
     , sheet
     , sheetFile
     , sheetTasks
+    , submissions
     , task
     , taskPrivateFiles
     , taskPublicFiles
-    , taskResult
     , taskRating
+    , taskResult
     , taskSubmission
-    , submissions
     , unwrap
     , updatePassword
     , user
@@ -201,12 +201,12 @@ taskResult courseId id =
 
 taskRating : Int -> Int -> Endpoint
 taskRating courseId taskId =
-    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "ratings" ] [] 
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "ratings" ] []
 
 
 taskSubmission : Int -> Int -> Endpoint
 taskSubmission courseId taskId =
-    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "submission"] []
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt taskId, "submission" ] []
 
 
 submissions : Int -> List QueryParameter -> Endpoint

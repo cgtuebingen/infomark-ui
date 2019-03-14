@@ -7,6 +7,8 @@ module Api.Request.Courses exposing
     , coursePut
     , courseSheetsGet
     , courseSheetsPost
+    , coursesBidsGet
+    , coursesBidsPost
     , coursesEnrollmentDelete
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
@@ -15,8 +17,6 @@ module Api.Request.Courses exposing
     , coursesEnrollmentPost
     , coursesGet
     , coursesPost
-    , coursesBidsGet
-    , coursesBidsPost
     )
 
 import Api.Data.Course as Course exposing (Course)
@@ -38,7 +38,7 @@ import Api.Endpoint
         , submissions
         , unwrap
         )
-import Api.Helper exposing (post, get, putExpectNothing, deleteExpectNothing, postExpectNothing)
+import Api.Helper exposing (deleteExpectNothing, get, post, postExpectNothing, putExpectNothing)
 import Http
 import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)

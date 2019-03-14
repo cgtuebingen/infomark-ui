@@ -1,35 +1,35 @@
 module Components.CommonElements exposing
-    ( inputLabel
-    , dateInputElement
+    ( dateInputElement
+    , fileUploader
     , inputElement
+    , inputLabel
+    , normalPage
+    , pageContainer
+    , r1Column
+    , r2Column
+    , r3Column
+    , rCollapsable
+    , rContainer
+    , rRow
+    , rRowButton
+    , rRowExtraSpacing
+    , rRowHeader
+    , rRowHeaderActionButtons
+    , rRowLabelButton
     , sliderInputElement
     , textAreaElement
     , timeInputElement
     , viewFormErrors
-    , fileUploader
-    , pageContainer
     , widePage
-    , normalPage
-    , rContainer
-    , rRow
-    , rRowHeader
-    , rRowButton
-    , rRowHeaderActionButtons
-    , rRowLabelButton
-    , rRowExtraSpacing
-    , rCollapsable
-    , r1Column
-    , r2Column
-    , r3Column
     )
 
 import Date exposing (Date)
 import DatePicker
 import File exposing (File)
-import Json.Decode as Decode exposing (Decoder)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, preventDefaultOn)
+import Json.Decode as Decode exposing (Decoder)
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
@@ -71,7 +71,7 @@ dateInputElement :
     -> (DatePicker.Msg -> msg)
     -> List (Html msg)
 dateInputElement inputConfig field errors msg =
-    [ inputLabel inputConfig.label 
+    [ inputLabel inputConfig.label
     , DatePicker.view inputConfig.value inputConfig.settings inputConfig.datePicker
         |> Html.map msg
     , viewFormErrors field errors
@@ -167,7 +167,7 @@ widePage childs =
 
 normalPage : List (Html msg) -> Html msg
 normalPage childs =
-    div [ classes [ TC.mw8, TC.ph4, TC.ph5_ns, TC.center ] ] 
+    div [ classes [ TC.mw8, TC.ph4, TC.ph5_ns, TC.center ] ]
         childs
 
 
@@ -184,7 +184,7 @@ rRow childs =
 
 
 rRowExtraSpacing : List (Html msg) -> Html msg
-rRowExtraSpacing childs = 
+rRowExtraSpacing childs =
     div [ classes [ TC.mt3, TC.mt4_ns, TC.cf, TC.ph2_ns ] ]
         childs
 
@@ -195,83 +195,108 @@ rRowHeader label =
         [ h1 [ Styles.headerStyle ] [ text label ] ]
 
 
-rRowHeaderActionButtons : String -> List (String, msg, Html.Attribute msg) -> Html msg
+rRowHeaderActionButtons : String -> List ( String, msg, Html.Attribute msg ) -> Html msg
 rRowHeaderActionButtons label actions =
-    div [ 
-        classes 
+    div
+        [ classes
             [ TC.flex
             , TC.flex_row
             , TC.justify_between
             , TC.items_center
             , TC.bb
-            , TC.bw2 
-            ] 
-        ] <| 
-        h1 [ Styles.headerStyle ] [ text label ] :: 
-            List.map (\(actionLabel, actionMsg, baseStyle) ->
-                button
-                    [ baseStyle
-                    , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
-                    , onClick actionMsg
-                    ] [ text actionLabel ]
-            ) actions
+            , TC.bw2
+            ]
+        ]
+    <|
+        h1 [ Styles.headerStyle ] [ text label ]
+            :: List.map
+                (\( actionLabel, actionMsg, baseStyle ) ->
+                    button
+                        [ baseStyle
+                        , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
+                        , onClick actionMsg
+                        ]
+                        [ text actionLabel ]
+                )
+                actions
 
 
 rRowButton : String -> msg -> Bool -> Html msg
 rRowButton buttonText msg enabled =
     div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
         [ button
-            ( classes [ TC.mb4, TC.mt3, TC.w_100 ] ::
-                if enabled then
-                    [ Styles.buttonGreyStyle
-                    , onClick msg
-                    ]
-                else
-                    [ Styles.buttonDisabled ]
+            (classes [ TC.mb4, TC.mt3, TC.w_100 ]
+                :: (if enabled then
+                        [ Styles.buttonGreyStyle
+                        , onClick msg
+                        ]
+
+                    else
+                        [ Styles.buttonDisabled ]
+                   )
             )
             [ text buttonText ]
         ]
 
+
 rRowLabelButton : String -> String -> msg -> Html msg
 rRowLabelButton label buttonText msg =
-    div [ classes
+    div
+        [ classes
             [ TC.w_100
             , TC.flex
             , TC.flex_row
             , TC.justify_between
             , TC.items_center
             ]
-    ]
-    [ h1 [ Styles.listHeadingStyle] [ text label ]
-    , button 
-        [ Styles.buttonGreyStyle
-        , Styles.pillStyle 
-        , onClick msg
         ]
-        [ text buttonText ]
-    ]
+        [ h1 [ Styles.listHeadingStyle ] [ text label ]
+        , button
+            [ Styles.buttonGreyStyle
+            , Styles.pillStyle
+            , onClick msg
+            ]
+            [ text buttonText ]
+        ]
 
 
-rCollapsable : String -> Bool -> msg -> (String, String) -> List (Html msg) -> List (Html msg)
-rCollapsable title collapsed collapseMsg (show, hide) childs =
-    div [ classes
+rCollapsable : String -> Bool -> msg -> ( String, String ) -> List (Html msg) -> List (Html msg)
+rCollapsable title collapsed collapseMsg ( show, hide ) childs =
+    div
+        [ classes
             [ TC.w_100
             , TC.flex
             , TC.flex_row
             , TC.justify_between
             , TC.items_center
-            , if collapsed then TC.mb3 else TC.mb0
+            , if collapsed then
+                TC.mb3
+
+              else
+                TC.mb0
             ]
-        ] 
+        ]
         [ h1 [ Styles.listHeadingStyle ] [ text title ]
         , button
             [ Styles.buttonGreyStyle
             , Styles.pillStyle
             , onClick collapseMsg
             ]
-            [ text <| if collapsed then show else hide ]
-        ] :: if collapsed then [ text "" ] else childs
-    
+            [ text <|
+                if collapsed then
+                    show
+
+                else
+                    hide
+            ]
+        ]
+        :: (if collapsed then
+                [ text "" ]
+
+            else
+                childs
+           )
+
 
 r2Column : List (Html msg) -> List (Html msg) -> List (Html msg)
 r2Column child1 child2 =
@@ -298,7 +323,10 @@ r3Column child1 child2 child3 =
     ]
 
 
+
 --Same for image uploader?
+
+
 fileUploader : Bool -> Maybe File -> msg -> msg -> msg -> (File -> List File -> msg) -> Html msg
 fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =
     div
@@ -308,6 +336,7 @@ fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =
             , TC.b__dashed
             , if hover then
                 TC.b__dark_red
+
               else
                 TC.b__black_40
             , TC.bw2

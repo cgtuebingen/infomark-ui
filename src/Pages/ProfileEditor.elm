@@ -12,7 +12,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement, pageContainer, normalPage, rContainer, rRow, rRowExtraSpacing, rRowButton, r1Column, r2Column)
+import Components.CommonElements exposing (inputElement, normalPage, pageContainer, r1Column, r2Column, rContainer, rRow, rRowButton, rRowExtraSpacing)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Dict
@@ -455,7 +455,7 @@ viewForm sharedState model =
                 )
             ]
         , rRowExtraSpacing <|
-            r2Column 
+            r2Column
                 (inputElement
                     { label = "Subject"
                     , placeholder = "Subject"
@@ -464,7 +464,8 @@ viewForm sharedState model =
                     }
                     Subject
                     model.userErrors
-                    SetField)
+                    SetField
+                )
                 (inputElement
                     { label = "Semester"
                     , placeholder = "Semester"
@@ -473,7 +474,8 @@ viewForm sharedState model =
                     }
                     Semester
                     model.userErrors
-                    SetField)
+                    SetField
+                )
         , rRow <|
             r1Column <|
                 inputElement
@@ -501,7 +503,6 @@ viewForm sharedState model =
                     Email
                     model.accountErrors
                     SetField
-            
         , rRow <|
             r2Column
                 (inputElement
@@ -512,7 +513,8 @@ viewForm sharedState model =
                     }
                     Password
                     model.accountErrors
-                    SetField)
+                    SetField
+                )
                 (inputElement
                     { label = "New Password Repeat"
                     , placeholder = "Password"
@@ -521,7 +523,8 @@ viewForm sharedState model =
                     }
                     PasswordRepeat
                     model.accountErrors
-                    SetField)
+                    SetField
+                )
         , rRow <|
             r1Column <|
                 inputElement
@@ -535,8 +538,11 @@ viewForm sharedState model =
                     SetField
         , rRowButton
             "Save"
-            Save <|
-            checkIfAccountChanged model || checkIfUserChanged model || model.avatarChanged
+            Save
+          <|
+            checkIfAccountChanged model
+                || checkIfUserChanged model
+                || model.avatarChanged
         , h2
             [ Styles.sectionStyle
             , classes [ TC.mt5, TC.bt, TC.b__dark_gray, TC.bw2, TC.pt4 ]

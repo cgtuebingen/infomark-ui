@@ -8,20 +8,21 @@ module Pages.CourseEditor exposing (Model, Msg(..), initCreate, initEdit, update
 import Api.Data.Course exposing (Course)
 import Api.Request.Courses as CoursesRequest
 import Browser.Navigation exposing (back, pushUrl)
-import Components.CommonElements exposing 
-    ( dateInputElement
-    , inputElement
-    , textAreaElement
-    , viewFormErrors
-    , pageContainer
-    , normalPage
-    , rContainer
-    , rRow
-    , rRowHeader
-    , rRowButton
-    , r1Column
-    , r2Column
-    )
+import Components.CommonElements
+    exposing
+        ( dateInputElement
+        , inputElement
+        , normalPage
+        , pageContainer
+        , r1Column
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowHeader
+        , textAreaElement
+        , viewFormErrors
+        )
 import Components.Toasty
 import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -35,8 +36,8 @@ import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
-import Toasty
 import Time
+import Toasty
 import Utils.DateAndTimeUtils as DTU
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
@@ -338,6 +339,7 @@ viewForm sharedState model =
         [ rRowHeader <|
             if model.createCourse then
                 "Kurs erstellen"
+
             else
                 "Kurs bearbeiten"
         , rRow <|
@@ -361,7 +363,8 @@ viewForm sharedState model =
                     }
                     BeginsAtDate
                     model.errors
-                    BeginDatePicker)
+                    BeginDatePicker
+                )
                 (dateInputElement
                     { label = "Ende"
                     , value = model.endsAtDate
@@ -370,7 +373,8 @@ viewForm sharedState model =
                     }
                     EndsAtDate
                     model.errors
-                    EndDatePicker)
+                    EndDatePicker
+                )
         , rRow <|
             r1Column <|
                 textAreaElement
@@ -386,9 +390,14 @@ viewForm sharedState model =
                 viewRequiredPercentage model
             , viewFormErrors RequiredPercentage model.errors
             ]
-        , rRowButton 
-            (if model.createCourse then "Erstellen" else "Bearbeiten") 
-            CreateOrEdit 
+        , rRowButton
+            (if model.createCourse then
+                "Erstellen"
+
+             else
+                "Bearbeiten"
+            )
+            CreateOrEdit
             True
         ]
 

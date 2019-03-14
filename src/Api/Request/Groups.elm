@@ -9,7 +9,7 @@ module Api.Request.Groups exposing
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
 import Api.Endpoint exposing (groups, groupsEnrollment, unwrap)
-import Api.Helper exposing (get, put, delete, post)
+import Api.Helper exposing (delete, get, post, put)
 import Http
 import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)

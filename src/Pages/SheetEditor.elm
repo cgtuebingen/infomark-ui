@@ -5,7 +5,7 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Sheet as SheetRequests
 import Array
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (dateInputElement, inputElement, sliderInputElement, timeInputElement, pageContainer, normalPage, rRow, rRowButton, rRowExtraSpacing, rContainer, r1Column, r2Column, fileUploader)
+import Components.CommonElements exposing (dateInputElement, fileUploader, inputElement, normalPage, pageContainer, r1Column, r2Column, rContainer, rRow, rRowButton, rRowExtraSpacing, sliderInputElement, timeInputElement)
 import Components.Toasty
 import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -555,7 +555,7 @@ viewForm sharedState model =
                 else
                     "Blatt bearbeiten"
             ]
-        , rRow 
+        , rRow
             [ fileUploader model.hover model.file DragEnter DragLeave Pick GotFiles ]
         , rRowExtraSpacing <|
             r1Column <|
@@ -578,7 +578,8 @@ viewForm sharedState model =
                     }
                     PublishedDate
                     model.errors
-                    PublishedDatePickerMsg)
+                    PublishedDatePickerMsg
+                )
                 (timeInputElement
                     { label = "Published time"
                     , placeholder = "Select time..."
@@ -587,7 +588,8 @@ viewForm sharedState model =
                     }
                     PublishedTime
                     model.errors
-                    PublishedTimePickerMsg)
+                    PublishedTimePickerMsg
+                )
         , rRow <|
             r2Column
                 (dateInputElement
@@ -598,7 +600,8 @@ viewForm sharedState model =
                     }
                     DeadlineDate
                     model.errors
-                    DeadlineDatePickerMsg)
+                    DeadlineDatePickerMsg
+                )
                 (timeInputElement
                     { label = "Deadline time"
                     , placeholder = "Select time..."
@@ -607,7 +610,8 @@ viewForm sharedState model =
                     }
                     DeadlineTime
                     model.errors
-                    DeadlineTimePickerMsg)
+                    DeadlineTimePickerMsg
+                )
         , rRow <|
             r1Column <|
                 sliderInputElement
@@ -622,8 +626,18 @@ viewForm sharedState model =
                     model.errors
                     SetField
         , rRowButton
-            (if model.createSheet then "Erstellen" else "Bearbeiten")
-            (if model.createSheet then Create else Update)
+            (if model.createSheet then
+                "Erstellen"
+
+             else
+                "Bearbeiten"
+            )
+            (if model.createSheet then
+                Create
+
+             else
+                Update
+            )
             True
         ]
 
