@@ -54,6 +54,7 @@ import Utils.Utils as Utils
 type Msg
     = NavigateTo Route
     | TaskMsg Int TaskMsgTypes
+    | UploadProgressMsg Http.Progress
     | GetTaskFetchResponse (WebData (List Task))
     | GetEnrollmentResponse (WebData (List AccountEnrollment))
 
@@ -97,6 +98,19 @@ update sharedState msg model =
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
+        UploadProgressMsg progress ->
+            List.foldl (\(taskId, modelType) (updatedModel, cmd, _) -> 
+                    updateTask sharedState updatedModel taskId cmd
+                    (case modelType of
+                        AdminTaskModel _ -> AdminTaskMsg <| 
+                            TaskEditor.UploadProgress progress
+                        StudentTaskModel _ -> StudentTaskMsg <| 
+                            TaskViewer.UploadProgress progress
+                    )
+                )
+                (model, Cmd.none, NoUpdate)
+                (Dict.toList model.taskDict)
+            
         GetTaskFetchResponse response ->
             let
                 (newModel, cmds) = fillModelTaskDict { model | taskResponse = response }
@@ -125,17 +139,22 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         TaskMsg id taskMsg ->
-            case getUpdateForTasks sharedState model id taskMsg of
-                Just (newModel, newCmd, newSharedState) ->
-                    ( { model
-                        | taskDict = Dict.update id 
-                            (Maybe.map (\_ -> newModel)) model.taskDict
-                        }
-                    , Cmd.map (TaskMsg id) newCmd
-                    , newSharedState)
+            updateTask sharedState model id Cmd.none taskMsg
 
-                Nothing ->
-                    (model, Cmd.none, NoUpdate)
+
+updateTask : SharedState -> Model -> Int -> Cmd Msg -> TaskMsgTypes -> (Model, Cmd Msg, SharedStateUpdate)
+updateTask sharedState model id currentCmds taskMsg =
+    case getUpdateForTasks sharedState model id taskMsg of
+        Just (newModel, newCmd, newSharedState) ->
+            ( { model
+                | taskDict = Dict.update id 
+                    (Maybe.map (\_ -> newModel)) model.taskDict
+                }
+            , Cmd.batch [ currentCmds, Cmd.map (TaskMsg id) newCmd ]
+            , newSharedState)
+
+        Nothing ->
+            (model, Cmd.none, NoUpdate)
 
 
 getUpdateForTasks : SharedState -> Model -> Int -> TaskMsgTypes -> Maybe (TaskModel, Cmd TaskMsgTypes, SharedStateUpdate)

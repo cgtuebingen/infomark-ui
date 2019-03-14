@@ -186,12 +186,12 @@ task courseId id =
 
 taskPublicFiles : Int -> Int -> Endpoint
 taskPublicFiles courseId id =
-    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "public_files" ] []
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "public_file" ] []
 
 
 taskPrivateFiles : Int -> Int -> Endpoint
 taskPrivateFiles courseId id =
-    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "private_files" ] []
+    url [ "courses", String.fromInt courseId, "tasks", String.fromInt id, "private_file" ] []
 
 
 taskResult : Int -> Int -> Endpoint

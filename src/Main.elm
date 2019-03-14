@@ -53,6 +53,7 @@ type Msg
     | LinkClicked UrlRequest
     | TimeChange Posix
     | SpinnerMsg Spinner.Msg
+    | UploadProgressMsg Http.Progress
     | HandleTranslationsResponse (WebData Translations)
     | RouterMsg Router.Msg
     | AdjustTimeZone Zone
@@ -99,6 +100,9 @@ update msg model =
 
         SpinnerMsg spinnerMsg ->
             updateRouter model (Router.SpinnerMsg spinnerMsg)
+
+        UploadProgressMsg progress ->
+            updateRouter model (Router.UploadProgressMsg progress)
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -237,6 +241,7 @@ subscriptions model =
         [ Time.every 1000 TimeChange
         , Sub.map SpinnerMsg Spinner.subscription
         , PersistantState.storageToState PersistanceUpdate
+        , Http.track "file_upload" UploadProgressMsg
         ]
 
 

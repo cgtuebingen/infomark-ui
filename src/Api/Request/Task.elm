@@ -13,7 +13,7 @@ import Api.Data.Task as Task exposing (Task)
 import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.TaskRatingResponse as TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, taskRating, taskResult, taskSubmission, unwrap)
-import Api.Helper exposing (get, patchExpectNothing, postFile, postExpectNothing)
+import Api.Helper exposing (get, patchExpectNothing, postFile, postExpectNothing, putExpectNothing)
 import Json.Encode as Encode
 import File exposing (File)
 import Http
@@ -29,7 +29,7 @@ taskGet courseId id msg =
 
 taskPut : Int -> Int -> Task -> (WebData () -> msg) -> Cmd msg
 taskPut courseId id taskUpdate msg =
-    patchExpectNothing (unwrap <| task courseId id)
+    putExpectNothing (unwrap <| task courseId id)
         (Http.jsonBody <| Task.encoder taskUpdate)
         msg
 

@@ -84,6 +84,7 @@ type Msg
     | LogoutCompleted (WebData ())
     | HandleTranslationsResponse (WebData Translations)
     | SpinnerMsg Spinner.Msg
+    | UploadProgressMsg Http.Progress
     | LoginMsg Login.Msg
     | RegistrationMsg Registration.Msg
     | DashboardMsg Dashboard.Msg
@@ -208,6 +209,10 @@ update sharedState msg model =
 
         ( SheetDetailMsg sheetDetailMsg, SheetDetailModel sheetDetail ) ->
             SheetDetail.update sharedState sheetDetailMsg sheetDetail
+                |> updateWith SheetDetailModel SheetDetailMsg model
+
+        ( UploadProgressMsg progress, SheetDetailModel sheetDetail ) ->
+            SheetDetail.update sharedState (SheetDetail.UploadProgressMsg progress) sheetDetail
                 |> updateWith SheetDetailModel SheetDetailMsg model
 
         ( SubmissionGradingEditorMsg submissionEditorMsg, SubmissionGradingEditorModel submissionEditor ) ->

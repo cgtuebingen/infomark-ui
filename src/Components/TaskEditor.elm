@@ -17,6 +17,7 @@ import Api.Request.Task as TaskRequests
 import Components.CommonElements exposing (inputLabel, inputElement, fileUploader, rContainer, rRow, rRowButton, rCollapsable, rRowExtraSpacing, r1Column, r2Column)
 import File exposing (File)
 import File.Select as Select
+import Http
 import Html exposing (..)
 import Html.Events exposing (onClick, preventDefaultOn)
 import Json.Decode as Decode exposing (Decoder)
@@ -25,12 +26,26 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Utils.Styles as Styles
+import Dict exposing (Dict)
 
 
 type FileType
     = Public
     | Private
 
+{-| Dicts with non comparable types are not allowed
+So for this single instance we convert the types to something
+comparable: https://github.com/elm/compiler/issues/1008#event-797842658
+-}
+fileTypeToInt : FileType -> Int
+fileTypeToInt fileType =
+    case fileType of
+        Public -> 1
+        Private -> 2
+
+intToFileType : Int -> FileType
+intToFileType fileTypeAsInt =
+    if fileTypeAsInt == 1 then Public else Private
 
 type Field
     = MaxPoints
@@ -49,6 +64,7 @@ type Msg
     | TaskCreateRequest (WebData Task)
     | TaskUpdateRequest (WebData ())
     | FileUploadResponse FileType (WebData ())
+    | UploadProgress Http.Progress
     | DoneUploading
     | ToggleCollapse
 
@@ -69,6 +85,8 @@ type alias Model =
     , collapse : Bool
     , createTask : Bool
     , toUpload : List FileType
+    , uploading : Dict Int (WebData ())
+    , averaged_progress : Int
     , errors : List Error
     }
 
@@ -90,6 +108,8 @@ initModel =
       , collapse = True
       , createTask = False
       , toUpload = []
+      , uploading = Dict.empty
+      , averaged_progress = 0
       , errors = []
       }
     , Cmd.none
@@ -171,7 +191,38 @@ update sharedState msg model =
             ( updateHover fileType False model, Cmd.none, NoUpdate )
 
         FileUploadResponse fileType response ->
-            ( model, Cmd.none, NoUpdate )
+            ( { model 
+                | uploading = Dict.update 
+                    (fileTypeToInt fileType) 
+                    (Maybe.map (\_ -> response)) 
+                    model.uploading
+            }, Cmd.none, NoUpdate )
+
+        UploadProgress progress ->
+            let
+                percentage = case progress of
+                    Http.Sending p ->
+                        Http.fractionSent p
+                    _ -> 0.0
+                
+                fileTypes = model.uploading |>
+                    Dict.toList |>
+                        List.filter (\(_, state) -> state == Loading) |>
+                        List.map (\(ftype, _) -> intToFileType ftype)
+
+                prog = if List.length fileTypes > 0 then
+                        -- If this particular task editor is uploading we need to calculate
+                        -- the average upload progress
+                        round <|
+                            (
+                                ( (toFloat model.averaged_progress) + 
+                                    100 * percentage
+                                ) / 2
+                            ) / (toFloat <| List.length fileTypes)
+                    else
+                        0
+            in
+            ( { model | averaged_progress = prog }, Cmd.none, NoUpdate)
 
         TaskGetRequest (Success task) ->
             ( fillModelFromTask model task, Cmd.none, NoUpdate )
@@ -180,60 +231,14 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         TaskCreateRequest (Success task) ->
-            case ( model.public_test_file, model.private_test_file ) of
-                ( Just public, Just private ) ->
-                    ( { model | toUpload = [ Public, Private ] }
-                    , Cmd.batch
-                        [ TaskRequests.taskPublicFilesPost model.courseId task.id public (FileUploadResponse Public)
-                        , TaskRequests.taskPrivateFilesPost model.courseId task.id private (FileUploadResponse Private)
-                        ]
-                    , NoUpdate
-                    )
-
-                ( Just public, _ ) ->
-                    ( { model | toUpload = [ Public ] }
-                    , TaskRequests.taskPublicFilesPost model.courseId task.id public (FileUploadResponse Public)
-                    , NoUpdate
-                    )
-
-                ( _, Just private ) ->
-                    ( { model | toUpload = [ Private ] }
-                    , TaskRequests.taskPrivateFilesPost model.courseId task.id private (FileUploadResponse Private)
-                    , NoUpdate
-                    )
-
-                ( _, _ ) ->
-                    ( model, Cmd.none, NoUpdate )
+            uploadFiles model
 
         TaskCreateRequest response ->
             ( model, Cmd.none, NoUpdate )
 
         TaskUpdateRequest (Success _) ->
-            case ( model.public_test_file, model.private_test_file ) of
-                ( Just public, Just private ) ->
-                    ( { model | toUpload = [ Public, Private ] }
-                    , Cmd.batch
-                        [ TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public)
-                        , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
-                        ]
-                    , NoUpdate
-                    )
-
-                ( Just public, _ ) ->
-                    ( { model | toUpload = [ Public ] }
-                    , TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public)
-                    , NoUpdate
-                    )
-
-                ( _, Just private ) ->
-                    ( { model | toUpload = [ Private ] }
-                    , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
-                    , NoUpdate
-                    )
-
-                ( _, _ ) ->
-                    ( model, Cmd.none, NoUpdate )
-
+            uploadFiles model
+              
         TaskUpdateRequest response ->
             ( model, Cmd.none, NoUpdate )
 
@@ -242,6 +247,36 @@ update sharedState msg model =
 
         ToggleCollapse ->
             ( { model | collapse = not model.collapse }, Cmd.none, NoUpdate )
+
+
+uploadFiles : Model -> (Model, Cmd Msg, SharedStateUpdate)
+uploadFiles model =
+    let
+        (fileTypes, cmds) =
+            case ( model.public_test_file, model.private_test_file ) of
+                ( Just public, Just private ) ->
+                    ( [ Public, Private ]
+                    , Cmd.batch
+                        [ TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public)
+                        , TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private)
+                        ]
+                    )
+                ( Just public, _ ) ->
+                    ( [Public], TaskRequests.taskPublicFilesPost model.courseId model.id public (FileUploadResponse Public))
+
+                ( _, Just private ) ->
+                    ( [Private], TaskRequests.taskPrivateFilesPost model.courseId model.id private (FileUploadResponse Private))
+
+                (_, _) ->
+                    ( [], Cmd.none)    
+    in
+    ( { model 
+        | toUpload = fileTypes
+        , uploading = Dict.fromList <| List.map (\ftype -> (fileTypeToInt ftype, Loading)) fileTypes
+    }
+    , cmds
+    , NoUpdate
+    )
 
 
 view : SharedState -> Model -> Html Msg
@@ -290,9 +325,16 @@ view sharedState model =
             , rRowButton 
                 (if model.createTask then "Erstellen" else "Bearbeiten")
                 SendTask
-                True
+                (anythingUploading model || Dict.isEmpty model.uploading)
             ]
 
+
+anythingUploading : Model -> Bool
+anythingUploading model =
+    model.uploading |>
+        Dict.values |>
+            List.any (\state -> state /= Loading)
+    
 
 setField : Model -> Field -> String -> Model
 setField model field value =

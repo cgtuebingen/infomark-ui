@@ -19,6 +19,7 @@ import Api.Request.Task as TaskRequests
 import Components.CommonElements exposing (inputLabel, sliderInputElement, fileUploader, rContainer, rRow, rRowExtraSpacing, rRowButton, r1Column, r2Column, rCollapsable)
 import File exposing (File)
 import File.Select as Select
+import Http
 import Html exposing (..)
 import Html.Events exposing (onClick)
 import RemoteData exposing (RemoteData(..), WebData)
@@ -39,6 +40,7 @@ type Msg
     = UploadSubmission
     | UploadSubmissionResponse (WebData ())
     | DoneUploading
+    | UploadProgress Http.Progress
     | GetCurrentRatingResponse (WebData TaskRatingResponse)
     | GetGradeResponse (WebData Grade) -- Change return type
     | RateTask Field String
@@ -60,6 +62,7 @@ type alias Model =
     , gradeResponse : WebData Grade
     , rating : Int
     , submission : Maybe File
+    , uploading : WebData ()
     , collapse : Bool
     , hover : Bool
     , ratingDebounce : Debounce Int
@@ -75,6 +78,7 @@ init courseId task =
         , gradeResponse = Loading
         , rating = 0
         , submission = Nothing
+        , uploading = NotAsked
         , collapse = True
         , hover = False
         , ratingDebounce = Debounce.init
@@ -99,15 +103,29 @@ update sharedState msg model =
         UploadSubmission ->
             case model.submission of
                 Just file ->
-                    (model, TaskRequests.taskSubmissionPost model.courseId model.id file UploadSubmissionResponse, NoUpdate)
+                    ( { model | uploading = Loading }, TaskRequests.taskSubmissionPost model.courseId model.id file UploadSubmissionResponse, NoUpdate)
                 
                 Nothing ->
                     (model, Cmd.none, NoUpdate) -- Should never happen. Upload button disabled without a set file
 
         UploadSubmissionResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ({ model | uploading = response }, Cmd.none, NoUpdate)
         
         DoneUploading ->
+            (model, Cmd.none, NoUpdate)
+
+        UploadProgress progress ->
+            let
+                percentage = case progress of
+                    Http.Sending p ->
+                        Http.fractionSent p
+                    _ -> 0.0
+
+                _ = if model.uploading == Loading then
+                        Debug.log "UploadProgress" (model.id, (100 * percentage))
+                    else
+                        (model.id, (100 * percentage))
+            in
             (model, Cmd.none, NoUpdate)
 
         GetCurrentRatingResponse (Success rating) ->
