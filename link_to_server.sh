@@ -6,7 +6,10 @@ if [ $# -eq 0 ]
 fi
 
 STATIC_PATH=$1/static
-MY_PATH="`dirname \"$0\"`"
+MY_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+
+echo $MY_PATH
+echo $STATIC_PATH
 
 ln -s $MY_PATH/index.html $STATIC_PATH/index.html
 ln -s $MY_PATH/elm.js $STATIC_PATH/elm.js
