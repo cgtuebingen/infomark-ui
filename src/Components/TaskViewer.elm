@@ -129,11 +129,19 @@ update sharedState msg model =
             ( { model 
                 | uploadDoneTime = sharedState.currentTime
                 , uploading = Success ()
-                , submission = Nothing
                 }, Cmd.none, NoUpdate )
         
         UploadSubmissionResponse response ->
-            ( { model | uploading = response }, Cmd.none, NoUpdate )
+            let
+                newModel = {model | uploading = response}
+                finalModel = if not (RemoteData.isLoading newModel.uploading) &&
+                    (RemoteData.isSuccess newModel.uploading || 
+                        RemoteData.isFailure newModel.uploading) then
+                        { newModel | uploadDoneTime = sharedState.currentTime }
+                    else
+                        newModel
+            in
+            ( finalModel, Cmd.none, NoUpdate )
 
         UploadProgress progress ->
             let
@@ -272,12 +280,12 @@ view sharedState model =
                         ) model.uploadDoneTime sharedState.currentTime
                 in
                 rRowButton <| PbbButton <|
-                    if not filesSelected then
-                        PbbDisabled "Upload"
-                    else if success && stateShownLongEnough == Just False then
+                    if success && stateShownLongEnough == Just False then
                         PbbResult <| PbbSuccess "Success"
                     else if failure && stateShownLongEnough == Just False then
                         PbbResult <| PbbFailure "Failure"
+                    else if not filesSelected then
+                        PbbDisabled "Upload"
                     else
                         PbbActive "Upload" UploadSubmission
             ]
