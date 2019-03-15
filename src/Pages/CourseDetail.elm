@@ -194,6 +194,9 @@ update sharedState msg model =
         SearchUserForEnrollmentResponse response ->
             ( { model | searchUserForEnrollmentRequest = response }, Cmd.none, NoUpdate )
 
+        EnrollmentsResponse response ->
+            ( { model | enrollmentsRequest = response}, Cmd.none, NoUpdate)
+
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
