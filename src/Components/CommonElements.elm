@@ -214,16 +214,18 @@ rRowHeaderActionButtons label actions =
         ]
     <|
         h1 [ Styles.headerStyle ] [ text label ]
-            :: List.map
+            :: [
+                div [] <| List.map
                 (\( actionLabel, actionMsg, baseStyle ) ->
                     button
                         [ baseStyle
-                        , classes [ TC.br_pill, TC.ph4, TC.pv3 ]
+                        , classes [ TC.br_pill, TC.ph4, TC.pv3, TC.ml3 ]
                         , onClick actionMsg
                         ]
                         [ text actionLabel ]
                 )
                 actions
+            ]
 
 
 rRowButton : PbbState msg -> Html msg

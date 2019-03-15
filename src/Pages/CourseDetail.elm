@@ -449,34 +449,39 @@ viewDetermineGroupDisplay courseRole sharedState model =
 
 viewSheets : SharedState -> Model -> List (Html Msg)
 viewSheets sharedState model =
-    case model.sheetRequest of
-        Success sheets ->
-            sheets |>
-                List.map (\sheet ->
-                    rRowHeaderActionButtons sheet.name <|
-                        ([
-                            ( "Download"
-                            , DownloadSheet model.courseId sheet.id
-                            , Styles.buttonGreyStyle)
-                        ,
-                            ( "Show"
-                            , NavigateTo <| SheetDetailRoute model.courseId sheet.id
-                            , Styles.buttonGreyStyle)
-                        ] ++ 
-                            ( if model.courseRole == Just Admin then
-                                [
-                                    ( "Edit"
-                                    , NavigateTo <| EditSheetRoute model.courseId sheet.id
+    [ div [ classes [ TC.ph3, TC.ph5_ns ] ] <|
+        [ h1 [ Styles.headerStyle, classes [ TC.w_100, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ] ] [ text "Sheets" ]
+        ] ++ [ div [classes [TC.ph4] ] <|
+            case model.sheetRequest of
+                Success sheets ->
+                    sheets |>
+                        List.map (\sheet ->
+                            rRowHeaderActionButtons sheet.name <|
+                                ([
+                                    ( "Download"
+                                    , DownloadSheet model.courseId sheet.id
                                     , Styles.buttonGreyStyle)
-                                
-                                ]
-                            else
-                                []
-                            )
+                                ,
+                                    ( "Show"
+                                    , NavigateTo <| SheetDetailRoute model.courseId sheet.id
+                                    , Styles.buttonGreyStyle)
+                                ] ++ 
+                                    ( if model.courseRole == Just Admin then
+                                        [
+                                            ( "Edit"
+                                            , NavigateTo <| EditSheetRoute model.courseId sheet.id
+                                            , Styles.buttonGreyStyle)
+                                        
+                                        ]
+                                    else
+                                        []
+                                    )
+                                )
                         )
-                )
-        _ -> 
-            [ div [] [ text "Loading"] ]
+                _ -> 
+                    [ div [] [ text "Loading"] ]
+        ]
+    ]
 
 
 compareRoleName : UserEnrollment -> UserEnrollment -> Order
