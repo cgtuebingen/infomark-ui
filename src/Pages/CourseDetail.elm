@@ -43,8 +43,7 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement)
-import Components.Dropdown as Dropdown exposing (ToggleEvent(..), drawer, dropdown, toggle)
+import Components.CommonElements exposing (inputElement, multiButton)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -60,6 +59,7 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
+import Utils.Utils exposing (perform)
 
 
 type Msg
@@ -80,7 +80,6 @@ type Msg
     | SearchUserForGroup
     | ChangeEnrollment UserEnrollment
     | ChangeGroup Int GroupEnrollmentChange
-    | ToggleRoleDropdown Bool
 
 
 type alias Model =
@@ -98,8 +97,6 @@ type alias Model =
     , groupChangedRequest : WebData GroupEnrollmentChange
     , searchEnrollmentInput : String
     , searchGroupInput : String
-    , roleDropdown : Dropdown.State
-    , groupDropdown : Dropdown.State
     }
 
 
@@ -119,8 +116,6 @@ init id =
       , groupChangedRequest = NotAsked
       , searchEnrollmentInput = ""
       , searchGroupInput = ""
-      , roleDropdown = False
-      , groupDropdown = False
       }
     , Cmd.batch
         [ AccountRequests.accountEnrollmentGet CourseRoleResponse
@@ -199,6 +194,16 @@ update sharedState msg model =
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
+
+        ChangeEnrollment enrollment ->
+            ( model
+            , CoursesRequests.coursesEnrollmentsUserPut model.courseId 
+                enrollment.user.id enrollment.role EnrollmentChangedResponse
+            , NoUpdate
+            )
+
+        EnrollmentChangedResponse (Success _) ->
+            ( model, perform SearchUserForEnrollment, NoUpdate )
 
         _ ->
             ( model, Cmd.none, NoUpdate )
@@ -380,19 +385,8 @@ viewUserSearchResult model maybeUserEnrollment =
 
                         Nothing ->
                             "assets/defaultAvatar.png"
-
-                currentRoleString =
-                    case userEnrollment.role of
-                        Student ->
-                            "Student"
-
-                        Tutor ->
-                            "Tutor"
-
-                        Admin ->
-                            "Admin"
             in
-            div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ] ]
+            div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ] ]
                 [ img
                     [ src avatar
                     , classes
@@ -411,51 +405,13 @@ viewUserSearchResult model maybeUserEnrollment =
                     [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
                     , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
                     ]
-                , div [ classes [ TC.ml4, TC.w4 ] ]
-                    [ dropdown
-                        div
-                        []
-                        [ toggle
-                            button
-                            [ classes [ TC.w4, TC.tc, TC.button_reset, TC.bg_white ]
-                            , Styles.lineInputStyle
-                            , Styles.labelStyle
-                            ]
-                            [ text currentRoleString ]
-                        , drawer div
-                            []
-                          <|
-                            List.map
-                                (\( role, label ) ->
-                                    button
-                                        [ onClick <| ChangeEnrollment { userEnrollment | role = role }
-                                        , classes
-                                            [ TC.w_100
-                                            , TC.bl_0
-                                            , TC.br_0
-                                            , TC.bb_0
-                                            , TC.bt
-                                            , TC.b__black_20
-                                            , TC.tc
-                                            , TC.button_reset
-                                            , TC.bg_near_white
-                                            , TC.ph2
-                                            , TC.pv3
-                                            , TC.grow
-                                            , TC.pointer
-                                            , TC.shadow_5
-                                            ]
-                                        , Styles.textStyle
-                                        ]
-                                        [ text label ]
-                                )
-                                [ ( Student, "Student" )
-                                , ( Tutor, "Tutor" )
-                                , ( Admin, "Admin" )
-                                ]
+                , div [ classes [ TC.ml4, TC.flex ] ]
+                    [ multiButton
+                        [ ("Student", userEnrollment.role == Student, ChangeEnrollment {userEnrollment | role = Student} )
+                        , ("Tutor", userEnrollment.role == Tutor, ChangeEnrollment {userEnrollment | role = Tutor} )
+                        , ("Admin", userEnrollment.role == Admin, ChangeEnrollment {userEnrollment | role = Admin} )
                         ]
-                        model.roleDropdown
-                        roleDropdownConfig
+                    
                     ]
                 ]
 
@@ -509,16 +465,6 @@ determineRole course_id enrollments =
     List.head <|
         List.map .role <|
             List.filter (\enrollment -> enrollment.course_id == course_id) enrollments
-
-
-roleDropdownConfig : Dropdown.Config Msg
-roleDropdownConfig =
-    Dropdown.Config
-        "roleDropdown"
-        OnClick
-        (class "visible")
-        ToggleRoleDropdown
-
 
 type Field
     = EnrollmentSearchField

@@ -22,6 +22,7 @@ module Components.CommonElements exposing
     , viewFormErrors
     , widePage
     , progressBarButton
+    , multiButton
     , PbbState(..)
     , PbbButtonState(..)
     , PbbResultState(..)
@@ -376,8 +377,19 @@ progressBarButton barOrButtonState =
                 ]
 
 
---Same for image uploader?
+multiButton : List (String, Bool, msg) -> Html msg
+multiButton actions =
+    div [] (actions |> List.map (\(label, active, msg) ->
+            button 
+                [ if active then Styles.buttonSuccessStyle else Styles.buttonGreyStyle 
+                , onClick msg
+                , classes [TC.mh0 ]
+                ] [text label]
+        )
+    )
 
+
+--Same for image uploader?
 
 fileUploader : Bool -> Maybe File -> msg -> msg -> msg -> (File -> List File -> msg) -> Html msg
 fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =

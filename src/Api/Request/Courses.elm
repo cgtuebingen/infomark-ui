@@ -15,6 +15,9 @@ module Api.Request.Courses exposing
     , coursesEnrollmentGetByEmail
     , coursesEnrollmentGetTeam
     , coursesEnrollmentPost
+    , coursesEnrollmentsUserGet
+    , coursesEnrollmentsUserPut
+    , coursesEnrollmentsUserDelete
     , coursesGet
     , coursesPost
     )
@@ -30,6 +33,7 @@ import Api.Endpoint
     exposing
         ( course
         , courseEnrollment
+        , courseEnrollmentUserDetail
         , courseGroup
         , courseGroupBids
         , courseGroups
@@ -38,9 +42,16 @@ import Api.Endpoint
         , submissions
         , unwrap
         )
-import Api.Helper exposing (deleteExpectNothing, get, post, postExpectNothing, putExpectNothing)
+import Api.Helper exposing 
+    ( deleteExpectNothing
+    , get
+    , post
+    , postExpectNothing
+    , putExpectNothing
+    )
 import Http
 import Json.Decode as Decode
+import Json.Encode as Encode
 import RemoteData exposing (RemoteData(..), WebData)
 import Url.Builder exposing (QueryParameter)
 
@@ -127,6 +138,27 @@ coursesEnrollmentPost courseId msg =
 coursesEnrollmentDelete : Int -> (WebData () -> msg) -> Cmd msg
 coursesEnrollmentDelete courseId msg =
     deleteExpectNothing (unwrap <| courseEnrollment courseId [])
+        msg
+
+coursesEnrollmentsUserGet : Int -> Int -> (WebData UserEnrollment -> msg) -> Cmd msg
+coursesEnrollmentsUserGet courseId userId msg =
+    get (unwrap <| courseEnrollmentUserDetail courseId userId)
+        msg
+        UserEnrollment.decoder
+
+
+coursesEnrollmentsUserPut : Int -> Int -> CourseRole -> (WebData () -> msg) -> Cmd msg
+coursesEnrollmentsUserPut courseId userId newRole msg =
+    putExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId)
+        (Http.jsonBody <| Encode.object
+            [ ( "role", CourseRole.encoder newRole )
+            ]
+        )
+        msg
+
+coursesEnrollmentsUserDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
+coursesEnrollmentsUserDelete courseId userId msg =
+    deleteExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId )
         msg
 
 
