@@ -5,7 +5,7 @@
        - If you are a root user:
            - Option to search for all enrolled users and change the enrollment (tutor/student)
 
-           (done?)
+           (done)
    - Group information:
        - If you are a student and not distributed to a group:
            - The exercise groups with dates and tutors
@@ -42,8 +42,9 @@ import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
+import Api.Endpoint exposing (unwrap, sheetFile)
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement, multiButton)
+import Components.CommonElements exposing (inputElement, multiButton, rRowHeaderActionButtons)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -60,6 +61,7 @@ import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (perform)
+import File.Download as Download
 
 
 type Msg
@@ -80,12 +82,14 @@ type Msg
     | SearchUserForGroup
     | ChangeEnrollment UserEnrollment
     | ChangeGroup Int GroupEnrollmentChange
+    | DownloadSheet Int Int
 
 
 type alias Model =
     { courseId : Int
     , courseRole : Maybe CourseRole
     , courseRequest : WebData Course
+    , sheetRequest : WebData (List Sheet)
     , courseRoleRequest : WebData (List AccountEnrollment)
     , enrollmentsRequest : WebData (List UserEnrollment)
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
@@ -105,6 +109,7 @@ init id =
     ( { courseId = id
       , courseRole = Nothing
       , courseRequest = Loading
+      , sheetRequest = Loading
       , courseRoleRequest = Loading
       , enrollmentsRequest = NotAsked
       , searchUserForEnrollmentRequest = NotAsked
@@ -120,6 +125,7 @@ init id =
     , Cmd.batch
         [ AccountRequests.accountEnrollmentGet CourseRoleResponse
         , CoursesRequests.courseGet id CourseResponse
+        , CoursesRequests.courseSheetsGet id SheetRequestResponse
         ]
     )
 
@@ -205,6 +211,12 @@ update sharedState msg model =
         EnrollmentChangedResponse (Success _) ->
             ( model, perform SearchUserForEnrollment, NoUpdate )
 
+        SheetRequestResponse response ->
+            ( {model | sheetRequest = response}, Cmd.none, NoUpdate )
+
+        DownloadSheet courseId sheetId ->
+            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate)
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
@@ -221,6 +233,7 @@ view sharedState model =
                 [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph0_l, TC.ph3_m, TC.ph2, TC.center, TC.mw9_ns ] ] <|
                     viewCourseInfo sharedState model
                         ++ viewDetermineTeamOrSearch role sharedState model
+                        ++ viewSheets sharedState model
                 ]
 
         ( _, _ ) ->
@@ -433,6 +446,37 @@ viewDetermineGroupDisplay courseRole sharedState model =
     -- Not set: Display bidding screen
     -- If set: Display own group. With members. Option to send email to other members and tutor
     ]
+
+viewSheets : SharedState -> Model -> List (Html Msg)
+viewSheets sharedState model =
+    case model.sheetRequest of
+        Success sheets ->
+            sheets |>
+                List.map (\sheet ->
+                    rRowHeaderActionButtons sheet.name <|
+                        ([
+                            ( "Download"
+                            , DownloadSheet model.courseId sheet.id
+                            , Styles.buttonGreyStyle)
+                        ,
+                            ( "Show"
+                            , NavigateTo <| SheetDetailRoute model.courseId sheet.id
+                            , Styles.buttonGreyStyle)
+                        ] ++ 
+                            ( if model.courseRole == Just Admin then
+                                [
+                                    ( "Edit"
+                                    , NavigateTo <| EditSheetRoute model.courseId sheet.id
+                                    , Styles.buttonGreyStyle)
+                                
+                                ]
+                            else
+                                []
+                            )
+                        )
+                )
+        _ -> 
+            [ div [] [ text "Loading"] ]
 
 
 compareRoleName : UserEnrollment -> UserEnrollment -> Order
