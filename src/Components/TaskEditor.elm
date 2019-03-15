@@ -14,13 +14,28 @@ module Components.TaskEditor exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing (fileUploader, inputElement, inputLabel, r1Column, r2Column, rCollapsable, rContainer, rRow, rRowButton, rRowExtraSpacing)
+import Components.CommonElements exposing 
+    ( fileUploader
+    , inputElement
+    , inputLabel
+    , r1Column
+    , r2Column
+    , rCollapsable
+    , rContainer
+    , rRow
+    , rRowButton
+    , rRowExtraSpacing
+    , PbbState(..)
+    , PbbButtonState(..)
+    , PbbResultState(..)
+    )
 import Dict exposing (Dict)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
 import Html.Events exposing (onClick, preventDefaultOn)
 import Http
+import Time
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -96,6 +111,7 @@ type alias Model =
     , createTask : Bool
     , toUpload : List FileType
     , uploading : Dict Int (WebData ())
+    , uploadDoneTime : Maybe Time.Posix
     , averaged_progress : Int
     , errors : List Error
     }
@@ -119,6 +135,7 @@ initModel =
       , createTask = False
       , toUpload = []
       , uploading = Dict.empty
+      , uploadDoneTime = Nothing
       , averaged_progress = 0
       , errors = []
       }
@@ -202,16 +219,21 @@ update sharedState msg model =
             ( updateHover fileType False model, Cmd.none, NoUpdate )
 
         FileUploadResponse fileType response ->
-            ( { model
-                | uploading =
-                    Dict.update
+            let
+                newModel = { model
+                    | uploading = Dict.update
                         (fileTypeToInt fileType)
                         (Maybe.map (\_ -> response))
                         model.uploading
-              }
-            , Cmd.none
-            , NoUpdate
-            )
+                    }
+
+                finalModel = if not (anythingUploading newModel) &&
+                    (uploadSuccess newModel || uploadFailure newModel) then
+                        { newModel | uploadDoneTime = sharedState.currentTime }
+                    else
+                        newModel
+            in
+            ( finalModel, Cmd.none, NoUpdate)
 
         UploadProgress progress ->
             let
@@ -351,15 +373,24 @@ view sharedState model =
                         MaxPoints
                         model.errors
                         SetField
-            , rRowButton
-                (if model.createTask then
-                    "Erstellen"
-
-                 else
-                    "Bearbeiten"
-                )
-                SendTask
-                (anythingUploading model || Dict.isEmpty model.uploading)
+            , if anythingUploading model &&
+                 (not (Dict.isEmpty model.uploading)) then
+                -- Something is uploading. We need a progress bar
+                rRowButton <| PbbProgressBar model.averaged_progress
+            else
+                let
+                    stateShownLongEnough = Maybe.map2 
+                        (\up cur ->
+                            (Time.posixToMillis cur) - (Time.posixToMillis up) > 1500
+                        ) model.uploadDoneTime sharedState.currentTime
+                in
+                rRowButton <| PbbButton <|
+                    if uploadSuccess model && stateShownLongEnough == Just False then
+                        PbbResult <| PbbSuccess "Success"
+                    else if uploadFailure model && stateShownLongEnough == Just False then
+                        PbbResult <| PbbFailure "Failure"
+                    else
+                        PbbActive "Bearbeiten" SendTask  
             ]
 
 
@@ -367,7 +398,21 @@ anythingUploading : Model -> Bool
 anythingUploading model =
     model.uploading
         |> Dict.values
-        |> List.any (\state -> state /= Loading)
+        |> List.any RemoteData.isLoading
+
+
+uploadSuccess : Model -> Bool
+uploadSuccess model =
+    model.uploading
+        |> Dict.values
+        |> List.all (\state -> RemoteData.isSuccess state)
+
+
+uploadFailure : Model -> Bool
+uploadFailure model =
+    model.uploading
+        |> Dict.values
+        |> List.any (\state -> RemoteData.isFailure state)
 
 
 setField : Model -> Field -> String -> Model

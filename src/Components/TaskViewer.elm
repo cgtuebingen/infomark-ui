@@ -15,7 +15,21 @@ import Api.Data.Grade exposing (Grade)
 import Api.Data.Task exposing (Task)
 import Api.Data.TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing (fileUploader, inputLabel, r1Column, r2Column, rCollapsable, rContainer, rRow, rRowButton, rRowExtraSpacing, sliderInputElement)
+import Components.CommonElements exposing 
+    ( fileUploader
+    , inputLabel
+    , r1Column
+    , r2Column
+    , rCollapsable
+    , rContainer
+    , rRow
+    , rRowButton
+    , rRowExtraSpacing
+    , sliderInputElement
+    , PbbState(..)
+    , PbbButtonState(..)
+    , PbbResultState(..)
+    )
 import Debounce exposing (Debounce)
 import File exposing (File)
 import File.Select as Select
@@ -23,6 +37,7 @@ import Html exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Markdown as MD
+import Time
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
@@ -38,7 +53,6 @@ type Field
 type Msg
     = UploadSubmission
     | UploadSubmissionResponse (WebData ())
-    | DoneUploading
     | UploadProgress Http.Progress
     | GetCurrentRatingResponse (WebData TaskRatingResponse)
     | GetGradeResponse (WebData Grade) -- Change return type
@@ -62,6 +76,8 @@ type alias Model =
     , rating : Int
     , submission : Maybe File
     , uploading : WebData ()
+    , uploadPercentage : Int
+    , uploadDoneTime : Maybe Time.Posix
     , collapse : Bool
     , hover : Bool
     , ratingDebounce : Debounce Int
@@ -77,6 +93,8 @@ init courseId task =
       , rating = 0
       , submission = Nothing
       , uploading = NotAsked
+      , uploadPercentage = 0
+      , uploadDoneTime = Nothing
       , collapse = True
       , hover = False
       , ratingDebounce = Debounce.init
@@ -103,15 +121,19 @@ update sharedState msg model =
                 Just file ->
                     ( { model | uploading = Loading }, TaskRequests.taskSubmissionPost model.courseId model.id file UploadSubmissionResponse, NoUpdate )
 
-                Nothing ->
+                Nothing -> -- Should never happen. Upload button disabled without a set file
                     ( model, Cmd.none, NoUpdate )
 
-        -- Should never happen. Upload button disabled without a set file
+        
+        UploadSubmissionResponse (Success _) ->
+            ( { model 
+                | uploadDoneTime = sharedState.currentTime
+                , uploading = Success ()
+                , submission = Nothing
+                }, Cmd.none, NoUpdate )
+        
         UploadSubmissionResponse response ->
             ( { model | uploading = response }, Cmd.none, NoUpdate )
-
-        DoneUploading ->
-            ( model, Cmd.none, NoUpdate )
 
         UploadProgress progress ->
             let
@@ -123,14 +145,14 @@ update sharedState msg model =
                         _ ->
                             0.0
 
-                _ =
+                prog =
                     if model.uploading == Loading then
-                        Debug.log "UploadProgress" ( model.id, 100 * percentage )
+                        round <| (100 * percentage )
 
                     else
-                        ( model.id, 100 * percentage )
+                        round <| 0
             in
-            ( model, Cmd.none, NoUpdate )
+            ( { model | uploadPercentage = prog }, Cmd.none, NoUpdate )
 
         GetCurrentRatingResponse (Success rating) ->
             ( { model | rating = rating.own_rating }, Cmd.none, NoUpdate )
@@ -233,16 +255,31 @@ view sharedState model =
                         Rating
                         []
                         RateTask
-            , rRowButton
-                "Upload"
-                UploadSubmission
-                (case model.submission of
-                    Just _ ->
-                        True
+            , if model.uploading == Loading then
+                rRowButton <| PbbProgressBar model.uploadPercentage
+            else
+                let
+                    success = RemoteData.isSuccess model.uploading
+                    failure = RemoteData.isFailure model.uploading
 
-                    Nothing ->
-                        False
-                )
+                    filesSelected = case model.submission of
+                        Just _ -> True
+                        Nothing -> False
+
+                    stateShownLongEnough = Maybe.map2 
+                        (\up cur ->
+                            (Time.posixToMillis cur) - (Time.posixToMillis up) > 1500
+                        ) model.uploadDoneTime sharedState.currentTime
+                in
+                rRowButton <| PbbButton <|
+                    if not filesSelected then
+                        PbbDisabled "Upload"
+                    else if success && stateShownLongEnough == Just False then
+                        PbbResult <| PbbSuccess "Success"
+                    else if failure && stateShownLongEnough == Just False then
+                        PbbResult <| PbbFailure "Failure"
+                    else
+                        PbbActive "Upload" UploadSubmission
             ]
 
 

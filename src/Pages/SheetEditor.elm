@@ -5,7 +5,23 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Sheet as SheetRequests
 import Array
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (dateInputElement, fileUploader, inputElement, normalPage, pageContainer, r1Column, r2Column, rContainer, rRow, rRowButton, rRowExtraSpacing, sliderInputElement, timeInputElement)
+import Components.CommonElements exposing 
+    ( dateInputElement
+    , fileUploader
+    , inputElement
+    , normalPage
+    , pageContainer
+    , r1Column
+    , r2Column
+    , rContainer
+    , rRow
+    , rRowButton
+    , rRowExtraSpacing
+    , sliderInputElement
+    , timeInputElement
+    , PbbState(..)
+    , PbbButtonState(..)
+    )
 import Components.Toasty
 import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -625,7 +641,7 @@ viewForm sharedState model =
                     UtcOffset
                     model.errors
                     SetField
-        , rRowButton
+        , rRowButton <| PbbButton <| PbbActive
             (if model.createSheet then
                 "Erstellen"
 
@@ -638,7 +654,6 @@ viewForm sharedState model =
              else
                 Update
             )
-            True
         ]
 
 

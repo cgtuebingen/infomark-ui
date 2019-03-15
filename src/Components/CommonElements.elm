@@ -21,6 +21,10 @@ module Components.CommonElements exposing
     , timeInputElement
     , viewFormErrors
     , widePage
+    , progressBarButton
+    , PbbState(..)
+    , PbbButtonState(..)
+    , PbbResultState(..)
     )
 
 import Date exposing (Date)
@@ -221,21 +225,10 @@ rRowHeaderActionButtons label actions =
                 actions
 
 
-rRowButton : String -> msg -> Bool -> Html msg
-rRowButton buttonText msg enabled =
+rRowButton : PbbState msg -> Html msg
+rRowButton buttonState =
     div [ classes [ TC.mt3, TC.cf, TC.ph4_ns, TC.ph3 ] ]
-        [ button
-            (classes [ TC.mb4, TC.mt3, TC.w_100 ]
-                :: (if enabled then
-                        [ Styles.buttonGreyStyle
-                        , onClick msg
-                        ]
-
-                    else
-                        [ Styles.buttonDisabled ]
-                   )
-            )
-            [ text buttonText ]
+        [ progressBarButton buttonState
         ]
 
 
@@ -322,6 +315,65 @@ r3Column child1 child2 child3 =
         child3
     ]
 
+
+type PbbState msg
+    = PbbButton (PbbButtonState msg)
+    | PbbProgressBar Int
+
+type PbbButtonState msg
+    = PbbActive String msg
+    | PbbDisabled String
+    | PbbResult PbbResultState
+
+type PbbResultState
+    = PbbSuccess String
+    | PbbFailure String
+
+
+progressBarButton : (PbbState msg) -> Html msg
+progressBarButton barOrButtonState =
+    let
+        baseButtonStyle = classes [ TC.mb4, TC.mt3, TC.w_100 ]
+    in
+    case barOrButtonState of
+        PbbButton buttonState ->
+            case buttonState of
+                PbbActive label msg ->
+                    button (baseButtonStyle :: [Styles.buttonGreyStyle, onClick msg]) [text label]
+                PbbDisabled label ->
+                    button (baseButtonStyle :: [Styles.buttonDisabled]) [text label]
+
+                PbbResult state ->
+                    case state of
+                        PbbSuccess label ->
+                            button (baseButtonStyle :: [Styles.buttonSuccessStyle]) [text label]
+                        PbbFailure label ->
+                            button (baseButtonStyle :: [Styles.buttonFailureStyle]) [text label]
+
+        PbbProgressBar progress ->
+            div 
+                [ baseButtonStyle
+                , classes 
+                    [ TC.pa2
+                    , TC.f5
+                    , TC.b
+                    , TC.dib
+                    , TC.items_center
+                    , TC.ba
+                    , TC.border_box
+                    , TC.bg_white
+                    , TC.b__dark_red
+                    ]
+                ]
+                [ div 
+                    [ classes 
+                        [ TC.bg_dark_red
+                        ]
+                    , style "width" <| (String.fromInt progress) ++ "%"
+                    , style "height" "1.95rem"
+                    ]
+                    [ text " "]
+                ]
 
 
 --Same for image uploader?

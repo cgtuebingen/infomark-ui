@@ -22,6 +22,8 @@ import Components.CommonElements
         , rRowHeader
         , textAreaElement
         , viewFormErrors
+        , PbbState(..)
+        , PbbButtonState(..)
         )
 import Components.Toasty
 import Date exposing (Date)
@@ -390,7 +392,7 @@ viewForm sharedState model =
                 viewRequiredPercentage model
             , viewFormErrors RequiredPercentage model.errors
             ]
-        , rRowButton
+        , rRowButton <| PbbButton <| PbbActive
             (if model.createCourse then
                 "Erstellen"
 
@@ -398,7 +400,6 @@ viewForm sharedState model =
                 "Bearbeiten"
             )
             CreateOrEdit
-            True
         ]
 
 
