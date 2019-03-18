@@ -298,6 +298,7 @@ dialogOverlayStyle =
         , TC.bg_black_30
         , TC.justify_center
         , TC.items_center
+        , TC.z_max
         ]
 
 

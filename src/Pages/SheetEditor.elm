@@ -21,7 +21,9 @@ import Components.CommonElements exposing
     , timeInputElement
     , PbbState(..)
     , PbbButtonState(..)
+    , simpleDialog
     )
+import Components.Dialog as Dialog
 import Components.Toasty
 import Date exposing (Date)
 import DatePicker exposing (DateEvent(..), defaultSettings)
@@ -59,6 +61,9 @@ type Msg
     | CreateResponse (WebData Sheet)
     | Update
     | UpdateResponse (WebData ())
+    | RequestDelete
+    | Delete
+    | DeleteResponse (WebData ())
     | SetField Field String
     | GotFiles File (List File)
     | Pick
@@ -66,6 +71,8 @@ type Msg
     | DragLeave
     | FileUploadResponse (WebData ())
     | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
+    | DeleteSheetDialogShown Bool
+    | NoOp
 
 
 type alias Model =
@@ -90,6 +97,7 @@ type alias Model =
     , fileChanged : Bool
     , errors : List Error
     , toasties : Toasty.Stack Components.Toasty.Toast
+    , deleteSheetDialogState : Dialog.State
     }
 
 
@@ -123,6 +131,7 @@ initModel =
       , fileChanged = False
       , errors = []
       , toasties = Toasty.initialState
+      , deleteSheetDialogState = False
       }
     , Cmd.batch
         [ Cmd.map PublishedDatePickerMsg publishedDatePickerFx
@@ -358,6 +367,15 @@ update sharedState msg model =
         UpdateResponse response ->
             updateHandleSend sharedState model response
 
+        RequestDelete -> --Show Dialog
+            ({ model | deleteSheetDialogState = True}, Cmd.none, NoUpdate)
+
+        Delete ->
+            (model, SheetRequests.sheetDelete model.course_id model.id DeleteResponse, NoUpdate)
+        
+        DeleteResponse response ->
+            updateHandleDelete sharedState model response
+
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
@@ -385,6 +403,36 @@ update sharedState msg model =
                     Toasty.update Components.Toasty.config ToastyMsg subMsg model
             in
             ( newModel, newCmd, NoUpdate )
+
+        DeleteSheetDialogShown visible ->
+            ({ model | deleteSheetDialogState = visible }, Cmd.none, NoUpdate)
+
+        NoOp ->
+            (model, Cmd.none, NoUpdate)
+
+
+updateHandleDelete : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleDelete sharedState model response =
+    case response of
+        RemoteData.Success _ ->
+            (model, perform <| NavigateTo <| CourseDetailRoute model.course_id, NoUpdate)
+        
+        RemoteData.Failure err ->
+            handleLogoutErrors model
+                sharedState
+                (\e ->
+                    -- Differentiate between errros
+                    let
+                        ( newModel, newCmd ) =
+                            ( model, Cmd.none )
+                                |> addToast (Components.Toasty.Error "Error" "Failed to delete")
+                    in
+                    ( newModel, newCmd, NoUpdate )
+                )
+                err
+
+        _ ->
+            ( model, Cmd.none, NoUpdate )
 
 
 updateHandleGetSheet : SharedState -> Model -> WebData Sheet -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -529,6 +577,7 @@ view : SharedState -> Model -> Html Msg
 view sharedState model =
     pageContainer
         [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        , viewDeleteSheetDialog sharedState model
         , normalPage
             [ viewFormLoadingOrError sharedState model ]
         ]
@@ -561,7 +610,7 @@ viewForm sharedState model =
         offsetLabelsArray =
             Array.fromList DTU.utcOffsetLabelsList
     in
-    rContainer
+    rContainer <|
         [ h1
             [ Styles.headerStyle ]
             [ text <|
@@ -654,7 +703,25 @@ viewForm sharedState model =
              else
                 Update
             )
+        ] ++ if not model.createSheet then
+                [rRowButton <| PbbButton <| PbbActive
+                    "Löschen"
+                    RequestDelete
+                ]
+            else
+                []
+
+
+viewDeleteSheetDialog : SharedState -> Model -> Html Msg
+viewDeleteSheetDialog sharedState model =
+    simpleDialog
+        "Delete the sheet?"
+        "Are you sure you want to delete the sheet? This cannot be undone. The sheet and everything associated with the sheet like submissions and tests are gone."
+        [ ("Delete", Styles.buttonRedStyle, Delete)
+        , ("Cancel", Styles.buttonGreenStyle, DeleteSheetDialogShown False)
         ]
+        model.deleteSheetDialogState
+        deleteSheetDialogConfig
 
 
 timePickerSettings : TimePicker.Settings
@@ -762,3 +829,13 @@ isFirstDateOlder maybeFirstPosix maybeSecondPosix =
 addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 addToast toast ( model, cmd ) =
     Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )
+
+
+deleteSheetDialogConfig : Dialog.Config Msg
+deleteSheetDialogConfig =
+    Dialog.Config
+        Styles.dialogVisibleStyle
+        Styles.dialogGoneStyle
+        DeleteSheetDialogShown
+        True
+        NoOp
