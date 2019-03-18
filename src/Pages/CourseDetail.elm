@@ -298,7 +298,7 @@ viewTeam sharedState model =
             in
             [ div [ classes [ TC.ph3, TC.ph5_ns ] ]
                 [ h1 [ Styles.headerStyle, classes [ TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ] ] [ text "Team" ]
-                , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_between ] ] <|
+                , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_start ] ] <|
                     List.map viewTeamMember sortedTeam
                 ]
             ]
@@ -321,7 +321,7 @@ viewTeamMember userEnrollment =
                 Nothing ->
                     "assets/defaultAvatar.png"
     in
-    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph0_l ] ]
+    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph0_l, TC.w_third_l, TC.w_50_m, TC.w_100 ] ]
         [ img
             [ src avatar
             , classes
@@ -338,7 +338,7 @@ viewTeamMember userEnrollment =
             []
         , div [ classes [ TC.flex_auto, TC.pl3 ] ]
             [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
-            , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
+            , h2 [ Styles.textStyle, classes [ TC.mv0 ], style "word-break" "break-all" ] [ text user.email ] -- TODO make clickable
             ]
         ]
 

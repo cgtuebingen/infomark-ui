@@ -207,6 +207,7 @@ rRowHeaderActionButtons label actions =
             [ TC.flex
             , TC.flex_row
             , TC.justify_between
+            , TC.flex_wrap
             , TC.items_center
             , TC.bb
             , TC.bw2
@@ -219,7 +220,7 @@ rRowHeaderActionButtons label actions =
                 (\( actionLabel, actionMsg, baseStyle ) ->
                     button
                         [ baseStyle
-                        , classes [ TC.br_pill, TC.ph4, TC.pv3, TC.ml3 ]
+                        , classes [ TC.br_pill, TC.ph4_ns, TC.ph3, TC.pv3, TC.ml3, TC.mb3, TC.mb0_ns ]
                         , onClick actionMsg
                         ]
                         [ text actionLabel ]
