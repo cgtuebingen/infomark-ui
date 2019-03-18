@@ -16,7 +16,11 @@ import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (pageContainer, rRowHeaderActionButtons, widePage)
+import Components.CommonElements exposing 
+    ( pageContainer
+    , rRowHeaderActionButtons
+    , widePage
+    , simpleDialog)
 import Components.Dialog as Dialog
 import Components.Toasty
 import Html exposing (..)
@@ -427,37 +431,12 @@ viewDeleteCourseDialog : SharedState -> Model -> Html Msg
 viewDeleteCourseDialog sharedState model =
     case model.courseToDelete of
         Just course ->
-            Dialog.modalDialog div
-                [ Styles.dialogOverlayStyle
+            simpleDialog
+                "Delete the course?"
+                "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone."
+                [ ("Delete", Styles.buttonRedStyle, PerformDelete course)
+                , ("Cancel", Styles.buttonGreenStyle, DeleteCourseDialogShown False)
                 ]
-                (Dialog.dialog div
-                    [ Styles.dialogContainerStyle
-                    ]
-                    [ div
-                        [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
-                        [ h1 [] [ text "Delete the course?" ] ]
-                    , div
-                        [ classes [ TC.w_100, TC.mt4 ] ]
-                        [ p [ Styles.textStyle ] [ text "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone." ]
-                        , div [ classes [ TC.fr, TC.mt3 ] ]
-                            [ button
-                                [ classes
-                                    []
-                                , Styles.buttonRedStyle
-                                , onClick <| PerformDelete course
-                                ]
-                                [ text "Delete" ]
-                            , button
-                                [ classes
-                                    [ TC.ml3 ]
-                                , Styles.buttonGreenStyle
-                                , onClick <| DeleteCourseDialogShown False
-                                ]
-                                [ text "Cancel" ]
-                            ]
-                        ]
-                    ]
-                )
                 model.deleteDialogState
                 deleteCourseDialogConfig
 
@@ -469,37 +448,12 @@ viewDisenrollCourseDialog : SharedState -> Model -> Html Msg
 viewDisenrollCourseDialog sharedState model =
     case model.courseToDisenroll of
         Just course ->
-            Dialog.modalDialog div
-                [ Styles.dialogOverlayStyle
+            simpleDialog
+                "Disenroll from course?"
+                "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!"
+                [ ("Disenroll", Styles.buttonRedStyle, PerformDisenroll course)
+                , ("Cancel", Styles.buttonGreenStyle, DisenrollCourseDialogShown False)
                 ]
-                (Dialog.dialog div
-                    [ Styles.dialogContainerStyle
-                    ]
-                    [ div
-                        [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
-                        [ h1 [] [ text "Disenroll from course?" ] ]
-                    , div
-                        [ classes [ TC.w_100, TC.mt4 ] ]
-                        [ p [ Styles.textStyle ] [ text "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!" ]
-                        , div [ classes [ TC.fr, TC.mt3 ] ]
-                            [ button
-                                [ classes
-                                    []
-                                , Styles.buttonRedStyle
-                                , onClick <| PerformDisenroll course
-                                ]
-                                [ text "Disenroll" ]
-                            , button
-                                [ classes
-                                    [ TC.ml3 ]
-                                , Styles.buttonGreenStyle
-                                , onClick <| DisenrollCourseDialogShown False
-                                ]
-                                [ text "Cancel" ]
-                            ]
-                        ]
-                    ]
-                )
                 model.disenrollDialogState
                 disenrollCourseDialogConfig
 

@@ -26,6 +26,7 @@ module Components.CommonElements exposing
     , PbbState(..)
     , PbbButtonState(..)
     , PbbResultState(..)
+    , simpleDialog
     )
 
 import Date exposing (Date)
@@ -39,6 +40,7 @@ import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Utils.Styles as Styles
+import Components.Dialog as Dialog
 
 
 inputElement : { label : String, placeholder : String, fieldType : String, value : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
@@ -391,6 +393,34 @@ multiButton actions =
         )
     )
 
+
+simpleDialog : String -> String -> List (String, Html.Attribute msg, msg) -> Dialog.State -> Dialog.Config msg -> Html msg
+simpleDialog header body actions state config =
+    Dialog.modalDialog div
+        [ Styles.dialogOverlayStyle
+        ]
+        (Dialog.dialog div
+            [ Styles.dialogContainerStyle
+            ]
+            [ div
+                [ classes [ TC.w_100, TC.ph1, TC.bb, TC.bw2, TC.b__black ] ]
+                [ h1 [] [ text header ] ]
+            , div
+                [ classes [ TC.w_100, TC.mt4 ] ]
+                [ p [ Styles.textStyle ] [ text body ]
+                , div [ classes [ TC.fr, TC.mt3 ] ] <|
+                    List.map (\(label, buttonStyle, msg) ->
+                        button 
+                            [ classes [ TC.ml3 ]
+                            , buttonStyle
+                            , onClick msg
+                            ] [ text label ]
+                        ) actions
+                ]
+            ]
+        )
+        state
+        config
 
 --Same for image uploader?
 
