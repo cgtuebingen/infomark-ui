@@ -377,7 +377,7 @@ view sharedState model =
                     Maybe.withDefault { root = False } sharedState.role
 
                 cTemp =
-                    [ rRowHeaderActionButtons "Aktuell"
+                    [ rRowHeaderActionButtons "Aktuell" Styles.headerStyle
                         [ ( "+", NavigateTo CreateCourseRoute, Styles.buttonGreenStyle )
                         ]
                     , div
@@ -396,7 +396,7 @@ view sharedState model =
                 content =
                     if List.length oldCourses > 0 then
                         cTemp
-                            ++ [ rRowHeaderActionButtons "Archiv"
+                            ++ [ rRowHeaderActionButtons "Archiv" Styles.headerStyle
                                     [ ( if model.showArchive then
                                             "Hide"
 

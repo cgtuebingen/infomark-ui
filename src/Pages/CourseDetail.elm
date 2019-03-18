@@ -456,7 +456,7 @@ viewSheets sharedState model =
                 Success sheets ->
                     sheets |>
                         List.map (\sheet ->
-                            rRowHeaderActionButtons sheet.name <|
+                            rRowHeaderActionButtons sheet.name Styles.listHeadingStyle <|
                                 ([
                                     ( "Download"
                                     , DownloadSheet model.courseId sheet.id

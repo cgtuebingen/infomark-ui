@@ -200,8 +200,8 @@ rRowHeader label =
         [ h1 [ Styles.headerStyle ] [ text label ] ]
 
 
-rRowHeaderActionButtons : String -> List ( String, msg, Html.Attribute msg ) -> Html msg
-rRowHeaderActionButtons label actions =
+rRowHeaderActionButtons : String -> Html.Attribute msg -> List ( String, msg, Html.Attribute msg ) -> Html msg
+rRowHeaderActionButtons label headerStyle actions =
     div
         [ classes
             [ TC.flex
@@ -214,7 +214,7 @@ rRowHeaderActionButtons label actions =
             ]
         ]
     <|
-        h1 [ Styles.headerStyle ] [ text label ]
+        h1 [ headerStyle ] [ text label ]
             :: [
                 div [] <| List.map
                 (\( actionLabel, actionMsg, baseStyle ) ->
