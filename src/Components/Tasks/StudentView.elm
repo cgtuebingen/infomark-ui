@@ -1,4 +1,4 @@
-module Components.TaskViewer exposing
+module Components.Tasks.StudentView exposing
     ( Model
     , Msg(..)
     , init

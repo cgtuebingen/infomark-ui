@@ -33,8 +33,8 @@ import Api.Data.Task exposing (Task)
 import Api.Request.Account as AccountRequests
 import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.TaskEditor as TaskEditor
-import Components.TaskViewer as TaskViewer
+import Components.Tasks.AdminView as TaskAdminView
+import Components.Tasks.StudentView as TaskStudentView
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -60,13 +60,13 @@ type Msg
 
 
 type TaskMsgTypes
-    = AdminTaskMsg TaskEditor.Msg
-    | StudentTaskMsg TaskViewer.Msg
+    = AdminTaskMsg TaskAdminView.Msg
+    | StudentTaskMsg TaskStudentView.Msg
 
 
 type TaskModel
-    = AdminTaskModel TaskEditor.Model
-    | StudentTaskModel TaskViewer.Model
+    = AdminTaskModel TaskAdminView.Model
+    | StudentTaskModel TaskStudentView.Model
 
 
 type alias Model =
@@ -110,11 +110,11 @@ update sharedState msg model =
                         (case modelType of
                             AdminTaskModel _ ->
                                 AdminTaskMsg <|
-                                    TaskEditor.UploadProgress progress
+                                    TaskAdminView.UploadProgress progress
 
                             StudentTaskModel _ ->
                                 StudentTaskMsg <|
-                                    TaskViewer.UploadProgress progress
+                                    TaskStudentView.UploadProgress progress
                         )
                 )
                 ( model, Cmd.none, NoUpdate )
@@ -177,14 +177,14 @@ getUpdateForTasks sharedState model id taskMsg =
         ( AdminTaskMsg subMsg, Just (AdminTaskModel taskModel) ) ->
             let
                 ( newModel, newCmd, newSharedState ) =
-                    TaskEditor.update sharedState subMsg taskModel
+                    TaskAdminView.update sharedState subMsg taskModel
             in
             Just ( AdminTaskModel newModel, Cmd.map AdminTaskMsg newCmd, newSharedState )
 
         ( StudentTaskMsg subMsg, Just (StudentTaskModel taskModel) ) ->
             let
                 ( newModel, newCmd, newSharedState ) =
-                    TaskViewer.update sharedState subMsg taskModel
+                    TaskStudentView.update sharedState subMsg taskModel
             in
             Just ( StudentTaskModel newModel, Cmd.map StudentTaskMsg newCmd, newSharedState )
 
@@ -204,7 +204,7 @@ fillModelTaskDict model =
                                 |> List.map
                                     (\task ->
                                         ( task.id
-                                        , TaskEditor.initFromTask model.course_id task
+                                        , TaskAdminView.initFromTask model.course_id task
                                         )
                                     )
                     in
@@ -230,7 +230,7 @@ fillModelTaskDict model =
                     let
                         taskIdModelCmdsList =
                             tasks
-                                |> List.map (\task -> ( task.id, TaskViewer.init model.course_id task ))
+                                |> List.map (\task -> ( task.id, TaskStudentView.init model.course_id task ))
                     in
                     ( { model
                         | taskDict =
@@ -285,13 +285,13 @@ viewTasks sharedState model =
                         AdminTaskModel taskModel ->
                             ( taskModel.id
                             , Html.map AdminTaskMsg <|
-                                TaskEditor.view sharedState taskModel
+                                TaskAdminView.view sharedState taskModel
                             )
 
                         StudentTaskModel taskModel ->
                             ( taskModel.id
                             , Html.map StudentTaskMsg <|
-                                TaskViewer.view sharedState taskModel
+                                TaskStudentView.view sharedState taskModel
                             )
                 )
             |> List.map (\( id, taskModel ) -> Html.map (TaskMsg id) taskModel)

@@ -1,4 +1,4 @@
-module Components.TaskEditor exposing
+module Components.Tasks.AdminView exposing
     ( Model
     , Msg(..)
     , initCreate
