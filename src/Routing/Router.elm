@@ -29,6 +29,7 @@ import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
+import Pages.MailEditor as MailEditor
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -68,6 +69,7 @@ type CurrentModel
     | MailConfirmationModel MailConfirmation.Model
     | RequestPasswordResetModel RequestPasswordReset.Model
     | PasswordResetModel PasswordReset.Model
+    | MailEditorModel MailEditor.Model
     | NotFound
 
 
@@ -99,6 +101,7 @@ type Msg
     | MailConfirmationMsg MailConfirmation.Msg
     | RequestPasswordResetMsg RequestPasswordReset.Msg
     | PasswordResetMsg PasswordReset.Msg
+    | MailEditorMsg MailEditor.Msg
     | NoOp
 
 
@@ -239,6 +242,10 @@ update sharedState msg model =
             PasswordReset.update sharedState passwordResetMsg passwordReset
                 |> updateWith PasswordResetModel PasswordResetMsg model
 
+        ( MailEditorMsg mailEditorMsg, MailEditorModel mailEditor ) ->
+            MailEditor.update sharedState mailEditorMsg mailEditor
+                |> updateWith MailEditorModel MailEditorMsg model
+
         ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
@@ -333,6 +340,15 @@ navigateTo route model =
         PasswordResetRoute mail token ->
             PasswordReset.init mail token |> initWith PasswordResetModel PasswordResetMsg model NoUpdate
 
+        MailToUsersRoute userId ->
+            MailEditor.initForUser userId |> initWith MailEditorModel MailEditorMsg model NoUpdate
+
+        MailToGroupRoute courseId groupId ->
+            MailEditor.initForGroup courseId groupId |> initWith MailEditorModel MailEditorMsg model NoUpdate
+        
+        MailToCourseRoute courseId ->
+            MailEditor.initForCourse courseId |> initWith MailEditorModel MailEditorMsg model NoUpdate
+
         NotFoundRoute ->
             ( { model | currentModel = NotFound }
             , Cmd.none
@@ -395,6 +411,15 @@ view msgMapper sharedState model =
 
                 PasswordResetRoute _ _ ->
                     "page-title-reset"
+
+                MailToUsersRoute _ ->
+                    "page-title-email"
+
+                MailToGroupRoute _ _ ->
+                    "page-title-email"
+            
+                MailToCourseRoute _ ->
+                    "page-title-email"
 
                 NotFoundRoute ->
                     "page-title-404"
@@ -706,6 +731,10 @@ pageView sharedState model =
         PasswordResetModel passwordReset ->
             PasswordReset.view sharedState passwordReset
                 |> Html.map PasswordResetMsg
+
+        MailEditorModel mailEditor ->
+            MailEditor.view sharedState mailEditor
+                |> Html.map MailEditorMsg
 
         NotFound ->
             div
