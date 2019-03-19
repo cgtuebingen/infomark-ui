@@ -40,6 +40,7 @@ import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Utils.Styles as Styles
+import Spinner
 import Components.Dialog as Dialog
 
 
@@ -325,6 +326,7 @@ r3Column child1 child2 child3 =
 type PbbState msg
     = PbbButton (PbbButtonState msg)
     | PbbProgressBar Int
+    | PbbSpinner Spinner.Model
 
 type PbbButtonState msg
     = PbbActive String msg
@@ -380,6 +382,19 @@ progressBarButton barOrButtonState =
                     ]
                     [ text " "]
                 ]
+
+        PbbSpinner spinnerModel ->
+            div
+                [ baseButtonStyle
+                , classes
+                    [ TC.dib
+                    , TC.relative
+                    , TC.w_100
+                    , TC.mt5
+                    , TC.mb3
+                    ]
+                ]
+                [ Spinner.view Styles.spinnerRedStyle spinnerModel ]
 
 
 multiButton : List (String, Bool, msg) -> Html msg

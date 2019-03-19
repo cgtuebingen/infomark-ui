@@ -4,7 +4,12 @@ import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement)
+import Components.CommonElements exposing 
+    ( inputElement
+    , rRowButton
+    , PbbState(..)
+    , PbbButtonState(..)
+    )
 import Components.Toasty
 import Decoders
 import Dict
@@ -230,26 +235,13 @@ view sharedState model =
 
 viewLoginButtonOrSpinner : WebData a -> Model -> Html Msg
 viewLoginButtonOrSpinner status model =
-    case status of
-        RemoteData.Loading ->
-            div
-                [ classes
-                    [ TC.dib
-                    , TC.relative
-                    , TC.w_100
-                    , TC.mt5
-                    , TC.mb3
-                    ]
-                ]
-                [ Spinner.view Styles.spinnerRedStyle model.spinner ]
+    rRowButton <|
+        case status of
+            RemoteData.Loading ->
+                PbbSpinner model.spinner
 
-        _ ->
-            button
-                [ Styles.buttonGreyStyle
-                , classes [ TC.mt4, TC.w_100 ]
-                , onClick Login
-                ]
-                [ text "Anmelden" ]
+            _ ->
+                PbbButton <| PbbActive "Anmelden" Login
 
 
 viewLoginError : String -> Html Msg
