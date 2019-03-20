@@ -12,7 +12,6 @@ type alias Group =
     , description : String
     , tutor : User
     , courseId : Int
-    , participants : Maybe (List User)
     }
 
 
@@ -23,7 +22,6 @@ decoder =
         |> required "description" Decode.string
         |> required "tutor" User.decoder
         |> required "course_id" Decode.int
-        |> optional "participants" (Decode.nullable (Decode.list User.decoder)) Nothing
 
 
 encoder : Group -> Encode.Value
@@ -33,5 +31,4 @@ encoder model =
         , ( "description", Encode.string model.description )
         , ( "tutor", User.encoder model.tutor )
         , ( "course_id", Encode.int model.courseId )
-        , ( "participants", maybe (Encode.list User.encoder) model.participants )
         ]

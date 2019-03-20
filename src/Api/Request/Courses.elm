@@ -193,12 +193,11 @@ coursesBidsGet id msg =
         Decode.list GroupBid.decoder
 
 
-coursesBidsPost : Int -> GroupBid -> (WebData GroupBid -> msg) -> Cmd msg
+coursesBidsPost : Int -> GroupBid -> (WebData () -> msg) -> Cmd msg
 coursesBidsPost id groupBidNew msg =
-    post (unwrap <| courseGroupBids id)
+    postExpectNothing (unwrap <| courseGroupBids id)
         (Http.jsonBody (GroupBid.encoder groupBidNew))
         msg
-        GroupBid.decoder
 
 
 courseSheetsGet : Int -> (WebData (List Sheet) -> msg) -> Cmd msg

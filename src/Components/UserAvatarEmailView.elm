@@ -47,6 +47,7 @@ initFromUser user =
     , Cmd.none
     )
 
+
 updateFromUserAvatar : SharedState -> Int -> Cmd msg
 updateFromUserAvatar sharedState userId =
     pushUrl sharedState.navKey (reverseRoute <| MailToUsersRoute userId)
@@ -54,7 +55,17 @@ updateFromUserAvatar sharedState userId =
 
 view : SharedState -> Model -> (Int -> msg) -> Html msg
 view sharedState model msg =
-    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph0_l, TC.w_third_l, TC.w_50_m, TC.w_100 ] ]
+    div 
+        [ classes 
+            [ TC.flex
+            , TC.items_center
+            , TC.pa3
+            , TC.ph0_l
+            , TC.w_third_l
+            , TC.w_50_m
+            , TC.w_100 
+            ] 
+        ]
         [ img
             [ src model.avatarUrl
             , classes
@@ -70,7 +81,10 @@ view sharedState model msg =
             ]
             []
         , div [ classes [ TC.flex_auto, TC.pl2 ] ]
-            [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0, TC.ph2 ] ] [ text (model.firstName ++ " " ++ model.lastName) ]
+            [ h1 
+                [ Styles.listHeadingStyle
+                , classes [ TC.mv0, TC.ph2 ] 
+                ] [ text (model.firstName ++ " " ++ model.lastName) ]
             , button 
                 [ Styles.linkGreyStyle
                 , classes [ TC.mv0, TC.tl, TC.mh0 ]
