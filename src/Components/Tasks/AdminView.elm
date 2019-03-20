@@ -119,7 +119,7 @@ type alias Model =
 
 initModel : ( Model, Cmd Msg )
 initModel =
-    ( { id = 0
+    ( { id = -1
       , courseId = 0
       , sheet_id = 0
       , max_points = "0"
@@ -276,7 +276,7 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         TaskCreateRequest (Success task) ->
-            uploadFiles model
+            uploadFiles { model | id = task.id }
 
         TaskCreateRequest response ->
             ( model, Cmd.none, NoUpdate )
@@ -328,7 +328,12 @@ uploadFiles model =
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     rContainer <|
-        rCollapsable ("Task " ++ String.fromInt model.id)
+        rCollapsable 
+            (if model.createTask then
+                "New task"
+            else 
+                "Task " ++ String.fromInt model.id
+            )
             model.collapse
             ToggleCollapse
             ( "Show", "Hide" )

@@ -207,6 +207,10 @@ fillModelTaskDict model =
                                         , TaskAdminView.initFromTask model.course_id task
                                         )
                                     )
+                                |> Utils.flip List.append 
+                                    [ 
+                                        ( -1, TaskAdminView.initCreate model.course_id model.id)
+                                    ]
                     in
                     ( { model
                         | taskDict =
