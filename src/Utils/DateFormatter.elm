@@ -16,6 +16,7 @@ import Iso8601
 import SharedState exposing (SharedState)
 import Time exposing (Posix, Zone(..))
 import Utils.DateAndTimeUtils exposing (dateToPosix)
+import Utils.Utils exposing (flip)
 
 
 dayFormatter : SharedState -> Time.Weekday -> String
@@ -118,11 +119,6 @@ shortDayFormatter sharedState day =
 
         Time.Sun ->
             t "day-sun-short"
-
-
-flip : (a -> b -> c) -> (b -> a -> c)
-flip f b a =
-    f a b
 
 
 dateToShortFormatString : SharedState -> Date -> String

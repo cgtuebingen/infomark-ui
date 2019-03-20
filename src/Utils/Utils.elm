@@ -1,10 +1,11 @@
-module Utils.Utils exposing (handleLogoutErrors, perform)
+module Utils.Utils exposing (handleLogoutErrors, perform, split, flip)
 
 import Browser.Navigation exposing (pushUrl)
 import Http
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Task
+import List
 
 
 perform : msg -> Cmd msg
@@ -29,3 +30,14 @@ handleLogoutErrors model sharedState handler err =
 
         _ ->
             handler err
+
+
+split : Int -> List a -> List (List a)
+split i list =
+  case List.take i list of
+    [] -> []
+    listHead -> listHead :: split i (List.drop i list)
+
+flip : (a -> b -> c) -> (b -> a -> c)
+flip f b a =
+    f a b

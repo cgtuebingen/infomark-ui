@@ -60,9 +60,10 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Utils.Utils exposing (perform)
+import Utils.Utils exposing (perform, flip)
 import File.Download as Download
 import Components.UserAvatarEmailView as UserView
+import Components.Groups.BiddingView as BiddingView
 
 
 type Msg
@@ -450,7 +451,20 @@ viewSheets sharedState model =
                                         []
                                     )
                                 )
-                        )
+                        ) |>
+                        flip List.append
+                            [ if model.courseRole == Just Admin then
+                                rRowHeaderActionButtons "New sheet" Styles.listHeadingStyle 
+                                    [ 
+                                        ( "Create"
+                                        , NavigateTo <| CreateSheetRoute model.courseId
+                                        , Styles.buttonGreenStyle) 
+                                    ]
+                                
+                            else
+                                text ""
+                            ]
+                        
                 _ -> 
                     [ div [] [ text "Loading"] ]
         ]
