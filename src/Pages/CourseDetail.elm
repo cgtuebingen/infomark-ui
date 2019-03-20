@@ -62,6 +62,7 @@ import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (perform)
 import File.Download as Download
+import Components.UserAvatarEmailView as UserView
 
 
 type Msg
@@ -82,6 +83,7 @@ type Msg
     | SearchUserForGroup
     | ChangeEnrollment UserEnrollment
     | ChangeGroup Int GroupEnrollmentChange
+    | WriteTo Int
     | DownloadSheet Int Int
 
 
@@ -217,6 +219,9 @@ update sharedState msg model =
         DownloadSheet courseId sheetId ->
             ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate)
 
+        WriteTo userId ->
+            ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate)
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
@@ -298,49 +303,17 @@ viewTeam sharedState model =
             in
             [ div [ classes [ TC.ph3, TC.ph5_ns ] ]
                 [ h1 [ Styles.headerStyle, classes [ TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ] ] [ text "Team" ]
-                , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_start ] ] <|
-                    List.map viewTeamMember sortedTeam
+                , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_start ] ]
+                    ( sortedTeam |>
+                        List.map (\ue -> UserView.initFromUser ue.user) |>
+                            List.map Tuple.first |>
+                                List.map (\uv -> UserView.view sharedState uv WriteTo)
+                    )
                 ]
             ]
 
         _ ->
             [ text "Loading" ]
-
-
-viewTeamMember : UserEnrollment -> Html Msg
-viewTeamMember userEnrollment =
-    let
-        user =
-            userEnrollment.user
-
-        avatar =
-            case user.avatarUrl of
-                Just avatarUrl ->
-                    avatarUrl
-
-                Nothing ->
-                    "assets/defaultAvatar.png"
-    in
-    div [ classes [ TC.flex, TC.items_center, TC.pa3, TC.ph0_l, TC.w_third_l, TC.w_50_m, TC.w_100 ] ]
-        [ img
-            [ src avatar
-            , classes
-                [ TC.br_100
-                , TC.ba
-                , TC.b__black_10
-                , TC.shadow_5_ns
-                , TC.h3_ns
-                , TC.h2
-                , TC.w3_ns
-                , TC.w2
-                ]
-            ]
-            []
-        , div [ classes [ TC.flex_auto, TC.pl3 ] ]
-            [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
-            , h2 [ Styles.textStyle, classes [ TC.mv0 ], style "word-break" "break-all" ] [ text user.email ] -- TODO make clickable
-            ]
-        ]
 
 
 viewMemberSearch : SharedState -> Model -> List (Html Msg)
