@@ -1,4 +1,4 @@
-module Api.Data.Material exposing (Material, decoder, encoder)
+module Api.Data.Material exposing (Material, MaterialType(..), decoder, encoder)
 
 import Iso8601
 import Json.Decode as Decode exposing (Decoder)
@@ -29,8 +29,8 @@ decoder =
         |> required "id" Decode.int
         |> optional "file_url" (Decode.nullable Decode.string) Nothing
         |> required "name" Decode.string
-        |> required "material_type" typeDecoder
-        |> required "published_at" Iso8601.decoder
+        |> required "kind" typeDecoder
+        |> required "publish_at" Iso8601.decoder
         |> required "lecture_at" Iso8601.decoder
 
 
@@ -38,21 +38,20 @@ encoder : Material -> Encode.Value
 encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
-        , ( "file_url", maybe Encode.string model.file_url )
         , ( "name", Encode.string model.name )
-        , ( "material_type", typeEncoder model.material_type )
-        , ( "published_at", Iso8601.encode model.published_at )
+        , ( "kind", typeEncoder model.material_type )
+        , ( "publish_at", Iso8601.encode model.published_at )
         , ( "lecture_at", Iso8601.encode model.lecture_at )
         ]
 
 
 typeDecoder : Decoder MaterialType
 typeDecoder =
-    Decode.string
+    Decode.int
         |> Decode.andThen
             (\str ->
                 case str of
-                    "slide" ->
+                    0 ->
                         Decode.succeed Slide
 
                     _ ->
@@ -64,7 +63,7 @@ typeEncoder : MaterialType -> Encode.Value
 typeEncoder materialType =
     case materialType of
         Supplementary ->
-            Encode.string "supplementary"
+            Encode.int 1
 
         Slide ->
-            Encode.string "slide"
+            Encode.int 0

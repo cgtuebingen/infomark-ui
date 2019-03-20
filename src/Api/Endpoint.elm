@@ -11,9 +11,12 @@ module Api.Endpoint exposing
     , courseGroupBids
     , courseGroups
     , courseSheets
+    , courseMaterials
     , courses
     , groups
     , groupsEnrollment
+    , material
+    , materialFile
     , me
     , requestPasswordReset
     , sessions
@@ -129,6 +132,11 @@ courseSheets id =
     url [ "courses", String.fromInt id, "sheets" ] []
 
 
+courseMaterials : Int -> Endpoint
+courseMaterials id =
+    url [ "courses", String.fromInt id, "materials" ] []
+
+
 courseEnrollment : Int -> List QueryParameter -> Endpoint
 courseEnrollment id params =
     url [ "courses", String.fromInt id, "enrollments" ] params
@@ -162,6 +170,16 @@ groups courseId id =
 groupsEnrollment : Int -> Int -> Endpoint
 groupsEnrollment courseId id =
     url [ "courses", String.fromInt courseId, "groups", String.fromInt id, "enrollments" ] []
+
+
+material : Int -> Int -> Endpoint
+material courseId materialId =
+    url [ "courses", String.fromInt courseId, "materials", String.fromInt materialId ] []
+
+
+materialFile : Int -> Int -> Endpoint
+materialFile courseId materialId =
+    url [ "courses", String.fromInt courseId, "materials", String.fromInt materialId, "file"] []
 
 
 sheet : Int -> Int -> Endpoint

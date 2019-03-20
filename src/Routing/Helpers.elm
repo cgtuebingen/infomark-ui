@@ -14,6 +14,8 @@ type Route
     | CourseDetailRoute Int
     | CreateSheetRoute Int
     | EditSheetRoute Int Int
+    | CreateMaterialRoute Int
+    | EditMaterialRoute Int Int
     | SheetDetailRoute Int Int
     | SubmissionGradingRoute Int Int Int
     | AdminRoute
@@ -58,6 +60,12 @@ reverseRoute route =
 
                 EditSheetRoute courseId id ->
                     [ "course", String.fromInt courseId, "sheet", String.fromInt id, "edit" ]
+
+                CreateMaterialRoute courseId ->
+                    [ "course", String.fromInt courseId, "material", "create" ]
+
+                EditMaterialRoute courseId id ->
+                    [ "course", String.fromInt courseId, "material", String.fromInt id, "edit" ]
 
                 SheetDetailRoute courseId id ->
                     [ "course", String.fromInt courseId, "sheet", String.fromInt id ]
@@ -107,6 +115,8 @@ routeParser =
         , Url.Parser.map SheetDetailRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int)
         , Url.Parser.map CreateSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.s "create")
         , Url.Parser.map EditSheetRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "sheet" </> Url.Parser.int </> Url.Parser.s "edit")
+        , Url.Parser.map CreateMaterialRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "material" </> Url.Parser.s "create")
+        , Url.Parser.map EditMaterialRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "material" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map SubmissionGradingRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "task" </> Url.Parser.int </> Url.Parser.s "grade" </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map ProfileEditorRoute (Url.Parser.s "profile")
         , Url.Parser.map AdminRoute (Url.Parser.s "admin")

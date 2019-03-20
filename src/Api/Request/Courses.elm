@@ -20,8 +20,11 @@ module Api.Request.Courses exposing
     , coursesEnrollmentsUserDelete
     , coursesGet
     , coursesPost
+    , courseMaterialsGet
+    , courseMaterialsPost
     )
 
+import Api.Data.Material as Material exposing (Material)
 import Api.Data.Course as Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
@@ -40,6 +43,7 @@ import Api.Endpoint
         , courseSheets
         , courses
         , submissions
+        , courseMaterials
         , unwrap
         )
 import Api.Helper exposing 
@@ -244,3 +248,19 @@ submissionsForUserPerSheet courseId userId sheetId msg =
             ]
     in
     coursesSubmissions courseId params msg
+
+
+courseMaterialsGet : Int -> (WebData (List Material) -> msg) -> Cmd msg
+courseMaterialsGet id msg =
+    get (unwrap <| courseMaterials id)
+        msg
+    <|
+        Decode.list Material.decoder
+
+
+courseMaterialsPost : Int -> Material -> (WebData Material -> msg) -> Cmd msg
+courseMaterialsPost id materialNew msg =
+    post (unwrap <| courseMaterials id)
+        (Http.jsonBody <| Material.encoder materialNew)
+        msg
+        Material.decoder

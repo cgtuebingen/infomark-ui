@@ -28,6 +28,7 @@ import Pages.Registration as Registration
 import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
+import Pages.MaterialEditor as MaterialEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
 import Pages.MailEditor as MailEditor
 import RemoteData exposing (RemoteData(..), WebData)
@@ -62,6 +63,7 @@ type CurrentModel
     | CoursesModel Courses.Model
     | CourseDetailModel CourseDetail.Model
     | CourseEditorModel CourseEditor.Model
+    | MaterialEditorModel MaterialEditor.Model
     | SheetDetailModel SheetDetail.Model
     | SheetEditorModel SheetEditor.Model
     | SubmissionGradingEditorModel SubmissionGradingEditor.Model
@@ -94,6 +96,7 @@ type Msg
     | CoursesMsg Courses.Msg
     | CourseDetailMsg CourseDetail.Msg
     | CourseEditorMsg CourseEditor.Msg
+    | MaterialEditorMsg MaterialEditor.Msg
     | SheetDetailMsg SheetDetail.Msg
     | SheetEditorMsg SheetEditor.Msg
     | SubmissionGradingEditorMsg SubmissionGradingEditor.Msg
@@ -201,6 +204,10 @@ update sharedState msg model =
         ( CourseEditorMsg courseEditorMsg, CourseEditorModel courseEditor ) ->
             CourseEditor.update sharedState courseEditorMsg courseEditor
                 |> updateWith CourseEditorModel CourseEditorMsg model
+
+        ( MaterialEditorMsg materialEditorMsg, MaterialEditorModel materialEditor) ->
+            MaterialEditor.update sharedState materialEditorMsg materialEditor
+                |> updateWith MaterialEditorModel MaterialEditorMsg model
 
         ( CourseDetailMsg courseDetailMsg, CourseDetailModel courseDetail ) ->
             CourseDetail.update sharedState courseDetailMsg courseDetail
@@ -319,6 +326,12 @@ navigateTo route model =
         EditSheetRoute courseId id ->
             SheetEditor.initEdit courseId id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
+        CreateMaterialRoute courseId ->
+            MaterialEditor.initCreate courseId |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
+
+        EditMaterialRoute courseId id ->
+            MaterialEditor.initEdit courseId id |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
+
         SheetDetailRoute courseId id ->
             SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
 
@@ -390,6 +403,12 @@ view msgMapper sharedState model =
 
                 EditSheetRoute _ _ ->
                     "page-title-edit-sheet"
+
+                CreateMaterialRoute _ ->
+                    "page-title-create-material"
+
+                EditMaterialRoute _ _ ->
+                    "page-title-edit-material"
 
                 SheetDetailRoute _ _ ->
                     "page-title-sheet"
@@ -703,6 +722,10 @@ pageView sharedState model =
         SheetEditorModel sheetEditor ->
             SheetEditor.view sharedState sheetEditor
                 |> Html.map SheetEditorMsg
+
+        MaterialEditorModel materialEditor ->
+            MaterialEditor.view sharedState materialEditor
+                |> Html.map MaterialEditorMsg
 
         SheetDetailModel sheetDetail ->
             SheetDetail.view sharedState sheetDetail
