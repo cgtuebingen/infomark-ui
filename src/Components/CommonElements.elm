@@ -27,6 +27,9 @@ module Components.CommonElements exposing
     , PbbButtonState(..)
     , PbbResultState(..)
     , simpleDialog
+    , rRowWarning
+    , datesDisplayContainer
+    , dateElement
     )
 
 import Date exposing (Date)
@@ -151,6 +154,18 @@ sliderInputElement inputConfig field errors msg =
     ]
 
 
+datesDisplayContainer : List (Html msg) -> Html msg
+datesDisplayContainer childs =
+    dl [ Styles.dateStyle ] childs
+
+
+dateElement : String -> Html msg -> List (Html msg)
+dateElement label formattedTime =
+    [ dt [ classes [ TC.black, TC.fw6 ] ] [ text label ]
+    , dd [ classes [ TC.ml0 ] ] [ formattedTime ]
+    ]
+
+
 inputLabel : String -> Html msg
 inputLabel title =
     label
@@ -202,6 +217,15 @@ rRowHeader label =
     rRow <|
         [ h1 [ Styles.headerStyle ] [ text label ] ]
 
+
+rRowWarning : String -> String -> Html msg
+rRowWarning header body =
+    rRow <|
+        [ div [ classes [TC.bg_red, TC.b__white_60, TC.bw1, TC.br3, TC.ma2, TC.pa4, TC.mw8, TC.shadow_5] ]
+            [ h3 [Styles.listHeadingStyle, classes [TC.white, TC.mt0]] [text header ]
+            , span [Styles.textStyle, classes [TC.white] ] [text body]
+            ]
+        ]
 
 rRowHeaderActionButtons : String -> Html.Attribute msg -> List ( String, msg, Html.Attribute msg ) -> Html msg
 rRowHeaderActionButtons label headerStyle actions =

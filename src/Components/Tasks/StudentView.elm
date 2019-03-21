@@ -220,8 +220,8 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
 
-view : SharedState -> Model -> Html Msg
-view sharedState model =
+view : SharedState -> Model -> Bool -> Html Msg
+view sharedState model deadlineReached =
     rContainer <|
         rCollapsable ("Task " ++ String.fromInt model.task.id)
             model.collapse
@@ -284,6 +284,8 @@ view sharedState model =
                         PbbResult <| PbbSuccess "Success"
                     else if failure && stateShownLongEnough == Just False then
                         PbbResult <| PbbFailure "Failure"
+                    else if deadlineReached then
+                        PbbDisabled "Submission closed"
                     else if not filesSelected then
                         PbbDisabled "Upload"
                     else

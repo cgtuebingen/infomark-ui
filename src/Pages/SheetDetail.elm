@@ -32,6 +32,7 @@ import Api.Data.Sheet exposing (Sheet)
 import Api.Data.Task exposing (Task)
 import Api.Request.Account as AccountRequests
 import Api.Request.Sheet as SheetRequests
+import Api.Endpoint exposing (unwrap, sheetFile)
 import Browser.Navigation exposing (pushUrl)
 import Components.Tasks.AdminView as TaskAdminView
 import Components.Tasks.StudentView as TaskStudentView
@@ -49,6 +50,20 @@ import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
 import Utils.Utils as Utils
+import File.Download as Download
+import Utils.DateFormatter as DF
+import Components.CommonElements exposing 
+    ( pageContainer
+    , normalPage
+    , rContainer
+    , rRow
+    , rRowExtraSpacing
+    , rRowHeader
+    , rRowHeaderActionButtons
+    , rRowWarning
+    , datesDisplayContainer
+    , dateElement
+    )
 
 
 type Msg
@@ -57,6 +72,8 @@ type Msg
     | UploadProgressMsg Http.Progress
     | GetTaskFetchResponse (WebData (List Task))
     | GetEnrollmentResponse (WebData (List AccountEnrollment))
+    | GetSheetDetailResponse (WebData Sheet)
+    | DownloadSheet Int Int
 
 
 type TaskMsgTypes
@@ -75,6 +92,7 @@ type alias Model =
     , role : Maybe CourseRole
     , taskResponse : WebData (List Task)
     , taskDict : Dict Int TaskModel
+    , sheetDetailResponse : WebData Sheet
     }
 
 
@@ -85,10 +103,12 @@ init course_id id =
       , role = Nothing
       , taskDict = Dict.empty
       , taskResponse = Loading
+      , sheetDetailResponse = Loading
       }
     , Cmd.batch
         -- Query the role and all tasks
         [ SheetRequests.sheetTasksGet course_id id GetTaskFetchResponse
+        , SheetRequests.sheetGet course_id id GetSheetDetailResponse
         , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
         ]
     )
@@ -126,6 +146,12 @@ update sharedState msg model =
                     fillModelTaskDict { model | taskResponse = response }
             in
             ( newModel, cmds, NoUpdate )
+
+        GetSheetDetailResponse response ->
+            ( { model | sheetDetailResponse = response }, Cmd.none, NoUpdate )
+
+        DownloadSheet courseId sheetId ->
+            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate)
 
         GetEnrollmentResponse (Success roles) ->
             let
@@ -264,39 +290,75 @@ fillModelTaskDict model =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0_ns, TC.w_100 ] ]
-        [ --Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-          div
-            [ classes
-                [ TC.mw8
-                , TC.ph4
-                , TC.ph5_ns
-                , TC.center
-                ]
-            ]
-            [ viewTasks sharedState model
+    pageContainer
+        [ normalPage <|
+            [ viewSheetDetail sharedState model
+            , rRowHeader "Tasks"
+            , viewTasks sharedState model
             ]
         ]
+
+viewSheetDetail : SharedState -> Model -> Html Msg
+viewSheetDetail sharedState model =
+    case model.sheetDetailResponse of
+        Success detail ->
+            rContainer <|
+                [ rRowHeaderActionButtons detail.name Styles.headerStyle
+                    ([ ("Download", DownloadSheet model.course_id model.id, Styles.buttonGreenStyle) 
+                    ] ++ 
+                        if model.role == Just Admin then
+                            [ ("Edit", NavigateTo <| EditSheetRoute model.course_id model.id, Styles.buttonGreyStyle) ]
+                        else
+                            []
+                    )
+                , if checkIfSheetStillActive sharedState detail.due_at then
+                    rRowWarning "Submission closed" <| 
+                        "The sheet was due " ++ 
+                        DF.shortDateFormatter sharedState detail.due_at ++
+                        " at " ++ DF.timeFormatter sharedState detail.due_at
+                else
+                    text ""
+                , datesDisplayContainer <|
+                    (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at)
+
+                ]
+
+
+        Failure err ->
+            text "Error loading"
+
+        _ ->
+            text "Loading"
 
 
 viewTasks : SharedState -> Model -> Html Msg
 viewTasks sharedState model =
-    div []
-        (Dict.values model.taskDict
-            |> List.map
-                (\taskModelType ->
-                    case taskModelType of
-                        AdminTaskModel taskModel ->
-                            ( taskModel.id
-                            , Html.map AdminTaskMsg <|
-                                TaskAdminView.view sharedState taskModel
-                            )
+    case model.sheetDetailResponse of
+        Success detail ->
+            div [ classes [ TC.mh3, TC.pa1 ] ]
+                (Dict.values model.taskDict
+                    |> List.map
+                        (\taskModelType ->
+                            case taskModelType of
+                                AdminTaskModel taskModel ->
+                                    ( taskModel.id
+                                    , Html.map AdminTaskMsg <|
+                                        TaskAdminView.view sharedState taskModel
+                                    )
 
-                        StudentTaskModel taskModel ->
-                            ( taskModel.id
-                            , Html.map StudentTaskMsg <|
-                                TaskStudentView.view sharedState taskModel
-                            )
+                                StudentTaskModel taskModel ->
+                                    ( taskModel.id
+                                    , Html.map StudentTaskMsg <|
+                                        TaskStudentView.view sharedState taskModel <|
+                                            checkIfSheetStillActive sharedState detail.due_at
+                                    )
+                        )
+                    |> List.map (\( id, taskModel ) -> Html.map (TaskMsg id) taskModel)
                 )
-            |> List.map (\( id, taskModel ) -> Html.map (TaskMsg id) taskModel)
-        )
+        _ ->
+            text ""
+
+checkIfSheetStillActive : SharedState -> Time.Posix -> Bool
+checkIfSheetStillActive sharedState deadlineTime =
+    (Time.posixToMillis deadlineTime) < 
+        (Maybe.withDefault 0 <| Maybe.map Time.posixToMillis sharedState.currentTime)

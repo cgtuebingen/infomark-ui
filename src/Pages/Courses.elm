@@ -20,7 +20,10 @@ import Components.CommonElements exposing
     ( pageContainer
     , rRowHeaderActionButtons
     , widePage
-    , simpleDialog)
+    , simpleDialog
+    , datesDisplayContainer
+    , dateElement
+    )
 import Components.Dialog as Dialog
 import Components.Toasty
 import Html exposing (..)
@@ -523,12 +526,9 @@ viewRenderCourse sharedState course enrollment =
                                 actionItems
                             )
                        ]
-            , dl [ Styles.dateStyle ]
-                [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
-                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
-                , dt [ classes [ TC.black, TC.fw6 ] ] [ text " Ende " ]
-                , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
-                ]
+            , datesDisplayContainer <|
+                (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at) ++
+                (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
             ]
         , div [ classes [ TC.measure ] ] <|
             [ MD.toHtml [ Styles.textStyle ] <| course.description -- Normal paragraph
