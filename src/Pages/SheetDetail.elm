@@ -319,8 +319,8 @@ viewSheetDetail sharedState model =
                 else
                     text ""
                 , datesDisplayContainer <|
-                    (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at)
-
+                    (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at) ++
+                    (dateElement "Maximale Punkte" <| text <| String.fromInt <| sumTasksPoints model )
                 ]
 
 
@@ -330,6 +330,20 @@ viewSheetDetail sharedState model =
         _ ->
             text "Loading"
 
+
+sumTasksPoints : Model -> Int
+sumTasksPoints model =
+    Dict.values model.taskDict
+        |> List.map (\taskModel -> 
+            case taskModel of
+                AdminTaskModel admin ->
+                    Maybe.withDefault 0 <| 
+                        String.toInt admin.max_points
+                StudentTaskModel student ->
+                    student.task.max_points
+
+        )
+        |> List.foldl (+) 0 
 
 viewTasks : SharedState -> Model -> Html Msg
 viewTasks sharedState model =
