@@ -495,6 +495,7 @@ viewSheets sharedState model =
             case model.sheetRequest of
                 Success sheets ->
                     sheets |>
+                        List.sortBy (\sheet -> Time.posixToMillis sheet.due_at ) |>
                         List.map (\sheet ->
                             rRowHeaderActionButtons sheet.name Styles.listHeadingStyle <|
                                 ([
