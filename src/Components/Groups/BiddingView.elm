@@ -301,7 +301,7 @@ viewGroupBid sharedState model data =
                 [ h3 [ Styles.listHeadingStyle ] 
                     [ text <| "Group - " ++ tutor.firstname ++ " " ++ tutor.lastname
                     ]
-                , span [ Styles.textStyle ] 
+                , span [ Styles.textStyle, classes [TC.mb3, TC.db] ] 
                     [ text <| group.description ]
                  ] ++ sliderInputElement 
                     { label = "Präferenz"
