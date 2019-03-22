@@ -385,7 +385,7 @@ viewMemberSearch sharedState model =
     div [ classes [ TC.ph3, TC.ph5_ns ] ]
         [ h1
             [ Styles.headerStyle
-            , classes [ TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ]
+            , classes [ TC.w_100, TC.pt4_ns, TC.pt3, TC.mb4_ns, TC.mb3 ]
             ]
             [ text "Change role" ]
         , div [ classes [ TC.w_100, TC.h3, TC.v_mid, TC.flex, TC.items_center ] ]
