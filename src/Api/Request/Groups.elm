@@ -2,14 +2,15 @@ module Api.Request.Groups exposing
     ( groupsDelete
     , groupsEnrollmentPost
     , groupsEnrollmentPut
+    , groupsEnrollmentGetAll
     , groupsGet
     , groupsPut
     )
 
 import Api.Data.Group as Group exposing (Group)
-import Api.Data.User as User exposing (User)
+import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
-import Api.Endpoint exposing (groups, groupsEnrollment, unwrap)
+import Api.Endpoint exposing (group, groupsEnrollment, unwrap)
 import Api.Helper exposing (delete, get, post, put, putExpectNothing, deleteExpectNothing, postExpectNothing)
 import Http
 import Json.Decode as Decode
@@ -18,40 +19,40 @@ import RemoteData exposing (RemoteData(..), WebData)
 
 groupsGet : Int -> Int -> (WebData Group -> msg) -> Cmd msg
 groupsGet courseId id msg =
-    get (unwrap <| groups courseId id)
+    get (unwrap <| group courseId id)
         msg
         Group.decoder
 
 
 groupsPut : Int -> Int -> Group -> (WebData () -> msg) -> Cmd msg
-groupsPut courseId id group msg =
-    putExpectNothing (unwrap <| groups courseId id)
-        (Http.jsonBody (Group.encoder group))
+groupsPut courseId id groupUpdate msg =
+    putExpectNothing (unwrap <| group courseId id)
+        (Http.jsonBody (Group.encoder groupUpdate))
         msg
 
 
 groupsDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
 groupsDelete courseId id msg =
-    deleteExpectNothing (unwrap <| groups courseId id)
+    deleteExpectNothing (unwrap <| group courseId id)
         msg
 
 
 groupsEnrollmentPut : Int -> Int -> GroupEnrollmentChange -> (WebData () -> msg) -> Cmd msg
 groupsEnrollmentPut courseId id groupEnrollment msg =
-    putExpectNothing (unwrap <| groupsEnrollment courseId id)
+    putExpectNothing (unwrap <| groupsEnrollment courseId id [])
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
 
 
 groupsEnrollmentPost : Int -> Int -> GroupEnrollmentChange -> (WebData () -> msg) -> Cmd msg
 groupsEnrollmentPost courseId id groupEnrollment msg =
-    postExpectNothing (unwrap <| groupsEnrollment courseId id)
+    postExpectNothing (unwrap <| groupsEnrollment courseId id [])
         (Http.jsonBody (GroupEnrollmentChange.encoder groupEnrollment))
         msg
 
 
-groupsEnrollmentGet : Int -> Int -> (WebData (List User) -> msg) -> Cmd msg
-groupsEnrollmentGet courseId groupId msg =
-    get (unwrap <| groupsEnrollment courseId groupId)
+groupsEnrollmentGetAll : Int -> Int -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+groupsEnrollmentGetAll courseId groupId msg =
+    get (unwrap <| groupsEnrollment courseId groupId [])
         msg <|
-        Decode.list User.decoder
+        Decode.list UserEnrollment.decoder

@@ -44,7 +44,21 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
 import Api.Endpoint exposing (unwrap, sheetFile)
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing (inputElement, multiButton, rRowHeaderActionButtons)
+import Components.CommonElements exposing 
+    ( inputElement
+    , multiButton
+    , rRowHeaderActionButtons
+    , pageContainer
+    , normalPage
+    , widePage
+    , rContainer
+    , rRow
+    , rRowExtraSpacing
+    , rRowHeader
+    , r2Column
+    , datesDisplayContainer
+    , dateElement
+    )
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -60,7 +74,7 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Utils.Utils exposing (perform, flip)
+import Utils.Utils exposing (perform, flip, handleLogoutErrors, tupleMapThree)
 import File.Download as Download
 import Components.UserAvatarEmailView as UserView
 import Components.Groups.BiddingView as BiddingView
@@ -73,11 +87,10 @@ type Msg
     | EnrollmentsResponse (WebData (List UserEnrollment)) -- List all enrollments in the course. Only used for students and tutors
     | SearchUserForEnrollmentResponse (WebData (List UserEnrollment)) -- Search for a specific user to change the enrollment
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
-    | GroupsListResponse (WebData (List Group)) -- List all groups. Only visible for unenrolled students/tutors and admins
     | GroupDisplayResponse (WebData Group) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
-    | GroupBidResponse (WebData GroupBid) -- Response for a group bid (only students)
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
+    | GroupMsg GroupMsgTypes
     | SheetRequestResponse (WebData (List Sheet))
     | SetField Field String
     | SearchUserForEnrollment
@@ -97,14 +110,18 @@ type alias Model =
     , enrollmentsRequest : WebData (List UserEnrollment)
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
-    , groupsRequest : WebData (List Group)
     , groupRequest : WebData Group
-    , groupBidRequest : WebData GroupBid
+    , groupModel : Maybe GroupModel
     , searchUserForGroupRequest : WebData UserEnrollment
-    , groupChangedRequest : WebData GroupEnrollmentChange
     , searchEnrollmentInput : String
     , searchGroupInput : String
     }
+
+type GroupMsgTypes
+    = BiddingMsg BiddingView.Msg
+
+type GroupModel
+    = BiddingModel BiddingView.Model
 
 
 init : Int -> ( Model, Cmd Msg )
@@ -117,11 +134,9 @@ init id =
       , enrollmentsRequest = NotAsked
       , searchUserForEnrollmentRequest = NotAsked
       , enrollmentChangedRequest = NotAsked
-      , groupsRequest = NotAsked
       , groupRequest = NotAsked
-      , groupBidRequest = NotAsked
+      , groupModel = Nothing
       , searchUserForGroupRequest = NotAsked
-      , groupChangedRequest = NotAsked
       , searchEnrollmentInput = ""
       , searchGroupInput = ""
       }
@@ -223,10 +238,62 @@ update sharedState msg model =
         WriteTo userId ->
             ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate)
 
+        GroupDisplayResponse response ->
+            updateOwnGroupDisplay sharedState model response
+
+        GroupMsg subMsg ->
+            let
+                (subModel, subCmd, subSharedState) = 
+                    case (model.groupModel, subMsg) of
+                        (Just (BiddingModel biddingModel), BiddingMsg bidMsg) ->
+                            tupleMapThree
+                                (\m -> Just <| BiddingModel m)
+                                (\m -> Cmd.map GroupMsg <| Cmd.map BiddingMsg m) 
+                                (\v -> v) <|
+                            BiddingView.update sharedState bidMsg biddingModel
+
+                        (_, _) -> (Nothing, Cmd.none, NoUpdate)
+            in
+            ( { model | groupModel = subModel }
+            , subCmd
+            , subSharedState
+            )
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
 
+updateOwnGroupDisplay : SharedState -> Model -> WebData Group -> (Model, Cmd Msg, SharedStateUpdate)
+updateOwnGroupDisplay sharedState model response =
+    case response of
+        Failure err ->
+            handleLogoutErrors {model | groupRequest = response } sharedState 
+                (\e ->
+                    let
+                        maybeInit = case e of
+                            Http.BadStatus 404 ->
+                                Just <| 
+                                    Tuple.mapBoth 
+                                        (\subModel -> BiddingModel subModel)
+                                        (\subMsg -> Cmd.map BiddingMsg subMsg) <|
+                                    BiddingView.init model.courseId
+                            _ ->
+                                Nothing
+                    in
+                    ( { model 
+                        | groupRequest = response 
+                        , groupModel = Maybe.map Tuple.first maybeInit
+                    }
+                    , Maybe.withDefault Cmd.none <| 
+                        Maybe.map (\subInit ->
+                            Cmd.map GroupMsg <| Tuple.second subInit) maybeInit
+                    , NoUpdate
+                    )              
+                ) 
+                err
+
+        _ ->
+            ( { model | groupRequest = response }, Cmd.none, NoUpdate)
 
 -- TODO if successful update searchProgress too
 
@@ -235,56 +302,44 @@ view : SharedState -> Model -> Html Msg
 view sharedState model =
     case ( model.courseRoleRequest, model.courseRole ) of
         ( Success _, Just role ) ->
-            div [ classes [ TC.db, TC.pv5_l, TC.pv3_m, TC.pv1, TC.ph0, TC.w_100 ] ]
-                [ div [ classes [ TC.w_75_l, TC.w_100, TC.ph0_l, TC.ph3_m, TC.ph2, TC.center, TC.mw9_ns ] ] <|
-                    viewCourseInfo sharedState model
-                        ++ viewDetermineTeamOrSearch role sharedState model
-                        ++ viewSheets sharedState model
+            pageContainer <|
+                [ widePage <| [ viewCourseInfo sharedState model ]
+                , normalPage <|
+                    [ viewDetermineTeamOrSearch role sharedState model
+                    , viewDetermineGroupDisplay role sharedState model
+                    , viewSheets sharedState model
+                    ]
                 ]
 
         ( _, _ ) ->
             div [] []
 
 
-viewCourseInfo : SharedState -> Model -> List (Html Msg)
+viewCourseInfo : SharedState -> Model -> Html Msg
 viewCourseInfo sharedState model =
     case model.courseRequest of
         RemoteData.Success course ->
-            [ article [ classes [ TC.cf, TC.ph3, TC.ph5_ns, TC.pt4 ] ]
-                [ header [ classes [ TC.fn, TC.fl_ns, TC.w_50_ns, TC.pr4_ns ] ]
-                    [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
-                    , dl [ Styles.dateStyle ]
-                        [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Beginn " ]
-                        , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.begins_at ]
-                        , dt [ classes [ TC.black, TC.fw6 ] ] [ text " Ende " ]
-                        , dd [ classes [ TC.ml0 ] ] [ DF.fullDateFormatter sharedState course.ends_at ]
+            div [ classes [TC.w_100, TC.b__black, TC.bw2, TC.bb, TC.pb3, TC.overflow_hidden] ]
+                ( r2Column 
+                    [ div []
+                        [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
+                        , datesDisplayContainer <|
+                            (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at) ++
+                            (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
                         ]
                     ]
-                , div
-                    [ classes
-                        [ TC.fn
-                        , TC.fl_ns
-                        , TC.w_50_ns
-                        , TC.lh_copy
-                        , TC.measure_wide
-                        , TC.mt4
-                        , TC.mt0_ns
-                        ]
-                    ]
-                    [ MD.toHtml [ Styles.textStyle ] <| course.description
-                    ]
-                ]
-            ]
+                    [ MD.toHtml [ Styles.textStyle ] <| course.description ]
+                )
 
         _ ->
-            [ text "" ]
+            text ""
 
 
 
 -- TODO loading, error etc.
 
 
-viewDetermineTeamOrSearch : CourseRole -> SharedState -> Model -> List (Html Msg)
+viewDetermineTeamOrSearch : CourseRole -> SharedState -> Model -> Html Msg
 viewDetermineTeamOrSearch courseRole sharedState model =
     case courseRole of
         Admin ->
@@ -294,7 +349,7 @@ viewDetermineTeamOrSearch courseRole sharedState model =
             viewTeam sharedState model
 
 
-viewTeam : SharedState -> Model -> List (Html Msg)
+viewTeam : SharedState -> Model -> Html Msg
 viewTeam sharedState model =
     case model.enrollmentsRequest of
         RemoteData.Success enrollments ->
@@ -302,8 +357,8 @@ viewTeam sharedState model =
                 sortedTeam =
                     List.sortWith compareRoleName enrollments
             in
-            [ div [ classes [ TC.ph3, TC.ph5_ns ] ]
-                [ h1 [ Styles.headerStyle, classes [ TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ] ] [ text "Team" ]
+            rContainer <|
+                [ rRowHeader "Team"
                 , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_start ] ]
                     ( sortedTeam |>
                         List.map (\ue -> UserView.initFromUser ue.user) |>
@@ -311,13 +366,12 @@ viewTeam sharedState model =
                                 List.map (\uv -> UserView.view sharedState uv WriteTo)
                     )
                 ]
-            ]
 
         _ ->
-            [ text "Loading" ]
+            text "Loading"
 
 
-viewMemberSearch : SharedState -> Model -> List (Html Msg)
+viewMemberSearch : SharedState -> Model -> Html Msg
 viewMemberSearch sharedState model =
     let
         displaySearchResults =
@@ -328,7 +382,7 @@ viewMemberSearch sharedState model =
                 _ ->
                     text ""
     in
-    [ div [ classes [ TC.ph3, TC.ph5_ns ] ]
+    div [ classes [ TC.ph3, TC.ph5_ns ] ]
         [ h1
             [ Styles.headerStyle
             , classes [ TC.w_100, TC.bt, TC.bw2, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ]
@@ -352,9 +406,9 @@ viewMemberSearch sharedState model =
                 ]
                 []
             ]
+        , displaySearchResults
         ]
-    , displaySearchResults
-    ]
+
 
 
 viewUserSearchResult : Model -> Maybe UserEnrollment -> Html Msg
@@ -410,22 +464,34 @@ viewUserSearchResult model maybeUserEnrollment =
                 [ text "Not found" ]
 
 
-viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> List (Html Msg)
+viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> Html Msg
 viewDetermineGroupDisplay courseRole sharedState model =
-    [ div [] [] -- Check Role
+    {- Check Role
 
-    -- If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
-    -- If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
-    -- If Student -> Check if own group is set
-    -- Not set: Display bidding screen
-    -- If set: Display own group. With members. Option to send email to other members and tutor
-    ]
+    If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
+    If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
+    If Student -> Check if own group is set
+        - Not set: Display bidding screen
+        - If set: Display own group. With members. Option to send email to other members and tutor
+    -}
+    case model.groupModel of
+        Just (BiddingModel biddingModel) ->
+            rContainer <|
+                [ rRowHeader "Gruppen Präferenzen"
+                , BiddingView.view sharedState biddingModel
+                    |> Html.map BiddingMsg
+                    |> Html.map GroupMsg
+                ]
 
-viewSheets : SharedState -> Model -> List (Html Msg)
+        Nothing ->
+            text ""
+
+
+viewSheets : SharedState -> Model -> Html Msg
 viewSheets sharedState model =
-    [ div [ classes [ TC.ph3, TC.ph5_ns ] ] <|
-        [ h1 [ Styles.headerStyle, classes [ TC.w_100, TC.pt5_ns, TC.pt4, TC.mb4_ns, TC.mb3 ] ] [ text "Sheets" ]
-        ] ++ [ div [classes [TC.ph4] ] <|
+    rContainer <|
+        [ rRowHeader "Sheets"
+        , div [classes [TC.ph4] ] <|
             case model.sheetRequest of
                 Success sheets ->
                     sheets |>
@@ -468,7 +534,6 @@ viewSheets sharedState model =
                 _ -> 
                     [ div [] [ text "Loading"] ]
         ]
-    ]
 
 
 compareRoleName : UserEnrollment -> UserEnrollment -> Order

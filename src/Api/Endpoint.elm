@@ -8,12 +8,13 @@ module Api.Endpoint exposing
     , courseEnrollment
     , courseEnrollmentUserDetail
     , courseGroup
-    , courseGroupBids
+    , courseBids
+    , courseGroupBid
     , courseGroups
     , courseSheets
     , courseMaterials
     , courses
-    , groups
+    , group
     , groupsEnrollment
     , material
     , materialFile
@@ -152,9 +153,14 @@ courseGroup id =
     url [ "courses", String.fromInt id, "group" ] []
 
 
-courseGroupBids : Int -> Endpoint
-courseGroupBids id =
-    url [ "courses", String.fromInt id, "bids" ] []
+courseGroupBid : Int -> Int -> Endpoint
+courseGroupBid courseId groupId =
+    url [ "courses", String.fromInt courseId, "groups", String.fromInt groupId, "bids" ] []
+
+
+courseBids : Int -> Endpoint
+courseBids courseId =
+    url [  "courses", String.fromInt courseId, "bids"] []
 
 
 courseEnrollmentUserDetail : Int -> Int -> Endpoint
@@ -162,14 +168,14 @@ courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
 
 
-groups : Int -> Int -> Endpoint
-groups courseId id =
+group : Int -> Int -> Endpoint
+group courseId id =
     url [ "courses", String.fromInt courseId, "groups", String.fromInt id ] []
 
 
-groupsEnrollment : Int -> Int -> Endpoint
-groupsEnrollment courseId id =
-    url [ "courses", String.fromInt courseId, "groups", String.fromInt id, "enrollments" ] []
+groupsEnrollment : Int -> Int -> List QueryParameter -> Endpoint
+groupsEnrollment courseId id params =
+    url [ "courses", String.fromInt courseId, "groups", String.fromInt id, "enrollments" ] params
 
 
 material : Int -> Int -> Endpoint

@@ -1,6 +1,9 @@
 module Components.Groups.BiddingView exposing 
     ( Msg(..)
     , Model
+    , init
+    , update
+    , view
     )
 {-| Group view for unassigned Students:
     - List group with time/dates and tutor
@@ -43,6 +46,7 @@ type Msg
     | GetOldGroupBidsResponse (WebData (List GroupBid))
     | GetGroupBidResponse (WebData ())
     | SendBid Int Int
+    | SetBid Field String
     | DebounceMsg Int Debounce.Msg
 
 
@@ -99,22 +103,22 @@ updateOrInitGroupMsgHandler model groupId maybeGroup maybeBid =
 
 
 type alias Model =
-    { currentUserId : Int
-    , courseId : Int
+    { courseId : Int
     , groupResponse : WebData (List Group)
     , groupOldBidsResponse : WebData (List GroupBid)
     , groupMsgHandlers : Dict Int GroupMsgHandler
+    , errors : List (Field, String)
     }
 
 
-init : Int -> Int -> (Model, Cmd Msg)
-init userId courseId =
+init : Int -> (Model, Cmd Msg)
+init courseId =
     (
-        { currentUserId = userId
-        , courseId = courseId
+        { courseId = courseId
         , groupResponse = Loading
         , groupOldBidsResponse = Loading
         , groupMsgHandlers = Dict.empty
+        , errors = []
         }
     , Cmd.batch 
         [ CourseRequests.courseGroupsGet courseId GetGroupsResponse
@@ -138,11 +142,42 @@ update sharedState msg model =
         SendBid groupId bid ->
             ( model 
             , CourseRequests.coursesBidsPost 
-                model.courseId 
-                (createGroupBid model groupId bid)
+                model.courseId
+                groupId
+                bid
                 GetGroupBidResponse
             , NoUpdate
             )
+
+        SetBid field val ->
+            case field of
+                Rating groupId ->
+                    let
+                        toInt =
+                            Maybe.withDefault 0 <| String.toInt val
+
+                        maybeDebounceCmd = Dict.get groupId model.groupMsgHandlers 
+                            |> Maybe.map (\gms ->
+                                Debounce.push (debounceConfig groupId) toInt gms.ratingDebounce)
+
+                        updatedGms = Dict.update 
+                            groupId 
+                            (Maybe.map (\gms -> 
+                                { gms 
+                                    | bid = Just toInt
+                                    , ratingDebounce = 
+                                        case maybeDebounceCmd of
+                                            Just debounceCmd ->
+                                                Tuple.first debounceCmd
+                                            Nothing ->
+                                                Debounce.init
+                                }
+                            )) 
+                            model.groupMsgHandlers 
+                    in
+                    ( { model | groupMsgHandlers = updatedGms }
+                    , Maybe.withDefault Cmd.none <| Maybe.map Tuple.second maybeDebounceCmd
+                    , NoUpdate )
 
         DebounceMsg groupId subMsg ->
             case Dict.get groupId model.groupMsgHandlers of
@@ -166,7 +201,6 @@ update sharedState msg model =
                     , NoUpdate
                     )
                     
-
                 Nothing ->
                     (model, Cmd.none, NoUpdate)
 
@@ -225,35 +259,61 @@ view sharedState model =
             Dict.values |>
                 split 3 
     in
-    text ""
-    {-rContainer <|
+    rContainer <|
         List.map 
             (\gbmsChunk -> 
-                case List.length gbmsChunk of
-                    3 -> 
-                        r3Column <|
+                case gbmsChunk of
+                    (c1 :: c2 :: c3 :: []) ->
+                        rRow <|
+                        r3Column 
+                            [ viewGroupBid sharedState model c1 ]
+                            [ viewGroupBid sharedState model c2 ] 
+                            [ viewGroupBid sharedState model c3 ]
 
-                    2 ->
-                        r2Column <|
+                    (c1 :: c2 :: []) ->
+                        rRow <|
+                        r3Column 
+                            [ viewGroupBid sharedState model c1 ]
+                            [ viewGroupBid sharedState model c2 ]
+                            [ div [classes [TC.db, TC.w_100]] [] ]
 
-
-                    1 ->
-                        r1Column <|
+                    (c1 :: []) ->
+                        rRow <| 
+                        r3Column 
+                            [ viewGroupBid sharedState model c1 ]
+                            [ div [classes [TC.db, TC.w_100]] [] ]
+                            [ div [classes [TC.db, TC.w_100]] [] ]
 
                     _ -> text ""
             ) 
-            groupChunks-}
+            groupChunks
 
 
-viewGroupBid : SharedState -> GroupMsgHandler -> Html Msg
-viewGroupBid sharedState data =
-    text ""
-    -- Show Tutor, Description
+viewGroupBid : SharedState -> Model -> GroupMsgHandler -> Html Msg
+viewGroupBid sharedState model data =
+    case data.group of
+        Just group ->
+            let
+                tutor = group.tutor
+                curBid = Maybe.withDefault 1 data.bid
+            in
+            div [ classes [ TC.w_100, TC.ph2 ] ] <|
+                [ h3 [ Styles.listHeadingStyle ] 
+                    [ text <| "Group - " ++ tutor.firstname ++ " " ++ tutor.lastname
+                    ]
+                , span [ Styles.textStyle ] 
+                    [ text <| group.description ]
+                 ] ++ sliderInputElement 
+                    { label = "Präferenz"
+                    , value = curBid
+                    , min = 1
+                    , max = 10
+                    , step = 1
+                    , valueLabel = String.fromInt curBid
+                    }
+                    (Rating group.id)
+                    model.errors
+                    SetBid
 
-createGroupBid : Model -> Int -> Int -> GroupBid
-createGroupBid model groupId bid =
-    { id = 0
-    , groupId = groupId
-    , userId = model.currentUserId
-    , bid = bid
-    }
+        Nothing ->
+            text ""

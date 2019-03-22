@@ -38,7 +38,8 @@ import Api.Endpoint
         , courseEnrollment
         , courseEnrollmentUserDetail
         , courseGroup
-        , courseGroupBids
+        , courseGroupBid
+        , courseBids
         , courseGroups
         , courseSheets
         , courses
@@ -154,9 +155,10 @@ coursesEnrollmentsUserGet courseId userId msg =
 coursesEnrollmentsUserPut : Int -> Int -> CourseRole -> (WebData () -> msg) -> Cmd msg
 coursesEnrollmentsUserPut courseId userId newRole msg =
     putExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId)
-        (Http.jsonBody <| Encode.object
+        (Encode.object
             [ ( "role", CourseRole.encoder newRole )
-            ]
+            ] |>
+            Http.jsonBody
         )
         msg
 
@@ -191,16 +193,21 @@ courseOwnGroupGet id msg =
 
 coursesBidsGet : Int -> (WebData (List GroupBid) -> msg) -> Cmd msg
 coursesBidsGet id msg =
-    get (unwrap <| courseGroupBids id)
+    get (unwrap <| courseBids id)
         msg
     <|
         Decode.list GroupBid.decoder
 
 
-coursesBidsPost : Int -> GroupBid -> (WebData () -> msg) -> Cmd msg
-coursesBidsPost id groupBidNew msg =
-    postExpectNothing (unwrap <| courseGroupBids id)
-        (Http.jsonBody (GroupBid.encoder groupBidNew))
+coursesBidsPost : Int -> Int -> Int -> (WebData () -> msg) -> Cmd msg
+coursesBidsPost courseId groupId bid msg =
+    postExpectNothing (unwrap <| courseGroupBid courseId groupId)
+        (Encode.object 
+            [ ("bid", Encode.int bid) 
+            ] |>
+            Http.jsonBody
+            
+        )
         msg
 
 
