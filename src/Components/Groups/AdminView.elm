@@ -52,11 +52,11 @@ type alias Model =
     }
 
 
-init : Int -> (Model, Cmd Msg)
-init courseId =
+init : Int -> List Group -> (Model, Cmd Msg)
+init courseId groups =
     (
         { course_id = courseId
-        , groupsRequest = Loading
+        , groupsRequest = Success groups
         , groups = Dict.empty
         }
     , CourseRequests.courseGroupsGet courseId GetGroupsResponse

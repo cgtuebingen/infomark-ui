@@ -53,8 +53,8 @@ updateFromUserAvatar sharedState userId =
     pushUrl sharedState.navKey (reverseRoute <| MailToUsersRoute userId)
 
 
-view : SharedState -> Model -> (Int -> msg) -> Html msg
-view sharedState model msg =
+view : SharedState -> Model -> Maybe (Int -> msg) -> Html msg
+view sharedState model maybeMsg =
     div 
         [ classes 
             [ TC.flex
@@ -86,10 +86,12 @@ view sharedState model msg =
                 , classes [ TC.mv0, TC.ph2 ] 
                 ] [ text (model.firstName ++ " " ++ model.lastName) ]
             , button 
-                [ Styles.linkGreyStyle
+                ([ Styles.linkGreyStyle
                 , classes [ TC.mv0, TC.tl, TC.mh0 ]
-                , style "word-break" "break-all"
-                , onClick <| msg model.id
-                ] [ text model.email ]
+                , style "word-break" "break-word"
+                ] ++ (Maybe.map (\msg -> [ onClick <| msg model.id ]) maybeMsg
+                    |> Maybe.withDefault [])
+                )
+                [ text model.email ]
             ]
         ]

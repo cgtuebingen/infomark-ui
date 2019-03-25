@@ -101,6 +101,7 @@ type Msg
     | ChangeGroup Int GroupEnrollmentChange
     | WriteTo Int
     | DownloadSheet Int Int
+    | WriteEmailMsg Int
 
 
 type alias Model =
@@ -245,6 +246,9 @@ update sharedState msg model =
 
         WriteTo userId ->
             ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate)
+
+        WriteEmailMsg _ ->
+            (model, Cmd.none, NoUpdate)
 
         GroupDisplayResponse response ->
             updateStudentTutorGroupDisplay sharedState { model | groupRequest = response }
@@ -406,7 +410,7 @@ viewTeam sharedState model =
                     ( sortedTeam |>
                         List.map (\ue -> UserView.initFromUser ue.user) |>
                             List.map Tuple.first |>
-                                List.map (\uv -> UserView.view sharedState uv WriteTo)
+                                List.map (\uv -> UserView.view sharedState uv (Just WriteTo))
                     )
                 ]
 
@@ -420,7 +424,7 @@ viewMemberSearch sharedState model =
         displaySearchResults =
             case model.searchUserForEnrollmentRequest of
                 Success userEnrollment ->
-                    viewUserSearchResult model <| List.head userEnrollment
+                    viewUserSearchResult sharedState model <| List.head userEnrollment
 
                 _ ->
                     text ""
@@ -455,8 +459,8 @@ viewMemberSearch sharedState model =
 
 
 
-viewUserSearchResult : Model -> Maybe UserEnrollment -> Html Msg
-viewUserSearchResult model maybeUserEnrollment =
+viewUserSearchResult : SharedState -> Model -> Maybe UserEnrollment -> Html Msg
+viewUserSearchResult sharedState model maybeUserEnrollment =
     case maybeUserEnrollment of
         Just userEnrollment ->
             let
@@ -472,26 +476,8 @@ viewUserSearchResult model maybeUserEnrollment =
                             "assets/defaultAvatar.png"
             in
             div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph5_l ] ]
-                [ div [ classes [ TC.flex, TC.items_center] ]
-                    [ img
-                        [ src avatar
-                        , classes
-                            [ TC.br_100
-                            , TC.ba
-                            , TC.b__black_10
-                            , TC.shadow_5_ns
-                            , TC.h3_ns
-                            , TC.h2
-                            , TC.w3_ns
-                            , TC.w2
-                            ]
-                        ]
-                        []
-                    , div [ classes [ TC.ph3 ] ]
-                        [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
-                        , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
-                        ]
-                    ]
+                [ UserView.view sharedState (Tuple.first <| UserView.initFromUser user) Nothing
+                    |> Html.map WriteEmailMsg
                 , div [ classes [ TC.ml4_l, TC.ml0, TC.mt0_l, TC.mt2, TC.flex ] ]
                     [ multiButton
                         [ ("Student", userEnrollment.role == Student, ChangeEnrollment {userEnrollment | role = Student} )
