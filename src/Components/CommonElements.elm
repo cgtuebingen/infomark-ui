@@ -184,7 +184,7 @@ pageContainer childs =
 
 widePage : List (Html msg) -> Html msg
 widePage childs =
-    div [ classes [ TC.w_75_l, TC.w_100, TC.ph5, TC.ph0_l, TC.center, TC.mw9_ns ] ]
+    div [ classes [ TC.w_100, TC.ph4, TC.ph3_l, TC.center, TC.mw9_ns, TC.mw8_l ] ]
         childs
 
 
@@ -216,6 +216,7 @@ rRowHeader : String -> Html msg
 rRowHeader label =
     rRow <|
         [ h1 [ Styles.headerStyle ] [ text label ] ]
+
 
 
 rRowWarning : String -> String -> Html msg

@@ -78,6 +78,7 @@ import Utils.Utils exposing (perform, flip, handleLogoutErrors, tupleMapThree)
 import File.Download as Download
 import Components.UserAvatarEmailView as UserView
 import Components.Groups.BiddingView as BiddingView
+import Components.Groups.GroupView as GroupView
 
 
 type Msg
@@ -88,6 +89,7 @@ type Msg
     | SearchUserForEnrollmentResponse (WebData (List UserEnrollment)) -- Search for a specific user to change the enrollment
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
     | GroupDisplayResponse (WebData Group) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
+    | GroupsDisplayResponse (WebData (List Group)) -- Query all groups
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
     | GroupMsg GroupMsgTypes
@@ -111,6 +113,7 @@ type alias Model =
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
     , groupRequest : WebData Group
+    , groupsRequest : WebData (List Group)
     , groupModel : Maybe GroupModel
     , searchUserForGroupRequest : WebData UserEnrollment
     , searchEnrollmentInput : String
@@ -119,9 +122,12 @@ type alias Model =
 
 type GroupMsgTypes
     = BiddingMsg BiddingView.Msg
+    | DetailMsg GroupView.Msg
+
 
 type GroupModel
     = BiddingModel BiddingView.Model
+    | DetailModel GroupView.Model
 
 
 init : Int -> ( Model, Cmd Msg )
@@ -135,6 +141,7 @@ init id =
       , searchUserForEnrollmentRequest = NotAsked
       , enrollmentChangedRequest = NotAsked
       , groupRequest = NotAsked
+      , groupsRequest = NotAsked
       , groupModel = Nothing
       , searchUserForGroupRequest = NotAsked
       , searchEnrollmentInput = ""
@@ -164,6 +171,7 @@ determineInitialRoleRequests model role =
             , Cmd.batch
                 [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
                 , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
+                , CoursesRequests.courseGroupsGet model.courseId GroupsDisplayResponse
                 ]
             )
 
@@ -239,7 +247,10 @@ update sharedState msg model =
             ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate)
 
         GroupDisplayResponse response ->
-            updateOwnGroupDisplay sharedState model response
+            updateStudentTutorGroupDisplay sharedState { model | groupRequest = response }
+
+        GroupsDisplayResponse response ->
+            updateStudentTutorGroupDisplay sharedState { model | groupsRequest = response }
 
         GroupMsg subMsg ->
             let
@@ -263,11 +274,11 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
 
-updateOwnGroupDisplay : SharedState -> Model -> WebData Group -> (Model, Cmd Msg, SharedStateUpdate)
-updateOwnGroupDisplay sharedState model response =
-    case response of
-        Failure err ->
-            handleLogoutErrors {model | groupRequest = response } sharedState 
+updateStudentTutorGroupDisplay : SharedState -> Model -> (Model, Cmd Msg, SharedStateUpdate)
+updateStudentTutorGroupDisplay sharedState model =
+    case (model.groupRequest, model.courseRole) of
+        (Failure err, Just Student) ->
+            handleLogoutErrors model sharedState 
                 (\e ->
                     let
                         maybeInit = case e of
@@ -281,8 +292,7 @@ updateOwnGroupDisplay sharedState model response =
                                 Nothing
                     in
                     ( { model 
-                        | groupRequest = response 
-                        , groupModel = Maybe.map Tuple.first maybeInit
+                        | groupModel = Maybe.map Tuple.first maybeInit
                     }
                     , Maybe.withDefault Cmd.none <| 
                         Maybe.map (\subInit ->
@@ -292,8 +302,41 @@ updateOwnGroupDisplay sharedState model response =
                 ) 
                 err
 
-        _ ->
-            ( { model | groupRequest = response }, Cmd.none, NoUpdate)
+        (Success group, _) ->
+            case (model.groupsRequest, model.courseRole) of
+                (_, Just Student) ->
+                    let
+                        groupInit = Tuple.mapBoth
+                            (\subModel -> DetailModel subModel)
+                            (\subMsg -> Cmd.map DetailMsg subMsg) <|
+                            GroupView.init group [] Student
+                    in
+                    ( { model 
+                        | groupModel = Just <| Tuple.first groupInit
+                    }
+                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , NoUpdate
+                    )
+            
+                (Success groups, Just Tutor) ->
+                    let
+                        groupInit = Tuple.mapBoth
+                            (\subModel -> DetailModel subModel)
+                            (\subMsg -> Cmd.map DetailMsg subMsg) <|
+                            GroupView.init group groups Tutor
+                    in
+                    ( { model 
+                        | groupModel = Just <| Tuple.first groupInit
+                    }
+                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , NoUpdate
+                    )
+
+                (_, _) ->
+                    (model, Cmd.none, NoUpdate)
+
+        (_, _) ->
+            ( model, Cmd.none, NoUpdate)
 
 -- TODO if successful update searchProgress too
 
@@ -382,31 +425,32 @@ viewMemberSearch sharedState model =
                 _ ->
                     text ""
     in
-    div [ classes [ TC.ph3, TC.ph5_ns ] ]
-        [ h1
-            [ Styles.headerStyle
-            , classes [ TC.w_100, TC.pt4_ns, TC.pt3, TC.mb4_ns, TC.mb3 ]
-            ]
-            [ text "Change role" ]
-        , div [ classes [ TC.w_100, TC.h3, TC.v_mid, TC.flex, TC.items_center ] ]
-            [ input
-                [ Styles.lineInputStyle
-                , type_ "email"
-                , placeholder "E-Mail"
-                , onInput <| SetField EnrollmentSearchField
-                , onEnter SearchUserForEnrollment
-                , classes [ TC.measure, TC.w_90 ]
+    rContainer <|
+        [ rRow <|
+            r2Column
+                [ h1 [Styles.headerStyle ] [ text "Change role" ]
                 ]
-                []
-            , input
-                [ type_ "image"
-                , src "assets/magnify.svg"
-                , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                , onClick SearchUserForEnrollment
+                [ div [ classes [ TC.w_100, TC.h3, TC.mt3_ns, TC.mt0, TC.v_mid, TC.flex, TC.items_center ] ]
+                    [ input
+                        [ Styles.lineInputStyle
+                        , type_ "email"
+                        , placeholder "E-Mail"
+                        , onInput <| SetField EnrollmentSearchField
+                        , onEnter SearchUserForEnrollment
+                        , classes [ TC.measure, TC.w_90 ]
+                        ]
+                        []
+                    , input
+                        [ type_ "image"
+                        , src "assets/magnify.svg"
+                        , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+                        , onClick SearchUserForEnrollment
+                        ]
+                        []
+                    ]
                 ]
-                []
-            ]
-        , displaySearchResults
+        , rRow <|
+            [ displaySearchResults ]
         ]
 
 
@@ -427,26 +471,28 @@ viewUserSearchResult model maybeUserEnrollment =
                         Nothing ->
                             "assets/defaultAvatar.png"
             in
-            div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph3, TC.ph5_ns ] ]
-                [ img
-                    [ src avatar
-                    , classes
-                        [ TC.br_100
-                        , TC.ba
-                        , TC.b__black_10
-                        , TC.shadow_5_ns
-                        , TC.h3_ns
-                        , TC.h2
-                        , TC.w3_ns
-                        , TC.w2
+            div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph5_l ] ]
+                [ div [ classes [ TC.flex, TC.items_center] ]
+                    [ img
+                        [ src avatar
+                        , classes
+                            [ TC.br_100
+                            , TC.ba
+                            , TC.b__black_10
+                            , TC.shadow_5_ns
+                            , TC.h3_ns
+                            , TC.h2
+                            , TC.w3_ns
+                            , TC.w2
+                            ]
+                        ]
+                        []
+                    , div [ classes [ TC.ph3 ] ]
+                        [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
+                        , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
                         ]
                     ]
-                    []
-                , div [ classes [ TC.ph3 ] ]
-                    [ h1 [ Styles.listHeadingStyle, classes [ TC.mv0 ] ] [ text (user.firstname ++ " " ++ user.lastname) ]
-                    , h2 [ Styles.textStyle, classes [ TC.mv0 ] ] [ text user.email ] -- TODO make clickable
-                    ]
-                , div [ classes [ TC.ml4, TC.flex ] ]
+                , div [ classes [ TC.ml4_l, TC.ml0, TC.mt0_l, TC.mt2, TC.flex ] ]
                     [ multiButton
                         [ ("Student", userEnrollment.role == Student, ChangeEnrollment {userEnrollment | role = Student} )
                         , ("Tutor", userEnrollment.role == Tutor, ChangeEnrollment {userEnrollment | role = Tutor} )
@@ -480,6 +526,14 @@ viewDetermineGroupDisplay courseRole sharedState model =
                 [ rRowHeader "Gruppen Präferenzen"
                 , BiddingView.view sharedState biddingModel
                     |> Html.map BiddingMsg
+                    |> Html.map GroupMsg
+                ]
+
+        Just (DetailModel detailModel) ->
+            rContainer <|
+                [ rRowHeader "Übungsgruppe"
+                , GroupView.view sharedState detailModel
+                    |> Html.map DetailMsg
                     |> Html.map GroupMsg
                 ]
 
