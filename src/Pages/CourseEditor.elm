@@ -341,7 +341,6 @@ viewForm sharedState model =
         [ rRowHeader <|
             if model.createCourse then
                 "Kurs erstellen"
-
             else
                 "Kurs bearbeiten"
         , rRow <|

@@ -30,6 +30,7 @@ module Components.CommonElements exposing
     , rRowWarning
     , datesDisplayContainer
     , dateElement
+    , searchElement
     )
 
 import Date exposing (Date)
@@ -38,6 +39,7 @@ import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, preventDefaultOn)
+import Html.Events.Extra exposing (onEnter)
 import Json.Decode as Decode exposing (Decoder)
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
@@ -153,6 +155,28 @@ sliderInputElement inputConfig field errors msg =
     , viewFormErrors field errors
     ]
 
+
+searchElement : { placeholder : String, fieldType : String, value : String } -> field -> (field -> String -> msg) -> msg -> List (Html msg)
+searchElement inputConfig field inputMsg clickMsg =
+    [ div [ classes [ TC.w_100, TC.h3, TC.mt3_ns, TC.mt0, TC.v_mid, TC.flex, TC.items_center ] ]
+        [ input
+            [ Styles.lineInputStyle
+            , type_ inputConfig.fieldType
+            , placeholder inputConfig.placeholder
+            , onInput <| inputMsg field
+            , onEnter clickMsg
+            , classes [ TC.measure, TC.w_90 ]
+            ]
+            []
+        , input
+            [ type_ "image"
+            , src "assets/magnify.svg"
+            , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
+            , onClick clickMsg
+            ]
+            []
+        ]
+    ]
 
 datesDisplayContainer : List (Html msg) -> Html msg
 datesDisplayContainer childs =

@@ -30,6 +30,7 @@ import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.MaterialEditor as MaterialEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
+import Pages.GroupEditor as GroupEditor
 import Pages.MailEditor as MailEditor
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
@@ -72,6 +73,7 @@ type CurrentModel
     | RequestPasswordResetModel RequestPasswordReset.Model
     | PasswordResetModel PasswordReset.Model
     | MailEditorModel MailEditor.Model
+    | GroupEditorModel GroupEditor.Model
     | NotFound
 
 
@@ -105,6 +107,7 @@ type Msg
     | RequestPasswordResetMsg RequestPasswordReset.Msg
     | PasswordResetMsg PasswordReset.Msg
     | MailEditorMsg MailEditor.Msg
+    | GroupEditorMsg GroupEditor.Msg
     | NoOp
 
 
@@ -253,6 +256,10 @@ update sharedState msg model =
             MailEditor.update sharedState mailEditorMsg mailEditor
                 |> updateWith MailEditorModel MailEditorMsg model
 
+        ( GroupEditorMsg groupEditorMsg, GroupEditorModel groupEditor ) ->
+            GroupEditor.update sharedState groupEditorMsg groupEditor
+                |> updateWith GroupEditorModel GroupEditorMsg model
+
         ( LoginDialogShown state, _ ) ->
             ( { model | loginDialogState = state }, Cmd.none, NoUpdate )
 
@@ -362,6 +369,12 @@ navigateTo route model =
         MailToCourseRoute courseId ->
             MailEditor.initForCourse courseId |> initWith MailEditorModel MailEditorMsg model NoUpdate
 
+        EditGroupRoute courseId groupId ->
+            GroupEditor.initEditFromId courseId groupId |> initWith GroupEditorModel GroupEditorMsg model NoUpdate
+
+        CreateGroupRoute courseId ->
+            GroupEditor.initCreate courseId |> initWith GroupEditorModel GroupEditorMsg model NoUpdate
+
         NotFoundRoute ->
             ( { model | currentModel = NotFound }
             , Cmd.none
@@ -430,6 +443,12 @@ view msgMapper sharedState model =
 
                 PasswordResetRoute _ _ ->
                     "page-title-reset"
+
+                CreateGroupRoute _ ->
+                    "page-title-group-create"
+
+                EditGroupRoute _ _ ->
+                    "page-title-group-edit"
 
                 MailToUsersRoute _ ->
                     "page-title-email"
@@ -758,6 +777,10 @@ pageView sharedState model =
         MailEditorModel mailEditor ->
             MailEditor.view sharedState mailEditor
                 |> Html.map MailEditorMsg
+
+        GroupEditorModel groupEditor ->
+            GroupEditor.view sharedState groupEditor
+                |> Html.map GroupEditorMsg
 
         NotFound ->
             div

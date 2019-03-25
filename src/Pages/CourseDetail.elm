@@ -58,11 +58,11 @@ import Components.CommonElements exposing
     , r2Column
     , datesDisplayContainer
     , dateElement
+    , searchElement
     )
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
-import Html.Events.Extra exposing (onEnter)
 import Http
 import I18n
 import Markdown as MD
@@ -78,6 +78,7 @@ import Utils.Utils exposing (perform, flip, handleLogoutErrors, tupleMapThree)
 import File.Download as Download
 import Components.UserAvatarEmailView as UserView
 import Components.Groups.BiddingView as BiddingView
+import Components.Groups.AdminView as GroupAdminView
 import Components.Groups.GroupView as GroupView
 
 
@@ -124,11 +125,13 @@ type alias Model =
 type GroupMsgTypes
     = BiddingMsg BiddingView.Msg
     | DetailMsg GroupView.Msg
+    | GroupAdminMsg GroupAdminView.Msg
 
 
 type GroupModel
     = BiddingModel BiddingView.Model
     | DetailModel GroupView.Model
+    | GroupAdminModel GroupAdminView.Model
 
 
 init : Int -> ( Model, Cmd Msg )
@@ -160,8 +163,10 @@ determineInitialRoleRequests : Model -> CourseRole -> ( Model, Cmd Msg )
 determineInitialRoleRequests model role =
     case role of
         Admin ->
-            ( model
-            , Cmd.none
+            ( { model
+                | groupsRequest = Loading
+            }
+            , CoursesRequests.courseGroupsGet model.courseId GroupsDisplayResponse
             )
 
         Tutor ->
@@ -251,10 +256,10 @@ update sharedState msg model =
             (model, Cmd.none, NoUpdate)
 
         GroupDisplayResponse response ->
-            updateStudentTutorGroupDisplay sharedState { model | groupRequest = response }
+            updateGroupDisplay sharedState { model | groupRequest = response }
 
         GroupsDisplayResponse response ->
-            updateStudentTutorGroupDisplay sharedState { model | groupsRequest = response }
+            updateGroupDisplay sharedState { model | groupsRequest = response }
 
         GroupMsg subMsg ->
             let
@@ -264,8 +269,22 @@ update sharedState msg model =
                             tupleMapThree
                                 (\m -> Just <| BiddingModel m)
                                 (\m -> Cmd.map GroupMsg <| Cmd.map BiddingMsg m) 
-                                (\v -> v) <|
+                                identity <|
                             BiddingView.update sharedState bidMsg biddingModel
+
+                        (Just (DetailModel detailModel), DetailMsg detailMsg) ->
+                            tupleMapThree 
+                                (\m -> Just <| DetailModel m)
+                                (\m -> Cmd.map GroupMsg <| Cmd.map DetailMsg m)
+                                identity <|
+                                GroupView.update sharedState detailMsg detailModel
+
+                        (Just (GroupAdminModel adminModel), GroupAdminMsg adminMsg) ->
+                            tupleMapThree
+                                (\m -> Just <| GroupAdminModel m)
+                                (\m -> Cmd.map GroupMsg <| Cmd.map GroupAdminMsg m)
+                                identity <|
+                                GroupAdminView.update sharedState adminMsg adminModel
 
                         (_, _) -> (Nothing, Cmd.none, NoUpdate)
             in
@@ -278,8 +297,8 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
 
-updateStudentTutorGroupDisplay : SharedState -> Model -> (Model, Cmd Msg, SharedStateUpdate)
-updateStudentTutorGroupDisplay sharedState model =
+updateGroupDisplay : SharedState -> Model -> (Model, Cmd Msg, SharedStateUpdate)
+updateGroupDisplay sharedState model =
     case (model.groupRequest, model.courseRole) of
         (Failure err, Just Student) ->
             handleLogoutErrors model sharedState 
@@ -311,8 +330,8 @@ updateStudentTutorGroupDisplay sharedState model =
                 (_, Just Student) ->
                     let
                         groupInit = Tuple.mapBoth
-                            (\subModel -> DetailModel subModel)
-                            (\subMsg -> Cmd.map DetailMsg subMsg) <|
+                            DetailModel
+                            (Cmd.map DetailMsg) <|
                             GroupView.init group [] Student
                     in
                     ( { model 
@@ -325,8 +344,8 @@ updateStudentTutorGroupDisplay sharedState model =
                 (Success groups, Just Tutor) ->
                     let
                         groupInit = Tuple.mapBoth
-                            (\subModel -> DetailModel subModel)
-                            (\subMsg -> Cmd.map DetailMsg subMsg) <|
+                            DetailModel
+                            (Cmd.map DetailMsg) <|
                             GroupView.init group groups Tutor
                     in
                     ( { model 
@@ -337,6 +356,25 @@ updateStudentTutorGroupDisplay sharedState model =
                     )
 
                 (_, _) ->
+                    (model, Cmd.none, NoUpdate)
+
+        (_, Just Admin) ->
+            case model.groupsRequest of
+                Success groups ->
+                    let
+                        groupInit = Tuple.mapBoth
+                            GroupAdminModel
+                            (Cmd.map GroupAdminMsg) <|
+                            GroupAdminView.init model.courseId groups
+                    in
+                    ( { model
+                        | groupModel = Just <| Tuple.first groupInit
+                    }
+                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , NoUpdate
+                    )
+                    
+                _ ->
                     (model, Cmd.none, NoUpdate)
 
         (_, _) ->
@@ -434,25 +472,15 @@ viewMemberSearch sharedState model =
             r2Column
                 [ h1 [Styles.headerStyle ] [ text "Change role" ]
                 ]
-                [ div [ classes [ TC.w_100, TC.h3, TC.mt3_ns, TC.mt0, TC.v_mid, TC.flex, TC.items_center ] ]
-                    [ input
-                        [ Styles.lineInputStyle
-                        , type_ "email"
-                        , placeholder "E-Mail"
-                        , onInput <| SetField EnrollmentSearchField
-                        , onEnter SearchUserForEnrollment
-                        , classes [ TC.measure, TC.w_90 ]
-                        ]
-                        []
-                    , input
-                        [ type_ "image"
-                        , src "assets/magnify.svg"
-                        , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
-                        , onClick SearchUserForEnrollment
-                        ]
-                        []
-                    ]
-                ]
+                ( searchElement 
+                    { placeholder = "Search by E-Mail" 
+                    , fieldType = "email"
+                    , value = model.searchEnrollmentInput
+                    }
+                    EnrollmentSearchField 
+                    SetField 
+                    SearchUserForEnrollment
+                )
         , rRow <|
             [ displaySearchResults ]
         ]
@@ -498,14 +526,6 @@ viewUserSearchResult sharedState model maybeUserEnrollment =
 
 viewDetermineGroupDisplay : CourseRole -> SharedState -> Model -> Html Msg
 viewDetermineGroupDisplay courseRole sharedState model =
-    {- Check Role
-
-    If Admin -> Show all groups. Option to create, edit, delete, email groups & search for students to change group
-    If Tutor -> Option to change group. Show own group (with members), option to email own group. Show date and times
-    If Student -> Check if own group is set
-        - Not set: Display bidding screen
-        - If set: Display own group. With members. Option to send email to other members and tutor
-    -}
     case model.groupModel of
         Just (BiddingModel biddingModel) ->
             rContainer <|
@@ -520,6 +540,14 @@ viewDetermineGroupDisplay courseRole sharedState model =
                 [ rRowHeader "Übungsgruppe"
                 , GroupView.view sharedState detailModel
                     |> Html.map DetailMsg
+                    |> Html.map GroupMsg
+                ]
+
+        Just (GroupAdminModel adminModel) ->
+            rContainer <|
+                [ rRowHeader "Übungsgruppen"
+                , GroupAdminView.view sharedState adminModel
+                    |> Html.map GroupAdminMsg
                     |> Html.map GroupMsg
                 ]
 

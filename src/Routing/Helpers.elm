@@ -23,6 +23,8 @@ type Route
     | MailConfirmationRoute String String
     | RequestPasswordResetRoute
     | PasswordResetRoute String String
+    | CreateGroupRoute Int
+    | EditGroupRoute Int Int 
     | MailToUsersRoute Int
     | MailToGroupRoute Int Int
     | MailToCourseRoute Int
@@ -88,6 +90,12 @@ reverseRoute route =
                 PasswordResetRoute mail token ->
                     [ "password_reset", mail, token ]
 
+                CreateGroupRoute courseId ->
+                    [ "course", String.fromInt courseId, "group", "create" ]
+                
+                EditGroupRoute courseId groupId ->
+                    [ "course", String.fromInt courseId, "group", String.fromInt groupId, "edit" ] 
+
                 MailToUsersRoute userId ->
                     [ "email", "user", String.fromInt userId ]
 
@@ -123,11 +131,12 @@ routeParser =
         , Url.Parser.map MailConfirmationRoute (Url.Parser.s "confirmation" </> Url.Parser.string </> Url.Parser.string)
         , Url.Parser.map RequestPasswordResetRoute (Url.Parser.s "request_reset")
         , Url.Parser.map PasswordResetRoute (Url.Parser.s "password_reset" </> Url.Parser.string </> Url.Parser.string)
+        , Url.Parser.map CreateGroupRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.s "create")
+        , Url.Parser.map EditGroupRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map MailToUsersRoute (Url.Parser.s "email" </> Url.Parser.s "user" </> Url.Parser.int)
         , Url.Parser.map MailToGroupRoute (Url.Parser.s "email" </> Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map MailToCourseRoute (Url.Parser.s "email" </> Url.Parser.s "course" </> Url.Parser.int)
         ]
-
 
 parseUrl : Url -> Route
 parseUrl url =
