@@ -74,6 +74,7 @@ intToFileType fileTypeAsInt =
 
 type Field
     = MaxPoints
+    | Name
     | PublicDockerImage
     | PrivateDockerImage
 
@@ -99,6 +100,7 @@ type alias Model =
     , courseId : Int
     , sheet_id : Int
     , max_points : String
+    , name : String
     , public_tests_url : String
     , private_tests_url : String
     , public_docker_image : String
@@ -123,6 +125,7 @@ initModel =
       , courseId = 0
       , sheet_id = 0
       , max_points = "0"
+      , name = ""
       , public_tests_url = ""
       , private_tests_url = ""
       , public_docker_image = ""
@@ -184,6 +187,7 @@ fillModelFromTask : Model -> Task -> Model
 fillModelFromTask model task =
     { model
         | id = task.id
+        , name = task.name
         , max_points = String.fromInt task.max_points
         , public_tests_url = Maybe.withDefault "" task.public_tests_url
         , private_tests_url = Maybe.withDefault "" task.private_tests_url
@@ -332,12 +336,22 @@ view sharedState model =
             (if model.createTask then
                 "New task"
             else 
-                "Task " ++ String.fromInt model.id
+                model.name
             )
             model.collapse
             ToggleCollapse
             ( "Show", "Hide" )
             [ rRow <|
+                inputElement
+                    { label = "Task name"
+                    , placeholder = "Task 1"
+                    , fieldType = "text"
+                    , value = model.name
+                    }
+                    Name
+                    model.errors
+                    SetField
+            , rRow <|
                 r2Column
                     [ inputLabel "Public Tests"
                     , fileUploader (chooseHover Public model) (chooseFile Public model) (DragEnter Public) (DragLeave Public) (Pick Public) (GotFiles Public)
@@ -423,6 +437,9 @@ uploadFailure model =
 setField : Model -> Field -> String -> Model
 setField model field value =
     case field of
+        Name ->
+            { model | name = value }
+
         MaxPoints ->
             { model | max_points = value }
 
@@ -437,7 +454,6 @@ createOrUpdate : Model -> Cmd Msg
 createOrUpdate model =
     if model.createTask then
         SheetRequests.sheetTasksPost model.courseId model.sheet_id (fillTaskFromModel model) TaskCreateRequest
-
     else
         TaskRequests.taskPut model.courseId model.id (fillTaskFromModel model) TaskUpdateRequest
 
@@ -445,6 +461,7 @@ createOrUpdate model =
 fillTaskFromModel : Model -> Task
 fillTaskFromModel model =
     { id = 0
+    , name = model.name
     , max_points = Maybe.withDefault 0 <| String.toInt model.max_points
     , public_tests_url = Nothing
     , private_tests_url = Nothing

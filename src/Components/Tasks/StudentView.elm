@@ -223,7 +223,7 @@ update sharedState msg model =
 view : SharedState -> Model -> Bool -> Html Msg
 view sharedState model deadlineReached =
     rContainer <|
-        rCollapsable ("Task " ++ String.fromInt model.task.id)
+        rCollapsable model.task.name
             model.collapse
             ToggleCollapse
             ( "Show", "Hide" )

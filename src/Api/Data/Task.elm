@@ -8,6 +8,7 @@ import Json.Encode.Extra exposing (maybe)
 
 type alias Task =
     { id : Int
+    , name : String
     , max_points : Int
     , public_tests_url : Maybe String
     , public_docker_image : Maybe String
@@ -20,6 +21,7 @@ decoder : Decoder Task
 decoder =
     Decode.succeed Task
         |> required "id" Decode.int
+        |> required "name" Decode.string
         |> required "max_points" Decode.int
         |> optional "public_tests_url" (Decode.nullable Decode.string) Nothing
         |> optional "public_docker_image" (Decode.nullable Decode.string) Nothing
@@ -31,6 +33,7 @@ encoder : Task -> Encode.Value
 encoder model =
     Encode.object
         [ ( "id", Encode.int model.id )
+        , ( "name", Encode.string model.name )
         , ( "max_points", Encode.int model.max_points )
         , ( "public_tests_url", maybe Encode.string model.public_tests_url )
         , ( "public_docker_image", maybe Encode.string model.public_docker_image )
