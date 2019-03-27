@@ -15,6 +15,9 @@ module Api.Endpoint exposing
     , courseMaterials
     , courses
     , coursePoints
+    , courseGrade
+    , courseGrades
+    , courseMissingGrades
     , group
     , groupsEnrollment
     , material
@@ -173,6 +176,21 @@ courseEnrollmentUserDetail courseId userId =
 coursePoints : Int ->  Endpoint
 coursePoints courseId =
     url [ "courses", String.fromInt courseId, "points" ] []
+
+
+courseMissingGrades : Int -> Endpoint
+courseMissingGrades courseId =
+    url [ "courses", String.fromInt courseId, "grades", "missing" ] []
+
+
+courseGrades : Int -> List QueryParameter -> Endpoint
+courseGrades courseId params =
+    url [ "courses", String.fromInt courseId, "grades" ] params
+
+
+courseGrade : Int -> Int -> Endpoint
+courseGrade courseId gradeId  =
+    url [ "courses", String.fromInt courseId, "grades", String.fromInt gradeId ] []
 
 
 group : Int -> Int -> Endpoint

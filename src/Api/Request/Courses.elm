@@ -23,6 +23,10 @@ module Api.Request.Courses exposing
     , courseMaterialsGet
     , courseMaterialsPost
     , coursePointsGet
+    , courseGradesGetPerTaskAndGroup
+    , courseGradeGet
+    , courseGradePut
+    , courseGradeMissing
     )
 
 import Api.Data.Material as Material exposing (Material)
@@ -34,6 +38,8 @@ import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.Submission as Submission exposing (Submission)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Data.PointOverview as PointOverview exposing (PointOverview)
+import Api.Data.Grade as Grade exposing (Grade)
+import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
 import Api.Endpoint
     exposing
         ( course
@@ -46,6 +52,9 @@ import Api.Endpoint
         , courseSheets
         , courses
         , coursePoints
+        , courseGrade
+        , courseGrades
+        , courseMissingGrades
         , submissions
         , courseMaterials
         , unwrap
@@ -282,3 +291,40 @@ coursePointsGet id msg =
         msg
     <|
         Decode.list PointOverview.decoder
+
+courseGradesGet : Int -> List QueryParameter -> (WebData (List Grade) -> msg) -> Cmd msg
+courseGradesGet courseId params msg =
+    get (unwrap <| courseGrades courseId params)
+        msg
+    <|
+        Decode.list Grade.decoder
+
+courseGradesGetPerTaskAndGroup : Int -> Int -> Int -> (WebData (List Grade) -> msg) -> Cmd msg
+courseGradesGetPerTaskAndGroup courseId taskId groupId msg =
+    let
+        params =
+            [ Url.Builder.int "task_id" taskId
+            , Url.Builder.int "group_id" groupId
+            ]
+    in
+    courseGradesGet courseId params msg
+
+
+courseGradeGet : Int -> Int -> (WebData Grade -> msg) -> Cmd msg
+courseGradeGet courseId gradeId msg =
+    get (unwrap <| courseGrade courseId gradeId) msg Grade.decoder
+
+
+courseGradePut : Int -> Int -> Grade -> (WebData () -> msg) -> Cmd msg
+courseGradePut courseId gradeId gradeUpdate msg =
+    putExpectNothing (unwrap <| courseGrade courseId gradeId)
+        (Http.jsonBody <| Grade.encoder gradeUpdate)
+        msg
+
+
+courseGradeMissing : Int -> (WebData (List MissingGrade) -> msg) -> Cmd msg
+courseGradeMissing courseId msg =
+    get (unwrap <| courseMissingGrades courseId)
+        msg
+    <|
+        Decode.list MissingGrade.decoder

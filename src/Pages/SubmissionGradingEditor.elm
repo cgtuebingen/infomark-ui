@@ -19,6 +19,7 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
+import File.Download as Download
 
 
 type Msg
