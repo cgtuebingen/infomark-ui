@@ -169,7 +169,7 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         GetGradeResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            ( { model | gradeResponse = response }, Cmd.none, NoUpdate )
 
         RateTask _ rating ->
             let
@@ -226,13 +226,15 @@ view sharedState model deadlineReached =
         rCollapsable model.task.name
             model.collapse
             ToggleCollapse
-            ( "Show", "Hide" )
+            ( "Show", "Hide" ) <|
             [ rRow <|
-                r2Column
+                r1Column <|
                     [ inputLabel "Submission"
                     , fileUploader model.hover model.submission DragEnter DragLeave Pick GotFiles
                     ]
-                    [ inputLabel "Results"
+            , rRow <|
+                r1Column <|
+                    [ inputLabel "Test Results"
                     , displayResults
                         (case model.gradeResponse of
                             Success grade ->
@@ -245,7 +247,29 @@ view sharedState model deadlineReached =
                                 "Undefined"
                         )
                     ]
-            , rRow <|
+            ] ++ 
+            ( case model.gradeResponse of
+                    Success grade -> 
+                        if String.isEmpty grade.feedback then
+                            [ text "" ]
+                        else
+                            [ rRow <|
+                                r1Column <|
+                                    [ inputLabel "Feedback"
+                                    , displayResults
+                                        grade.feedback
+                                    ]
+                            , h2 [ classes [TC.pa4, TC.mt4, TC.bt, TC.bb, TC.bw2, TC.dark_red, TC.b__black ]] [ text <|
+                                (String.fromInt grade.acquired_points) ++
+                                "/" ++
+                                (String.fromInt model.task.max_points) ++
+                                " Points acquired"
+                                ]
+                            ]
+                    _ ->
+                        [ text "" ]
+            ) ++
+            [ rRow <|
                 r1Column <|
                     sliderInputElement
                         { label = "Rating"
@@ -295,7 +319,7 @@ view sharedState model deadlineReached =
 
 displayResults : String -> Html msg
 displayResults content =
-    div [ classes [ TC.pa4, TC.bg_black_10, TC.shadow_5, TC.br3 ] ]
+    div [ classes [ TC.pa4, TC.bg_black_10, TC.shadow_5, TC.br3, TC.overflow_scroll ] ]
         [ MD.toHtml [ Styles.textStyle ] content
         ]
 
