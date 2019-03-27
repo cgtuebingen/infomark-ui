@@ -7,8 +7,10 @@ module Components.Groups.BiddingView exposing
     )
 
 {-| Group view for unassigned Students:
-- List group with time/dates and tutor
-- Set a preference (1-10) for a group
+
+  - List group with time/dates and tutor
+  - Set a preference (1-10) for a group
+
 -}
 
 import Api.Data.Group exposing (Group)

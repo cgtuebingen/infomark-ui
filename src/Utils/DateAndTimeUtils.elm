@@ -99,14 +99,13 @@ joinDateTimeAndOffset : Date -> TP.Time -> OffsetParts -> Time.Posix
 joinDateTimeAndOffset date time offset =
     let
         dateMillis =
-            Debug.log "DateMillis" <|
-                Time.posixToMillis <|
-                    Maybe.withDefault (Time.millisToPosix 0) <|
-                        Result.toMaybe <|
-                            dateToPosix date
+            Time.posixToMillis <|
+                Maybe.withDefault (Time.millisToPosix 0) <|
+                    Result.toMaybe <|
+                        dateToPosix date
 
         timeMillis =
-            Debug.log "TimeMillis" <| pickerTimeWithOffsetToMillis offset time
+            pickerTimeWithOffsetToMillis offset time
     in
     Time.millisToPosix (dateMillis + timeMillis)
 

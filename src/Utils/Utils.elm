@@ -15,10 +15,11 @@ perform =
 
 handleLogoutErrors : model -> SharedState -> (Http.Error -> ( model, Cmd msg, SharedStateUpdate )) -> Http.Error -> ( model, Cmd msg, SharedStateUpdate )
 handleLogoutErrors model sharedState handler err =
-    let
-        _ =
-            Debug.log "Received error code" err
-    in
+    {- let
+           _ =
+               Debug.log "Received error code" err
+       in
+    -}
     case err of
         Http.BadStatus 401 ->
             case sharedState.userMail of

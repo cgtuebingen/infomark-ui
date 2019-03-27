@@ -612,10 +612,6 @@ ifJustAndNotInt subjectToMaybeString error =
 
 isNothingOrInt : Maybe String -> Bool
 isNothingOrInt maybeString =
-    let
-        _ =
-            Debug.log "isNothingOrInt" maybeString
-    in
     case maybeString of
         Just string ->
             case String.toInt string of
@@ -636,10 +632,6 @@ ifIsNotPercentage subjectToMaybeString error =
 
 isPercentageRequiredAndOk : Maybe String -> Bool
 isPercentageRequiredAndOk maybePercentage =
-    let
-        _ =
-            Debug.log "isPercRequiredAndOk" maybePercentage
-    in
     case maybePercentage of
         Just percentage ->
             case String.toInt percentage of

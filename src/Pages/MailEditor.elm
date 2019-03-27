@@ -9,7 +9,9 @@ module Pages.MailEditor exposing
     )
 
 {-| This views enables writing emails
-- Should be possible for single persons, groups and courses
+
+  - Should be possible for single persons, groups and courses
+
 -}
 
 import Api.Data.Course as Course exposing (Course)

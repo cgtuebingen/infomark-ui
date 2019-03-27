@@ -146,10 +146,6 @@ updateHandleRegistrationResponse sharedState model response =
             ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         Failure (Http.BadBody error) ->
-            let
-                _ =
-                    Debug.log "Bad response:" error
-            in
             ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
 
         Failure err ->
