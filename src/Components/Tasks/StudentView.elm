@@ -15,21 +15,22 @@ import Api.Data.Grade exposing (Grade)
 import Api.Data.Task exposing (Task)
 import Api.Data.TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing 
-    ( fileUploader
-    , inputLabel
-    , r1Column
-    , r2Column
-    , rCollapsable
-    , rContainer
-    , rRow
-    , rRowButton
-    , rRowExtraSpacing
-    , sliderInputElement
-    , PbbState(..)
-    , PbbButtonState(..)
-    , PbbResultState(..)
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbResultState(..)
+        , PbbState(..)
+        , fileUploader
+        , inputLabel
+        , r1Column
+        , r2Column
+        , rCollapsable
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowExtraSpacing
+        , sliderInputElement
+        )
 import Debounce exposing (Debounce)
 import File exposing (File)
 import File.Select as Select
@@ -37,11 +38,11 @@ import Html exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Markdown as MD
-import Time
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
+import Time
 import Utils.Styles as Styles
 import Utils.Utils exposing (perform)
 
@@ -121,23 +122,33 @@ update sharedState msg model =
                 Just file ->
                     ( { model | uploading = Loading }, TaskRequests.taskSubmissionPost model.courseId model.id file UploadSubmissionResponse, NoUpdate )
 
-                Nothing -> -- Should never happen. Upload button disabled without a set file
+                Nothing ->
+                    -- Should never happen. Upload button disabled without a set file
                     ( model, Cmd.none, NoUpdate )
 
-        
         UploadSubmissionResponse (Success _) ->
-            ( { model 
+            ( { model
                 | uploadDoneTime = sharedState.currentTime
                 , uploading = Success ()
-                }, Cmd.none, NoUpdate )
-        
+              }
+            , Cmd.none
+            , NoUpdate
+            )
+
         UploadSubmissionResponse response ->
             let
-                newModel = {model | uploading = response}
-                finalModel = if not (RemoteData.isLoading newModel.uploading) &&
-                    (RemoteData.isSuccess newModel.uploading || 
-                        RemoteData.isFailure newModel.uploading) then
+                newModel =
+                    { model | uploading = response }
+
+                finalModel =
+                    if
+                        not (RemoteData.isLoading newModel.uploading)
+                            && (RemoteData.isSuccess newModel.uploading
+                                    || RemoteData.isFailure newModel.uploading
+                               )
+                    then
                         { newModel | uploadDoneTime = sharedState.currentTime }
+
                     else
                         newModel
             in
@@ -155,7 +166,7 @@ update sharedState msg model =
 
                 prog =
                     if model.uploading == Loading then
-                        round <| (100 * percentage )
+                        round <| (100 * percentage)
 
                     else
                         round <| 0
@@ -226,7 +237,8 @@ view sharedState model deadlineReached =
         rCollapsable model.task.name
             model.collapse
             ToggleCollapse
-            ( "Show", "Hide" ) <|
+            ( "Show", "Hide" )
+        <|
             [ rRow <|
                 r1Column <|
                     [ inputLabel "Submission"
@@ -247,74 +259,93 @@ view sharedState model deadlineReached =
                                 "Undefined"
                         )
                     ]
-            ] ++ 
-            ( case model.gradeResponse of
-                    Success grade -> 
-                        if String.isEmpty grade.feedback then
-                            [ text "" ]
-                        else
-                            [ rRow <|
-                                r1Column <|
-                                    [ inputLabel "Feedback"
-                                    , displayResults
-                                        grade.feedback
-                                    ]
-                            , h2 [ classes [TC.pa4, TC.mt4, TC.bt, TC.bb, TC.bw2, TC.dark_red, TC.b__black ]] [ text <|
-                                (String.fromInt grade.acquired_points) ++
-                                "/" ++
-                                (String.fromInt model.task.max_points) ++
-                                " Points acquired"
-                                ]
-                            ]
-                    _ ->
-                        [ text "" ]
-            ) ++
-            [ rRow <|
-                r1Column <|
-                    sliderInputElement
-                        { label = "Rating"
-                        , value = model.rating
-                        , min = 0
-                        , max = 5
-                        , step = 1
-                        , valueLabel =
-                            if model.rating == 0 then
-                                "Not rated"
+            ]
+                ++ (case model.gradeResponse of
+                        Success grade ->
+                            if String.isEmpty grade.feedback then
+                                [ text "" ]
 
                             else
-                                String.fromInt model.rating
-                        }
-                        Rating
-                        []
-                        RateTask
-            , if model.uploading == Loading then
-                rRowButton <| PbbProgressBar model.uploadPercentage
-            else
-                let
-                    success = RemoteData.isSuccess model.uploading
-                    failure = RemoteData.isFailure model.uploading
+                                [ rRow <|
+                                    r1Column <|
+                                        [ inputLabel "Feedback"
+                                        , displayResults
+                                            grade.feedback
+                                        ]
+                                , h2 [ classes [ TC.pa4, TC.mt4, TC.bt, TC.bb, TC.bw2, TC.dark_red, TC.b__black ] ]
+                                    [ text <|
+                                        String.fromInt grade.acquired_points
+                                            ++ "/"
+                                            ++ String.fromInt model.task.max_points
+                                            ++ " Points acquired"
+                                    ]
+                                ]
 
-                    filesSelected = case model.submission of
-                        Just _ -> True
-                        Nothing -> False
+                        _ ->
+                            [ text "" ]
+                   )
+                ++ [ rRow <|
+                        r1Column <|
+                            sliderInputElement
+                                { label = "Rating"
+                                , value = model.rating
+                                , min = 0
+                                , max = 5
+                                , step = 1
+                                , valueLabel =
+                                    if model.rating == 0 then
+                                        "Not rated"
 
-                    stateShownLongEnough = Maybe.map2 
-                        (\up cur ->
-                            (Time.posixToMillis cur) - (Time.posixToMillis up) > 1500
-                        ) model.uploadDoneTime sharedState.currentTime
-                in
-                rRowButton <| PbbButton <|
-                    if success && stateShownLongEnough == Just False then
-                        PbbResult <| PbbSuccess "Success"
-                    else if failure && stateShownLongEnough == Just False then
-                        PbbResult <| PbbFailure "Failure"
-                    else if deadlineReached then
-                        PbbDisabled "Submission closed"
-                    else if not filesSelected then
-                        PbbDisabled "Upload"
-                    else
-                        PbbActive "Upload" UploadSubmission
-            ]
+                                    else
+                                        String.fromInt model.rating
+                                }
+                                Rating
+                                []
+                                RateTask
+                   , if model.uploading == Loading then
+                        rRowButton <| PbbProgressBar model.uploadPercentage
+
+                     else
+                        let
+                            success =
+                                RemoteData.isSuccess model.uploading
+
+                            failure =
+                                RemoteData.isFailure model.uploading
+
+                            filesSelected =
+                                case model.submission of
+                                    Just _ ->
+                                        True
+
+                                    Nothing ->
+                                        False
+
+                            stateShownLongEnough =
+                                Maybe.map2
+                                    (\up cur ->
+                                        Time.posixToMillis cur - Time.posixToMillis up > 1500
+                                    )
+                                    model.uploadDoneTime
+                                    sharedState.currentTime
+                        in
+                        rRowButton <|
+                            PbbButton <|
+                                if success && stateShownLongEnough == Just False then
+                                    PbbResult <| PbbSuccess "Success"
+
+                                else if failure && stateShownLongEnough == Just False then
+                                    PbbResult <| PbbFailure "Failure"
+
+                                else if deadlineReached then
+                                    PbbDisabled "Submission closed"
+
+                                else if not filesSelected then
+                                    PbbDisabled "Upload"
+
+                                else
+                                    PbbActive "Upload" UploadSubmission
+                   ]
 
 
 displayResults : String -> Html msg

@@ -5,26 +5,27 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Material as MaterialRequests
 import Array
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( dateInputElement
-    , fileUploader
-    , inputElement
-    , inputLabel
-    , normalPage
-    , pageContainer
-    , r1Column
-    , r2Column
-    , rContainer
-    , rRow
-    , rRowButton
-    , rRowExtraSpacing
-    , sliderInputElement
-    , timeInputElement
-    , PbbState(..)
-    , PbbButtonState(..)
-    , simpleDialog
-    , multiButton
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , dateInputElement
+        , fileUploader
+        , inputElement
+        , inputLabel
+        , multiButton
+        , normalPage
+        , pageContainer
+        , r1Column
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowExtraSpacing
+        , simpleDialog
+        , sliderInputElement
+        , timeInputElement
+        )
 import Components.Dialog as Dialog
 import Components.Toasty
 import Date exposing (Date)
@@ -375,12 +376,13 @@ update sharedState msg model =
         UpdateResponse response ->
             updateHandleSend sharedState model response
 
-        RequestDelete -> --Show Dialog
-            ({ model | deleteMaterialDialogState = True}, Cmd.none, NoUpdate)
+        RequestDelete ->
+            --Show Dialog
+            ( { model | deleteMaterialDialogState = True }, Cmd.none, NoUpdate )
 
         Delete ->
-            (model, MaterialRequests.materialDelete model.course_id model.id DeleteResponse, NoUpdate)
-        
+            ( model, MaterialRequests.materialDelete model.course_id model.id DeleteResponse, NoUpdate )
+
         DeleteResponse response ->
             updateHandleDelete sharedState model response
 
@@ -419,18 +421,18 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
         DeleteMaterialDialogShown visible ->
-            ({ model | deleteMaterialDialogState = visible }, Cmd.none, NoUpdate)
+            ( { model | deleteMaterialDialogState = visible }, Cmd.none, NoUpdate )
 
         NoOp ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
-updateHandleDelete : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleDelete : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleDelete sharedState model response =
     case response of
         RemoteData.Success _ ->
-            (model, perform <| NavigateTo <| CourseDetailRoute model.course_id, NoUpdate)
-        
+            ( model, perform <| NavigateTo <| CourseDetailRoute model.course_id, NoUpdate )
+
         RemoteData.Failure err ->
             handleLogoutErrors model
                 sharedState
@@ -650,9 +652,9 @@ viewForm sharedState model =
         , rRow <|
             r1Column <|
                 [ inputLabel "Material Type"
-                , multiButton 
-                    [ ("Slide", model.materialType == Slide, SetMaterialType Slide)
-                    , ("Supplementary", model.materialType == Supplementary, SetMaterialType Supplementary)
+                , multiButton
+                    [ ( "Slide", model.materialType == Slide, SetMaterialType Slide )
+                    , ( "Supplementary", model.materialType == Supplementary, SetMaterialType Supplementary )
                     ]
                 ]
         , rRow <|
@@ -712,26 +714,33 @@ viewForm sharedState model =
                     UtcOffset
                     model.errors
                     SetField
-        , rRowButton <| PbbButton <| PbbActive
-            (if model.createMaterial then
-                "Erstellen"
+        , rRowButton <|
+            PbbButton <|
+                PbbActive
+                    (if model.createMaterial then
+                        "Erstellen"
 
-             else
-                "Bearbeiten"
-            )
-            (if model.createMaterial then
-                Create
+                     else
+                        "Bearbeiten"
+                    )
+                    (if model.createMaterial then
+                        Create
 
-             else
-                Update
-            )
-        ] ++ if not model.createMaterial then
-                [rRowButton <| PbbButton <| PbbActive
-                    "Löschen"
-                    RequestDelete
-                ]
-            else
-                []
+                     else
+                        Update
+                    )
+        ]
+            ++ (if not model.createMaterial then
+                    [ rRowButton <|
+                        PbbButton <|
+                            PbbActive
+                                "Löschen"
+                                RequestDelete
+                    ]
+
+                else
+                    []
+               )
 
 
 viewDeleteMaterialDialog : SharedState -> Model -> Html Msg
@@ -739,8 +748,8 @@ viewDeleteMaterialDialog sharedState model =
     simpleDialog
         "Delete the Material?"
         "Are you sure you want to delete the material? This cannot be undone. The material and everything associated with the material like files are gone."
-        [ ("Delete", Styles.buttonRedStyle, Delete)
-        , ("Cancel", Styles.buttonGreenStyle, DeleteMaterialDialogShown False)
+        [ ( "Delete", Styles.buttonRedStyle, Delete )
+        , ( "Cancel", Styles.buttonGreenStyle, DeleteMaterialDialogShown False )
         ]
         model.deleteMaterialDialogState
         deleteMaterialDialogConfig

@@ -24,7 +24,7 @@ type Route
     | RequestPasswordResetRoute
     | PasswordResetRoute String String
     | CreateGroupRoute Int
-    | EditGroupRoute Int Int 
+    | EditGroupRoute Int Int
     | MailToUsersRoute Int
     | MailToGroupRoute Int Int
     | MailToCourseRoute Int
@@ -37,7 +37,7 @@ reverseRoute route =
         pieces =
             case route of
                 LoginRoute ->
-                    [] 
+                    []
 
                 RegistrationRoute ->
                     [ "registration" ]
@@ -92,16 +92,16 @@ reverseRoute route =
 
                 CreateGroupRoute courseId ->
                     [ "course", String.fromInt courseId, "group", "create" ]
-                
+
                 EditGroupRoute courseId groupId ->
-                    [ "course", String.fromInt courseId, "group", String.fromInt groupId, "edit" ] 
+                    [ "course", String.fromInt courseId, "group", String.fromInt groupId, "edit" ]
 
                 MailToUsersRoute userId ->
                     [ "email", "user", String.fromInt userId ]
 
                 MailToGroupRoute courseId groupId ->
-                    [ "email", "course", String.fromInt courseId, "group", String.fromInt groupId ] 
-                
+                    [ "email", "course", String.fromInt courseId, "group", String.fromInt groupId ]
+
                 MailToCourseRoute courseId ->
                     [ "email", "course", String.fromInt courseId ]
 
@@ -137,6 +137,7 @@ routeParser =
         , Url.Parser.map MailToGroupRoute (Url.Parser.s "email" </> Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.int)
         , Url.Parser.map MailToCourseRoute (Url.Parser.s "email" </> Url.Parser.s "course" </> Url.Parser.int)
         ]
+
 
 parseUrl : Url -> Route
 parseUrl url =

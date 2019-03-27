@@ -36,31 +36,38 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
+import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
-import Api.Data.PointOverview as PointOverview exposing (PointOverview)
+import Api.Endpoint exposing (sheetFile, unwrap)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
-import Api.Endpoint exposing (unwrap, sheetFile)
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( inputElement
-    , multiButton
-    , rRowHeaderActionButtons
-    , pageContainer
-    , normalPage
-    , widePage
-    , rContainer
-    , rRow
-    , rRowExtraSpacing
-    , rRowHeader
-    , r2Column
-    , datesDisplayContainer
-    , dateElement
-    , searchElement
-    )
+import Components.CommonElements
+    exposing
+        ( dateElement
+        , datesDisplayContainer
+        , inputElement
+        , multiButton
+        , normalPage
+        , pageContainer
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowExtraSpacing
+        , rRowHeader
+        , rRowHeaderActionButtons
+        , searchElement
+        , widePage
+        )
+import Components.Groups.AdminView as GroupAdminView
+import Components.Groups.BiddingView as BiddingView
+import Components.Groups.GroupView as GroupView
+import Components.UserAvatarEmailView as UserView
+import Dict exposing (Dict)
+import File.Download as Download
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -75,13 +82,7 @@ import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Utils.Utils exposing (perform, flip, handleLogoutErrors, tupleMapThree)
-import File.Download as Download
-import Components.UserAvatarEmailView as UserView
-import Components.Groups.BiddingView as BiddingView
-import Components.Groups.AdminView as GroupAdminView
-import Components.Groups.GroupView as GroupView
-import Dict exposing (Dict)
+import Utils.Utils exposing (flip, handleLogoutErrors, perform, tupleMapThree)
 
 
 type Msg
@@ -125,6 +126,7 @@ type alias Model =
     , searchGroupInput : String
     , pointOverviewResponse : WebData (List PointOverview)
     }
+
 
 type GroupMsgTypes
     = BiddingMsg BiddingView.Msg
@@ -171,7 +173,7 @@ determineInitialRoleRequests model role =
         Admin ->
             ( { model
                 | groupsRequest = Loading
-            }
+              }
             , CoursesRequests.courseGroupsGet model.courseId GroupsDisplayResponse
             )
 
@@ -234,15 +236,17 @@ update sharedState msg model =
             ( { model | searchUserForEnrollmentRequest = response }, Cmd.none, NoUpdate )
 
         EnrollmentsResponse response ->
-            ( { model | enrollmentsRequest = response}, Cmd.none, NoUpdate)
+            ( { model | enrollmentsRequest = response }, Cmd.none, NoUpdate )
 
         SetField field value ->
             ( setField model field value, Cmd.none, NoUpdate )
 
         ChangeEnrollment enrollment ->
             ( model
-            , CoursesRequests.coursesEnrollmentsUserPut model.courseId 
-                enrollment.user.id enrollment.role EnrollmentChangedResponse
+            , CoursesRequests.coursesEnrollmentsUserPut model.courseId
+                enrollment.user.id
+                enrollment.role
+                EnrollmentChangedResponse
             , NoUpdate
             )
 
@@ -250,16 +254,16 @@ update sharedState msg model =
             ( model, perform SearchUserForEnrollment, NoUpdate )
 
         SheetRequestResponse response ->
-            ( {model | sheetRequest = response}, Cmd.none, NoUpdate )
+            ( { model | sheetRequest = response }, Cmd.none, NoUpdate )
 
         DownloadSheet courseId sheetId ->
-            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate)
+            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate )
 
         WriteTo userId ->
-            ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate)
+            ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate )
 
         WriteEmailMsg _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         GroupDisplayResponse response ->
             updateGroupDisplay sharedState { model | groupRequest = response }
@@ -269,30 +273,34 @@ update sharedState msg model =
 
         GroupMsg subMsg ->
             let
-                (subModel, subCmd, subSharedState) = 
-                    case (model.groupModel, subMsg) of
-                        (Just (BiddingModel biddingModel), BiddingMsg bidMsg) ->
+                ( subModel, subCmd, subSharedState ) =
+                    case ( model.groupModel, subMsg ) of
+                        ( Just (BiddingModel biddingModel), BiddingMsg bidMsg ) ->
                             tupleMapThree
                                 (\m -> Just <| BiddingModel m)
-                                (\m -> Cmd.map GroupMsg <| Cmd.map BiddingMsg m) 
-                                identity <|
-                            BiddingView.update sharedState bidMsg biddingModel
+                                (\m -> Cmd.map GroupMsg <| Cmd.map BiddingMsg m)
+                                identity
+                            <|
+                                BiddingView.update sharedState bidMsg biddingModel
 
-                        (Just (DetailModel detailModel), DetailMsg detailMsg) ->
-                            tupleMapThree 
+                        ( Just (DetailModel detailModel), DetailMsg detailMsg ) ->
+                            tupleMapThree
                                 (\m -> Just <| DetailModel m)
                                 (\m -> Cmd.map GroupMsg <| Cmd.map DetailMsg m)
-                                identity <|
+                                identity
+                            <|
                                 GroupView.update sharedState detailMsg detailModel
 
-                        (Just (GroupAdminModel adminModel), GroupAdminMsg adminMsg) ->
+                        ( Just (GroupAdminModel adminModel), GroupAdminMsg adminMsg ) ->
                             tupleMapThree
                                 (\m -> Just <| GroupAdminModel m)
                                 (\m -> Cmd.map GroupMsg <| Cmd.map GroupAdminMsg m)
-                                identity <|
+                                identity
+                            <|
                                 GroupAdminView.update sharedState adminMsg adminModel
 
-                        (_, _) -> (Nothing, Cmd.none, NoUpdate)
+                        ( _, _ ) ->
+                            ( Nothing, Cmd.none, NoUpdate )
             in
             ( { model | groupModel = subModel }
             , subCmd
@@ -302,94 +310,110 @@ update sharedState msg model =
         PointOverviewResponse response ->
             ( { model | pointOverviewResponse = response }
             , Cmd.none
-            , NoUpdate )
+            , NoUpdate
+            )
 
         _ ->
             ( model, Cmd.none, NoUpdate )
 
 
-updateGroupDisplay : SharedState -> Model -> (Model, Cmd Msg, SharedStateUpdate)
+updateGroupDisplay : SharedState -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 updateGroupDisplay sharedState model =
-    case (model.groupRequest, model.courseRole) of
-        (Failure err, Just Student) ->
-            handleLogoutErrors model sharedState 
+    case ( model.groupRequest, model.courseRole ) of
+        ( Failure err, Just Student ) ->
+            handleLogoutErrors model
+                sharedState
                 (\e ->
                     let
-                        maybeInit = case e of
-                            Http.BadStatus 404 ->
-                                Just <| 
-                                    Tuple.mapBoth 
-                                        (\subModel -> BiddingModel subModel)
-                                        (\subMsg -> Cmd.map BiddingMsg subMsg) <|
-                                    BiddingView.init model.courseId
-                            _ ->
-                                Nothing
+                        maybeInit =
+                            case e of
+                                Http.BadStatus 404 ->
+                                    Just <|
+                                        Tuple.mapBoth
+                                            (\subModel -> BiddingModel subModel)
+                                            (\subMsg -> Cmd.map BiddingMsg subMsg)
+                                        <|
+                                            BiddingView.init model.courseId
+
+                                _ ->
+                                    Nothing
                     in
-                    ( { model 
+                    ( { model
                         | groupModel = Maybe.map Tuple.first maybeInit
-                    }
-                    , Maybe.withDefault Cmd.none <| 
-                        Maybe.map (\subInit ->
-                            Cmd.map GroupMsg <| Tuple.second subInit) maybeInit
+                      }
+                    , Maybe.withDefault Cmd.none <|
+                        Maybe.map
+                            (\subInit ->
+                                Cmd.map GroupMsg <| Tuple.second subInit
+                            )
+                            maybeInit
                     , NoUpdate
-                    )              
-                ) 
+                    )
+                )
                 err
 
-        (Success group, _) ->
-            case (model.groupsRequest, model.courseRole) of
-                (_, Just Student) ->
+        ( Success group, _ ) ->
+            case ( model.groupsRequest, model.courseRole ) of
+                ( _, Just Student ) ->
                     let
-                        groupInit = Tuple.mapBoth
-                            DetailModel
-                            (Cmd.map DetailMsg) <|
-                            GroupView.init group [] Student
-                    in
-                    ( { model 
-                        | groupModel = Just <| Tuple.first groupInit
-                    }
-                    , Cmd.map GroupMsg <| Tuple.second groupInit
-                    , NoUpdate
-                    )
-            
-                (Success groups, Just Tutor) ->
-                    let
-                        groupInit = Tuple.mapBoth
-                            DetailModel
-                            (Cmd.map DetailMsg) <|
-                            GroupView.init group groups Tutor
-                    in
-                    ( { model 
-                        | groupModel = Just <| Tuple.first groupInit
-                    }
-                    , Cmd.map GroupMsg <| Tuple.second groupInit
-                    , NoUpdate
-                    )
-
-                (_, _) ->
-                    (model, Cmd.none, NoUpdate)
-
-        (_, Just Admin) ->
-            case model.groupsRequest of
-                Success groups ->
-                    let
-                        groupInit = Tuple.mapBoth
-                            GroupAdminModel
-                            (Cmd.map GroupAdminMsg) <|
-                            GroupAdminView.init model.courseId groups
+                        groupInit =
+                            Tuple.mapBoth
+                                DetailModel
+                                (Cmd.map DetailMsg)
+                            <|
+                                GroupView.init group [] Student
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
-                    }
+                      }
                     , Cmd.map GroupMsg <| Tuple.second groupInit
                     , NoUpdate
                     )
-                    
-                _ ->
-                    (model, Cmd.none, NoUpdate)
 
-        (_, _) ->
-            ( model, Cmd.none, NoUpdate)
+                ( Success groups, Just Tutor ) ->
+                    let
+                        groupInit =
+                            Tuple.mapBoth
+                                DetailModel
+                                (Cmd.map DetailMsg)
+                            <|
+                                GroupView.init group groups Tutor
+                    in
+                    ( { model
+                        | groupModel = Just <| Tuple.first groupInit
+                      }
+                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , NoUpdate
+                    )
+
+                ( _, _ ) ->
+                    ( model, Cmd.none, NoUpdate )
+
+        ( _, Just Admin ) ->
+            case model.groupsRequest of
+                Success groups ->
+                    let
+                        groupInit =
+                            Tuple.mapBoth
+                                GroupAdminModel
+                                (Cmd.map GroupAdminMsg)
+                            <|
+                                GroupAdminView.init model.courseId groups
+                    in
+                    ( { model
+                        | groupModel = Just <| Tuple.first groupInit
+                      }
+                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , NoUpdate
+                    )
+
+                _ ->
+                    ( model, Cmd.none, NoUpdate )
+
+        ( _, _ ) ->
+            ( model, Cmd.none, NoUpdate )
+
+
 
 -- TODO if successful update searchProgress too
 
@@ -414,60 +438,71 @@ view sharedState model =
 viewCourseInfo : SharedState -> Model -> Html Msg
 viewCourseInfo sharedState model =
     let
-        maybePoints = case (model.pointOverviewResponse, model.courseRequest) of
-            (Success points, Success course) ->
-                if List.isEmpty points then
-                    Nothing
-                else
-                    points
-                        |> List.map (\p -> (p.acquired_points, p.max_points))
-                        |> List.foldl (\pt at -> 
-                            Tuple.mapBoth
-                                ( (+) <| Tuple.first pt)
-                                ( (+) <| Tuple.second pt)
-                                at
-                        ) (0, 0)
-                        |> (\pt ->
-                            (Tuple.first pt, Tuple.second pt, 
-                                let
-                                    acquiredPerc = round <|
-                                        (toFloat <| Tuple.first pt) / 
-                                        (toFloat <| Tuple.second pt) * 100
-                                in
-                                if acquiredPerc < course.required_percentage then
-                                    TC.red
-                                else if acquiredPerc < (course.required_percentage + 5) then
-                                    TC.gold
-                                else
-                                    TC.dark_green
-                            )
-                        ) |> Just
+        maybePoints =
+            case ( model.pointOverviewResponse, model.courseRequest ) of
+                ( Success points, Success course ) ->
+                    if List.isEmpty points then
+                        Nothing
 
-            (_, _) ->
-                Nothing
+                    else
+                        points
+                            |> List.map (\p -> ( p.acquired_points, p.max_points ))
+                            |> List.foldl
+                                (\pt at ->
+                                    Tuple.mapBoth
+                                        ((+) <| Tuple.first pt)
+                                        ((+) <| Tuple.second pt)
+                                        at
+                                )
+                                ( 0, 0 )
+                            |> (\pt ->
+                                    ( Tuple.first pt
+                                    , Tuple.second pt
+                                    , let
+                                        acquiredPerc =
+                                            round <|
+                                                (toFloat <| Tuple.first pt)
+                                                    / (toFloat <| Tuple.second pt)
+                                                    * 100
+                                      in
+                                      if acquiredPerc < course.required_percentage then
+                                        TC.red
+
+                                      else if acquiredPerc < (course.required_percentage + 5) then
+                                        TC.gold
+
+                                      else
+                                        TC.dark_green
+                                    )
+                               )
+                            |> Just
+
+                ( _, _ ) ->
+                    Nothing
     in
     case model.courseRequest of
         RemoteData.Success course ->
-            div [ classes [TC.w_100, TC.b__black, TC.bw2, TC.bb, TC.pb3, TC.overflow_hidden] ]
-                ( r2Column 
+            div [ classes [ TC.w_100, TC.b__black, TC.bw2, TC.bb, TC.pb3, TC.overflow_hidden ] ]
+                (r2Column
                     [ div []
                         [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
                         , datesDisplayContainer <|
-                            (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at) ++
-                            (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at) ++
-                                case maybePoints of
-                                    Just (acquired, max, color) ->
-                                        [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Erreichte Punkte:"]
-                                        ,  h1 [ classes [ color, TC.mt0 ], Styles.headerStyle ]
-                                        [ text <| 
-                                            (String.fromInt <| acquired) ++
-                                            "/" ++
-                                            (String.fromInt <| max) ]
-                                        ]
+                            (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at)
+                                ++ (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
+                                ++ (case maybePoints of
+                                        Just ( acquired, max, color ) ->
+                                            [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Erreichte Punkte:" ]
+                                            , h1 [ classes [ color, TC.mt0 ], Styles.headerStyle ]
+                                                [ text <|
+                                                    (String.fromInt <| acquired)
+                                                        ++ "/"
+                                                        ++ (String.fromInt <| max)
+                                                ]
+                                            ]
 
-                                    Nothing ->
-                                        [ text "" ]
-                            
+                                        Nothing ->
+                                            [ text "" ]
+                                   )
                         ]
                     ]
                     [ MD.toHtml [ Styles.textStyle ] <| course.description ]
@@ -502,16 +537,19 @@ viewTeam sharedState model =
             rContainer <|
                 [ rRowHeader "Team"
                 , div [ classes [ TC.flex, TC.flex_row, TC.flex_wrap, TC.justify_start ] ]
-                    ( sortedTeam |>
-                        List.map (\ue -> UserView.initFromUser ue.user) |>
-                            List.map Tuple.first |>
-                                List.map (\uv -> 
-                                    div [ classes 
+                    (sortedTeam
+                        |> List.map (\ue -> UserView.initFromUser ue.user)
+                        |> List.map Tuple.first
+                        |> List.map
+                            (\uv ->
+                                div
+                                    [ classes
                                         [ TC.w_third_l
                                         , TC.w_50_m
-                                        , TC.w_100 
-                                        ] 
-                                    ] [ UserView.view sharedState uv (Just WriteTo) ]
+                                        , TC.w_100
+                                        ]
+                                    ]
+                                    [ UserView.view sharedState uv (Just WriteTo) ]
                             )
                     )
                 ]
@@ -534,21 +572,20 @@ viewMemberSearch sharedState model =
     rContainer <|
         [ rRow <|
             r2Column
-                [ h1 [Styles.headerStyle ] [ text "Change role" ]
+                [ h1 [ Styles.headerStyle ] [ text "Change role" ]
                 ]
-                ( searchElement 
-                    { placeholder = "Search by E-Mail" 
+                (searchElement
+                    { placeholder = "Search by E-Mail"
                     , fieldType = "email"
                     , value = model.searchEnrollmentInput
                     }
-                    EnrollmentSearchField 
-                    SetField 
+                    EnrollmentSearchField
+                    SetField
                     SearchUserForEnrollment
                 )
         , rRow <|
             [ displaySearchResults ]
         ]
-
 
 
 viewUserSearchResult : SharedState -> Model -> Maybe UserEnrollment -> Html Msg
@@ -572,11 +609,10 @@ viewUserSearchResult sharedState model maybeUserEnrollment =
                     |> Html.map WriteEmailMsg
                 , div [ classes [ TC.ml4_l, TC.ml0, TC.mt0_l, TC.mt2, TC.flex ] ]
                     [ multiButton
-                        [ ("Student", userEnrollment.role == Student, ChangeEnrollment {userEnrollment | role = Student} )
-                        , ("Tutor", userEnrollment.role == Tutor, ChangeEnrollment {userEnrollment | role = Tutor} )
-                        , ("Admin", userEnrollment.role == Admin, ChangeEnrollment {userEnrollment | role = Admin} )
+                        [ ( "Student", userEnrollment.role == Student, ChangeEnrollment { userEnrollment | role = Student } )
+                        , ( "Tutor", userEnrollment.role == Tutor, ChangeEnrollment { userEnrollment | role = Tutor } )
+                        , ( "Admin", userEnrollment.role == Admin, ChangeEnrollment { userEnrollment | role = Admin } )
                         ]
-                    
                     ]
                 ]
 
@@ -622,93 +658,109 @@ viewDetermineGroupDisplay courseRole sharedState model =
 viewSheets : SharedState -> Model -> Html Msg
 viewSheets sharedState model =
     let
-        baseStyle = [ TC.f3, TC.fw6, TC.lh_title ]
-        pointsDict = 
-            case (model.pointOverviewResponse, model.courseRequest) of
-                (Success points, Success course) ->
+        baseStyle =
+            [ TC.f3, TC.fw6, TC.lh_title ]
+
+        pointsDict =
+            case ( model.pointOverviewResponse, model.courseRequest ) of
+                ( Success points, Success course ) ->
                     points
-                        |> List.map (\p -> 
-                            let
-                                acquiredPerc = round <|
-                                    (toFloat <| p.acquired_points) / 
-                                    (toFloat <| p.max_points) * 100
-                            in
-                            (Maybe.withDefault -1 p.sheet_id,
-                                ( p.acquired_points
-                                , p.max_points
-                                , if acquiredPerc < course.required_percentage then
-                                    classes (TC.red :: baseStyle)
-                                else if acquiredPerc < (course.required_percentage + 5) then
-                                    classes (TC.gold :: baseStyle)
-                                else
-                                    classes (TC.dark_green :: baseStyle)
+                        |> List.map
+                            (\p ->
+                                let
+                                    acquiredPerc =
+                                        round <|
+                                            (toFloat <| p.acquired_points)
+                                                / (toFloat <| p.max_points)
+                                                * 100
+                                in
+                                ( Maybe.withDefault -1 p.sheet_id
+                                , ( p.acquired_points
+                                  , p.max_points
+                                  , if acquiredPerc < course.required_percentage then
+                                        classes (TC.red :: baseStyle)
+
+                                    else if acquiredPerc < (course.required_percentage + 5) then
+                                        classes (TC.gold :: baseStyle)
+
+                                    else
+                                        classes (TC.dark_green :: baseStyle)
+                                  )
                                 )
                             )
-                        )
                         |> Dict.fromList
 
-                (_, _) ->
+                ( _, _ ) ->
                     Dict.empty
 
-        defaultStyle = classes (TC.black :: baseStyle)
+        defaultStyle =
+            classes (TC.black :: baseStyle)
     in
     rContainer <|
         [ rRowHeader "Sheets"
-        , div [classes [TC.ph4] ] <|
+        , div [ classes [ TC.ph4 ] ] <|
             case model.sheetRequest of
                 Success sheets ->
-                    sheets |>
-                        List.sortBy (\sheet -> Time.posixToMillis sheet.due_at ) |>
-                        List.map (\sheet ->
-                            let
-                                toDisplay = case Dict.get sheet.id pointsDict of
-                                    Just (acquired, max, labelStyle) ->
-                                        (sheet.name ++ " - " ++ 
-                                        (String.fromInt acquired) ++ "/" ++
-                                        (String.fromInt max), labelStyle)
-                                    
-                                    Nothing ->
-                                        (sheet.name, defaultStyle)
-                            in
-                            rRowHeaderActionButtons 
-                                (Tuple.first toDisplay)
-                                (Tuple.second toDisplay) <|
-                                ([
-                                    ( "Download"
-                                    , DownloadSheet model.courseId sheet.id
-                                    , Styles.buttonGreyStyle)
-                                ,
-                                    ( "Show"
-                                    , NavigateTo <| SheetDetailRoute model.courseId sheet.id
-                                    , Styles.buttonGreyStyle)
-                                ] ++ 
-                                    ( if model.courseRole == Just Admin then
-                                        [
-                                            ( "Edit"
-                                            , NavigateTo <| EditSheetRoute model.courseId sheet.id
-                                            , Styles.buttonGreyStyle)
-                                        
-                                        ]
-                                    else
-                                        []
+                    sheets
+                        |> List.sortBy (\sheet -> Time.posixToMillis sheet.due_at)
+                        |> List.map
+                            (\sheet ->
+                                let
+                                    toDisplay =
+                                        case Dict.get sheet.id pointsDict of
+                                            Just ( acquired, max, labelStyle ) ->
+                                                ( sheet.name
+                                                    ++ " - "
+                                                    ++ String.fromInt acquired
+                                                    ++ "/"
+                                                    ++ String.fromInt max
+                                                , labelStyle
+                                                )
+
+                                            Nothing ->
+                                                ( sheet.name, defaultStyle )
+                                in
+                                rRowHeaderActionButtons
+                                    (Tuple.first toDisplay)
+                                    (Tuple.second toDisplay)
+                                <|
+                                    ([ ( "Download"
+                                       , DownloadSheet model.courseId sheet.id
+                                       , Styles.buttonGreyStyle
+                                       )
+                                     , ( "Show"
+                                       , NavigateTo <| SheetDetailRoute model.courseId sheet.id
+                                       , Styles.buttonGreyStyle
+                                       )
+                                     ]
+                                        ++ (if model.courseRole == Just Admin then
+                                                [ ( "Edit"
+                                                  , NavigateTo <| EditSheetRoute model.courseId sheet.id
+                                                  , Styles.buttonGreyStyle
+                                                  )
+                                                ]
+
+                                            else
+                                                []
+                                           )
                                     )
-                                )
-                        ) |>
-                        flip List.append
+                            )
+                        |> flip List.append
                             [ if model.courseRole == Just Admin then
-                                rRowHeaderActionButtons "New sheet" Styles.listHeadingStyle 
-                                    [ 
-                                        ( "Create"
-                                        , NavigateTo <| CreateSheetRoute model.courseId
-                                        , Styles.buttonGreenStyle) 
+                                rRowHeaderActionButtons "New sheet"
+                                    Styles.listHeadingStyle
+                                    [ ( "Create"
+                                      , NavigateTo <| CreateSheetRoute model.courseId
+                                      , Styles.buttonGreenStyle
+                                      )
                                     ]
-                                
-                            else
+
+                              else
                                 text ""
                             ]
-                        
-                _ -> 
-                    [ div [] [ text "Loading"] ]
+
+                _ ->
+                    [ div [] [ text "Loading" ] ]
         ]
 
 
@@ -742,6 +794,7 @@ determineRole course_id enrollments =
     List.head <|
         List.map .role <|
             List.filter (\enrollment -> enrollment.course_id == course_id) enrollments
+
 
 type Field
     = EnrollmentSearchField

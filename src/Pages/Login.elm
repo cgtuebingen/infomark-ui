@@ -4,12 +4,13 @@ import Api.Data.Account exposing (Account)
 import Api.Data.Role exposing (Role)
 import Api.Request.Auth exposing (sessionPost)
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( inputElement
-    , rRowButton
-    , PbbState(..)
-    , PbbButtonState(..)
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , inputElement
+        , rRowButton
+        )
 import Components.Toasty
 import Decoders
 import Dict

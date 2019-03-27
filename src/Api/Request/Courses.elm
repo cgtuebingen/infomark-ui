@@ -1,9 +1,16 @@
 module Api.Request.Courses exposing
     ( courseDelete
     , courseGet
+    , courseGradeGet
+    , courseGradeMissing
+    , courseGradePut
+    , courseGradesGetPerTaskAndGroup
     , courseGroupsGet
     , courseGroupsPost
+    , courseMaterialsGet
+    , courseMaterialsPost
     , courseOwnGroupGet
+    , coursePointsGet
     , coursePut
     , courseSheetsGet
     , courseSheetsPost
@@ -15,57 +22,51 @@ module Api.Request.Courses exposing
     , coursesEnrollmentGetByEmail
     , coursesEnrollmentGetTeam
     , coursesEnrollmentPost
+    , coursesEnrollmentsUserDelete
     , coursesEnrollmentsUserGet
     , coursesEnrollmentsUserPut
-    , coursesEnrollmentsUserDelete
     , coursesGet
     , coursesPost
-    , courseMaterialsGet
-    , courseMaterialsPost
-    , coursePointsGet
-    , courseGradesGetPerTaskAndGroup
-    , courseGradeGet
-    , courseGradePut
-    , courseGradeMissing
     )
 
-import Api.Data.Material as Material exposing (Material)
 import Api.Data.Course as Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
+import Api.Data.Material as Material exposing (Material)
+import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
+import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.Submission as Submission exposing (Submission)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
-import Api.Data.PointOverview as PointOverview exposing (PointOverview)
-import Api.Data.Grade as Grade exposing (Grade)
-import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
 import Api.Endpoint
     exposing
         ( course
+        , courseBids
         , courseEnrollment
         , courseEnrollmentUserDetail
-        , courseGroup
-        , courseGroupBid
-        , courseBids
-        , courseGroups
-        , courseSheets
-        , courses
-        , coursePoints
         , courseGrade
         , courseGrades
-        , courseMissingGrades
-        , submissions
+        , courseGroup
+        , courseGroupBid
+        , courseGroups
         , courseMaterials
+        , courseMissingGrades
+        , coursePoints
+        , courseSheets
+        , courses
+        , submissions
         , unwrap
         )
-import Api.Helper exposing 
-    ( deleteExpectNothing
-    , get
-    , post
-    , postExpectNothing
-    , putExpectNothing
-    )
+import Api.Helper
+    exposing
+        ( deleteExpectNothing
+        , get
+        , post
+        , postExpectNothing
+        , putExpectNothing
+        )
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -157,6 +158,7 @@ coursesEnrollmentDelete courseId msg =
     deleteExpectNothing (unwrap <| courseEnrollment courseId [])
         msg
 
+
 coursesEnrollmentsUserGet : Int -> Int -> (WebData UserEnrollment -> msg) -> Cmd msg
 coursesEnrollmentsUserGet courseId userId msg =
     get (unwrap <| courseEnrollmentUserDetail courseId userId)
@@ -169,14 +171,15 @@ coursesEnrollmentsUserPut courseId userId newRole msg =
     putExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId)
         (Encode.object
             [ ( "role", CourseRole.encoder newRole )
-            ] |>
-            Http.jsonBody
+            ]
+            |> Http.jsonBody
         )
         msg
 
+
 coursesEnrollmentsUserDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
 coursesEnrollmentsUserDelete courseId userId msg =
-    deleteExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId )
+    deleteExpectNothing (unwrap <| courseEnrollmentUserDetail courseId userId)
         msg
 
 
@@ -214,11 +217,10 @@ coursesBidsGet id msg =
 coursesBidsPost : Int -> Int -> Int -> (WebData () -> msg) -> Cmd msg
 coursesBidsPost courseId groupId bid msg =
     postExpectNothing (unwrap <| courseGroupBid courseId groupId)
-        (Encode.object 
-            [ ("bid", Encode.int bid) 
-            ] |>
-            Http.jsonBody
-            
+        (Encode.object
+            [ ( "bid", Encode.int bid )
+            ]
+            |> Http.jsonBody
         )
         msg
 
@@ -292,12 +294,14 @@ coursePointsGet id msg =
     <|
         Decode.list PointOverview.decoder
 
+
 courseGradesGet : Int -> List QueryParameter -> (WebData (List Grade) -> msg) -> Cmd msg
 courseGradesGet courseId params msg =
     get (unwrap <| courseGrades courseId params)
         msg
     <|
         Decode.list Grade.decoder
+
 
 courseGradesGetPerTaskAndGroup : Int -> Int -> Int -> (WebData (List Grade) -> msg) -> Cmd msg
 courseGradesGetPerTaskAndGroup courseId taskId groupId msg =

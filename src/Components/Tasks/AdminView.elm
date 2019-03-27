@@ -14,33 +14,34 @@ module Components.Tasks.AdminView exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
-import Components.CommonElements exposing 
-    ( fileUploader
-    , inputElement
-    , inputLabel
-    , r1Column
-    , r2Column
-    , rCollapsable
-    , rContainer
-    , rRow
-    , rRowButton
-    , rRowExtraSpacing
-    , PbbState(..)
-    , PbbButtonState(..)
-    , PbbResultState(..)
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbResultState(..)
+        , PbbState(..)
+        , fileUploader
+        , inputElement
+        , inputLabel
+        , r1Column
+        , r2Column
+        , rCollapsable
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowExtraSpacing
+        )
 import Dict exposing (Dict)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
 import Html.Events exposing (onClick, preventDefaultOn)
 import Http
-import Time
 import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
+import Time
 import Utils.Styles as Styles
 
 
@@ -224,20 +225,26 @@ update sharedState msg model =
 
         FileUploadResponse fileType response ->
             let
-                newModel = { model
-                    | uploading = Dict.update
-                        (fileTypeToInt fileType)
-                        (Maybe.map (\_ -> response))
-                        model.uploading
+                newModel =
+                    { model
+                        | uploading =
+                            Dict.update
+                                (fileTypeToInt fileType)
+                                (Maybe.map (\_ -> response))
+                                model.uploading
                     }
 
-                finalModel = if not (anythingUploading newModel) &&
-                    (uploadSuccess newModel || uploadFailure newModel) then
+                finalModel =
+                    if
+                        not (anythingUploading newModel)
+                            && (uploadSuccess newModel || uploadFailure newModel)
+                    then
                         { newModel | uploadDoneTime = sharedState.currentTime }
+
                     else
                         newModel
             in
-            ( finalModel, Cmd.none, NoUpdate)
+            ( finalModel, Cmd.none, NoUpdate )
 
         UploadProgress progress ->
             let
@@ -332,10 +339,11 @@ uploadFiles model =
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     rContainer <|
-        rCollapsable 
+        rCollapsable
             (if model.createTask then
                 "New task"
-            else 
+
+             else
                 model.name
             )
             model.collapse
@@ -392,24 +400,33 @@ view sharedState model =
                         MaxPoints
                         model.errors
                         SetField
-            , if anythingUploading model &&
-                 (not (Dict.isEmpty model.uploading)) then
+            , if
+                anythingUploading model
+                    && not (Dict.isEmpty model.uploading)
+              then
                 -- Something is uploading. We need a progress bar
                 rRowButton <| PbbProgressBar model.averaged_progress
-            else
+
+              else
                 let
-                    stateShownLongEnough = Maybe.map2 
-                        (\up cur ->
-                            (Time.posixToMillis cur) - (Time.posixToMillis up) > 1500
-                        ) model.uploadDoneTime sharedState.currentTime
+                    stateShownLongEnough =
+                        Maybe.map2
+                            (\up cur ->
+                                Time.posixToMillis cur - Time.posixToMillis up > 1500
+                            )
+                            model.uploadDoneTime
+                            sharedState.currentTime
                 in
-                rRowButton <| PbbButton <|
-                    if uploadSuccess model && stateShownLongEnough == Just False then
-                        PbbResult <| PbbSuccess "Success"
-                    else if uploadFailure model && stateShownLongEnough == Just False then
-                        PbbResult <| PbbFailure "Failure"
-                    else
-                        PbbActive "Bearbeiten" SendTask  
+                rRowButton <|
+                    PbbButton <|
+                        if uploadSuccess model && stateShownLongEnough == Just False then
+                            PbbResult <| PbbSuccess "Success"
+
+                        else if uploadFailure model && stateShownLongEnough == Just False then
+                            PbbResult <| PbbFailure "Failure"
+
+                        else
+                            PbbActive "Bearbeiten" SendTask
             ]
 
 
@@ -454,6 +471,7 @@ createOrUpdate : Model -> Cmd Msg
 createOrUpdate model =
     if model.createTask then
         SheetRequests.sheetTasksPost model.courseId model.sheet_id (fillTaskFromModel model) TaskCreateRequest
+
     else
         TaskRequests.taskPut model.courseId model.id (fillTaskFromModel model) TaskUpdateRequest
 

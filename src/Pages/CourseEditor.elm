@@ -10,7 +10,9 @@ import Api.Request.Courses as CoursesRequest
 import Browser.Navigation exposing (back, pushUrl)
 import Components.CommonElements
     exposing
-        ( dateInputElement
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , dateInputElement
         , inputElement
         , normalPage
         , pageContainer
@@ -22,8 +24,6 @@ import Components.CommonElements
         , rRowHeader
         , textAreaElement
         , viewFormErrors
-        , PbbState(..)
-        , PbbButtonState(..)
         )
 import Components.Toasty
 import Date exposing (Date)
@@ -341,6 +341,7 @@ viewForm sharedState model =
         [ rRowHeader <|
             if model.createCourse then
                 "Kurs erstellen"
+
             else
                 "Kurs bearbeiten"
         , rRow <|
@@ -391,14 +392,16 @@ viewForm sharedState model =
                 viewRequiredPercentage model
             , viewFormErrors RequiredPercentage model.errors
             ]
-        , rRowButton <| PbbButton <| PbbActive
-            (if model.createCourse then
-                "Erstellen"
+        , rRowButton <|
+            PbbButton <|
+                PbbActive
+                    (if model.createCourse then
+                        "Erstellen"
 
-             else
-                "Bearbeiten"
-            )
-            CreateOrEdit
+                     else
+                        "Bearbeiten"
+                    )
+                    CreateOrEdit
         ]
 
 

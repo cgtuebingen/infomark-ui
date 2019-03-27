@@ -14,20 +14,22 @@ import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Courses as CourseRequests
 import Api.Request.Groups as GroupRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( normalPage
-    , pageContainer
-    , r1Column
-    , r2Column
-    , rRow
-    , rRowHeader
-    , rContainer
-    , textAreaElement
-    , searchElement
-    , rRowButton
-    , PbbState(..)
-    , PbbButtonState(..)
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , normalPage
+        , pageContainer
+        , r1Column
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowHeader
+        , searchElement
+        , textAreaElement
+        )
+import Components.UserAvatarEmailView as UserView
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -36,12 +38,11 @@ import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
-import Components.UserAvatarEmailView as UserView
 import Utils.Styles as Styles
 import Utils.Utils exposing (handleLogoutErrors, perform)
 
 
-type Field 
+type Field
     = Description
     | SearchByMail
 
@@ -67,7 +68,7 @@ type alias Model =
     , searchByEmailInput : String
     , searchResponse : WebData (List UserEnrollment)
     , createGroup : Bool
-    , errors : List (Field, String)
+    , errors : List ( Field, String )
     }
 
 
@@ -84,17 +85,17 @@ initModel =
     }
 
 
-initCreate : Int -> (Model, Cmd Msg)
+initCreate : Int -> ( Model, Cmd Msg )
 initCreate courseId =
     ( { initModel | courseId = courseId, createGroup = True }, Cmd.none )
 
 
-initEdit : Int -> Group -> (Model, Cmd Msg)
+initEdit : Int -> Group -> ( Model, Cmd Msg )
 initEdit courseId group =
     ( fillModelFromGroup initModel group, Cmd.none )
 
 
-initEditFromId : Int -> Int -> (Model, Cmd Msg)
+initEditFromId : Int -> Int -> ( Model, Cmd Msg )
 initEditFromId courseId groupId =
     ( initModel
     , GroupRequests.groupsGet courseId groupId GetGroupResponse
@@ -111,18 +112,19 @@ update sharedState msg model =
             ( fillModelFromGroup model group, Cmd.none, NoUpdate )
 
         GetGroupResponse (Failure err) ->
-            (model, perform <| NavigateTo <| CourseDetailRoute model.courseId, NoUpdate)
+            ( model, perform <| NavigateTo <| CourseDetailRoute model.courseId, NoUpdate )
 
         GetGroupResponse _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         SearchUserByEmail ->
             ( { model | searchResponse = Loading }
             , CourseRequests.coursesEnrollmentGetByEmail model.courseId model.searchByEmailInput SearchUserResponse
-            , NoUpdate )
+            , NoUpdate
+            )
 
         SearchUserResponse response ->
-            ( { model | searchResponse = response}, Cmd.none, NoUpdate )
+            ( { model | searchResponse = response }, Cmd.none, NoUpdate )
 
         SetUserAsTutor user ->
             ( { model | maybeTutor = Just user }, Cmd.none, NoUpdate )
@@ -132,17 +134,18 @@ update sharedState msg model =
             , Cmd.none
             , NoUpdate
             )
-        
+
         CreateOrEdit ->
             case model.maybeTutor of
                 Just tutor ->
                     ( model
                     , if model.createGroup then
-                        CourseRequests.courseGroupsPost 
-                            model.courseId 
+                        CourseRequests.courseGroupsPost
+                            model.courseId
                             (fillRequestFromModel model tutor)
                             CreateResponse
-                    else
+
+                      else
                         GroupRequests.groupsPut
                             model.courseId
                             model.groupId
@@ -150,35 +153,37 @@ update sharedState msg model =
                             EditResponse
                     , NoUpdate
                     )
-                
+
                 _ ->
-                    (model, Cmd.none, NoUpdate)
-        
+                    ( model, Cmd.none, NoUpdate )
+
         CreateResponse response ->
             updateHandleCreateOrEditResponse model response
 
         EditResponse response ->
             updateHandleCreateOrEditResponse model response
 
-        WriteEmailMsg userId -> -- Currently not used
-            (model, Cmd.none, NoUpdate)
+        WriteEmailMsg userId ->
+            -- Currently not used
+            ( model, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
-view sharedState model =   
+view sharedState model =
     pageContainer
         [ normalPage
             [ rContainer <|
                 [ rRowHeader <|
                     if model.createGroup then
                         "Gruppe erstellen"
+
                     else
                         "Gruppe bearbeiten"
                 , case model.maybeTutor of
                     Just tutor ->
                         rRow <|
                             r2Column
-                                [ h1 [ Styles.headerStyle ] [text "Tutor"] ]
+                                [ h1 [ Styles.headerStyle ] [ text "Tutor" ] ]
                                 [ UserView.view sharedState (Tuple.first <| UserView.initFromUser tutor) Nothing
                                     |> Html.map WriteEmailMsg
                                 ]
@@ -187,15 +192,15 @@ view sharedState model =
                         text ""
                 , rRow <|
                     r2Column
-                        [ h1 [Styles.headerStyle ] [ text "Search For Tutor" ]
+                        [ h1 [ Styles.headerStyle ] [ text "Search For Tutor" ]
                         ]
-                        ( searchElement 
-                            { placeholder = "Search by E-Mail" 
+                        (searchElement
+                            { placeholder = "Search by E-Mail"
                             , fieldType = "email"
                             , value = model.searchByEmailInput
                             }
-                            SearchByMail 
-                            SetField 
+                            SearchByMail
+                            SetField
                             SearchUserByEmail
                         )
                 , rRow <|
@@ -204,7 +209,6 @@ view sharedState model =
                             case List.head userEnrollments of
                                 Just userEnrollment ->
                                     let
-                                        
                                         user =
                                             userEnrollment.user
 
@@ -220,10 +224,11 @@ view sharedState model =
                                         [ UserView.view sharedState (Tuple.first <| UserView.initFromUser user) Nothing
                                             |> Html.map WriteEmailMsg
                                         , div [ classes [ TC.ml4_l, TC.ml0, TC.mt0_l, TC.mt2, TC.flex ] ]
-                                            [ button 
+                                            [ button
                                                 [ Styles.buttonGreenStyle
-                                                , onClick <| SetUserAsTutor user 
-                                                ] [ text "Set as tutor" ]
+                                                , onClick <| SetUserAsTutor user
+                                                ]
+                                                [ text "Set as tutor" ]
                                             ]
                                         ]
 
@@ -233,6 +238,7 @@ view sharedState model =
                                         , Styles.listHeadingStyle
                                         ]
                                         [ text "Not found" ]
+
                         _ ->
                             text ""
                     ]
@@ -241,7 +247,8 @@ view sharedState model =
                         textAreaElement
                             { label = "Description"
                             , placeholder = "Details about place and time of group meetings"
-                            , value = model.description }
+                            , value = model.description
+                            }
                             Description
                             model.errors
                             SetField
@@ -250,26 +257,39 @@ view sharedState model =
                         case model.maybeTutor of
                             Just _ ->
                                 PbbActive
-                                    (if model.createGroup then "Erstellen" else "Bearbeiten")
+                                    (if model.createGroup then
+                                        "Erstellen"
+
+                                     else
+                                        "Bearbeiten"
+                                    )
                                     CreateOrEdit
 
-                            _ -> PbbDisabled (if model.createGroup then "Erstellen" else "Bearbeiten")
+                            _ ->
+                                PbbDisabled
+                                    (if model.createGroup then
+                                        "Erstellen"
+
+                                     else
+                                        "Bearbeiten"
+                                    )
                 ]
             ]
         ]
 
 
-updateHandleCreateOrEditResponse : Model -> WebData resp -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleCreateOrEditResponse : Model -> WebData resp -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleCreateOrEditResponse model response =
     case response of
         Success _ ->
-            (model, perform <| NavigateTo <| CourseDetailRoute model.courseId, NoUpdate)
+            ( model, perform <| NavigateTo <| CourseDetailRoute model.courseId, NoUpdate )
 
         Failure err ->
-            (model, Cmd.none, NoUpdate) -- TODO: Show error message
+            ( model, Cmd.none, NoUpdate )
 
+        -- TODO: Show error message
         _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
 setField : Field -> String -> Model -> Model

@@ -16,14 +16,15 @@ import Api.Data.UserEnrollment exposing (UserEnrollment)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( pageContainer
-    , rRowHeaderActionButtons
-    , widePage
-    , simpleDialog
-    , datesDisplayContainer
-    , dateElement
-    )
+import Components.CommonElements
+    exposing
+        ( dateElement
+        , datesDisplayContainer
+        , pageContainer
+        , rRowHeaderActionButtons
+        , simpleDialog
+        , widePage
+        )
 import Components.Dialog as Dialog
 import Components.Toasty
 import Html exposing (..)
@@ -384,7 +385,8 @@ view sharedState model =
                     Maybe.withDefault { root = False } sharedState.role
 
                 cTemp =
-                    [ rRowHeaderActionButtons "Aktuell" Styles.headerStyle
+                    [ rRowHeaderActionButtons "Aktuell"
+                        Styles.headerStyle
                         [ ( "+", NavigateTo CreateCourseRoute, Styles.buttonGreenStyle )
                         ]
                     , div
@@ -403,7 +405,8 @@ view sharedState model =
                 content =
                     if List.length oldCourses > 0 then
                         cTemp
-                            ++ [ rRowHeaderActionButtons "Archiv" Styles.headerStyle
+                            ++ [ rRowHeaderActionButtons "Archiv"
+                                    Styles.headerStyle
                                     [ ( if model.showArchive then
                                             "Hide"
 
@@ -437,8 +440,8 @@ viewDeleteCourseDialog sharedState model =
             simpleDialog
                 "Delete the course?"
                 "Are you sure you want to delete the course? This cannot be undone. The course and everything associated with the course like enrollments are gone."
-                [ ("Delete", Styles.buttonRedStyle, PerformDelete course)
-                , ("Cancel", Styles.buttonGreenStyle, DeleteCourseDialogShown False)
+                [ ( "Delete", Styles.buttonRedStyle, PerformDelete course )
+                , ( "Cancel", Styles.buttonGreenStyle, DeleteCourseDialogShown False )
                 ]
                 model.deleteDialogState
                 deleteCourseDialogConfig
@@ -454,8 +457,8 @@ viewDisenrollCourseDialog sharedState model =
             simpleDialog
                 "Disenroll from course?"
                 "Are you sure you want to disenroll from the course? This cannot be undone. Your group, submissions and everything else will be lost!"
-                [ ("Disenroll", Styles.buttonRedStyle, PerformDisenroll course)
-                , ("Cancel", Styles.buttonGreenStyle, DisenrollCourseDialogShown False)
+                [ ( "Disenroll", Styles.buttonRedStyle, PerformDisenroll course )
+                , ( "Cancel", Styles.buttonGreenStyle, DisenrollCourseDialogShown False )
                 ]
                 model.disenrollDialogState
                 disenrollCourseDialogConfig
@@ -527,8 +530,8 @@ viewRenderCourse sharedState course enrollment =
                             )
                        ]
             , datesDisplayContainer <|
-                (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at) ++
-                (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
+                (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at)
+                    ++ (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
             ]
         , div [ classes [ TC.measure ] ] <|
             [ MD.toHtml [ Styles.textStyle ] <| course.description -- Normal paragraph

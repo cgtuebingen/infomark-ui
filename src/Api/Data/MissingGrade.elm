@@ -7,7 +7,7 @@ import Json.Encode as Encode
 
 
 type alias MissingGrade =
-    { grade : Grade 
+    { grade : Grade
     , course_id : Int
     , sheet_id : Int
     , task_id : Int

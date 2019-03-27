@@ -1,12 +1,12 @@
 module Utils.Styles exposing
     ( buttonBlackStyle
     , buttonDisabled
+    , buttonFailureStyle
     , buttonGoldStyle
     , buttonGreenStyle
     , buttonGreyStyle
     , buttonRedStyle
     , buttonSuccessStyle
-    , buttonFailureStyle
     , dateStyle
     , dialogContainerStyle
     , dialogGoneStyle
@@ -192,10 +192,12 @@ buttonGreenStyle =
                , TC.hover_white
                ]
 
+
 buttonSuccessStyle =
     classes <|
         buttonStyle
             ++ [ TC.white, TC.b__white_40, TC.bg_dark_green ]
+
 
 buttonFailureStyle =
     classes <|

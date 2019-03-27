@@ -1,17 +1,17 @@
 module Api.Request.Groups exposing
     ( groupsDelete
+    , groupsEnrollmentGetAll
     , groupsEnrollmentPost
     , groupsEnrollmentPut
-    , groupsEnrollmentGetAll
     , groupsGet
     , groupsPut
     )
 
 import Api.Data.Group as Group exposing (Group)
-import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
+import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Endpoint exposing (group, groupsEnrollment, unwrap)
-import Api.Helper exposing (delete, get, post, put, putExpectNothing, deleteExpectNothing, postExpectNothing)
+import Api.Helper exposing (delete, deleteExpectNothing, get, post, postExpectNothing, put, putExpectNothing)
 import Http
 import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
@@ -54,5 +54,6 @@ groupsEnrollmentPost courseId id groupEnrollment msg =
 groupsEnrollmentGetAll : Int -> Int -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
 groupsEnrollmentGetAll courseId groupId msg =
     get (unwrap <| groupsEnrollment courseId groupId [])
-        msg <|
+        msg
+    <|
         Decode.list UserEnrollment.decoder

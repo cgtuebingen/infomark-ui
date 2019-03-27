@@ -1,8 +1,8 @@
 module Api.Request.Material exposing
-    ( materialGet
-    , materialPut
-    , materialDelete
+    ( materialDelete
     , materialFilePost
+    , materialGet
+    , materialPut
     )
 
 import Api.Data.Material as Material exposing (Material)
@@ -12,6 +12,7 @@ import File exposing (File)
 import Http
 import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
+
 
 materialGet : Int -> Int -> (WebData Material -> msg) -> Cmd msg
 materialGet courseId id msg =
@@ -28,7 +29,7 @@ materialPut courseId id materialUpdate msg =
 materialDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
 materialDelete courseId id msg =
     deleteExpectNothing (unwrap <| material courseId id) msg
-    
+
 
 materialFilePost : Int -> Int -> File -> (WebData () -> msg) -> Cmd msg
 materialFilePost courseId id file msg =

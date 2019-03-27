@@ -12,19 +12,20 @@ import Api.Request.Account as AccountRequests
 import Api.Request.Me as MeRequests
 import Api.Request.User as UserRequests
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( inputElement
-    , normalPage
-    , pageContainer
-    , r1Column
-    , r2Column
-    , rContainer
-    , rRow
-    , rRowButton
-    , rRowExtraSpacing
-    , PbbState(..)
-    , PbbButtonState(..)
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , inputElement
+        , normalPage
+        , pageContainer
+        , r1Column
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowExtraSpacing
+        )
 import Components.Dialog as Dialog
 import Components.Toasty
 import Dict
@@ -548,13 +549,17 @@ viewForm sharedState model =
                     OldPassword
                     model.accountErrors
                     SetField
-        , rRowButton <| PbbButton <| 
-            if checkIfAccountChanged model
-                || checkIfUserChanged model
-                || model.avatarChanged then
-                PbbActive "Save" Save
-            else
-                PbbDisabled "Save"
+        , rRowButton <|
+            PbbButton <|
+                if
+                    checkIfAccountChanged model
+                        || checkIfUserChanged model
+                        || model.avatarChanged
+                then
+                    PbbActive "Save" Save
+
+                else
+                    PbbDisabled "Save"
         , h2
             [ Styles.sectionStyle
             , classes [ TC.mt5, TC.bt, TC.b__dark_gray, TC.bw2, TC.pt4 ]

@@ -1,11 +1,11 @@
-module Utils.Utils exposing (handleLogoutErrors, perform, split, flip, tupleMapThree)
+module Utils.Utils exposing (flip, handleLogoutErrors, perform, split, tupleMapThree)
 
 import Browser.Navigation exposing (pushUrl)
 import Http
+import List
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Task
-import List
 
 
 perform : msg -> Cmd msg
@@ -34,15 +34,19 @@ handleLogoutErrors model sharedState handler err =
 
 split : Int -> List a -> List (List a)
 split i list =
-  case List.take i list of
-    [] -> []
-    listHead -> listHead :: split i (List.drop i list)
+    case List.take i list of
+        [] ->
+            []
+
+        listHead ->
+            listHead :: split i (List.drop i list)
+
 
 flip : (a -> b -> c) -> (b -> a -> c)
 flip f b a =
     f a b
 
 
-tupleMapThree : (a -> x) -> (b -> y) -> (c -> z) -> (a, b, c) -> (x, y, z)
-tupleMapThree funcA funcB funcC (x, y, z) =
+tupleMapThree : (a -> x) -> (b -> y) -> (c -> z) -> ( a, b, c ) -> ( x, y, z )
+tupleMapThree funcA funcB funcC ( x, y, z ) =
     ( funcA x, funcB y, funcC z )

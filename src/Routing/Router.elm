@@ -20,18 +20,18 @@ import Pages.CourseDetail as CourseDetail
 import Pages.CourseEditor as CourseEditor
 import Pages.Courses as Courses
 import Pages.Dashboard as Dashboard
+import Pages.GroupEditor as GroupEditor
 import Pages.Login as Login
 import Pages.MailConfirmation as MailConfirmation
+import Pages.MailEditor as MailEditor
+import Pages.MaterialEditor as MaterialEditor
 import Pages.PasswordReset as PasswordReset
 import Pages.ProfileEditor as ProfileEditor
 import Pages.Registration as Registration
 import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
-import Pages.MaterialEditor as MaterialEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
-import Pages.GroupEditor as GroupEditor
-import Pages.MailEditor as MailEditor
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -208,7 +208,7 @@ update sharedState msg model =
             CourseEditor.update sharedState courseEditorMsg courseEditor
                 |> updateWith CourseEditorModel CourseEditorMsg model
 
-        ( MaterialEditorMsg materialEditorMsg, MaterialEditorModel materialEditor) ->
+        ( MaterialEditorMsg materialEditorMsg, MaterialEditorModel materialEditor ) ->
             MaterialEditor.update sharedState materialEditorMsg materialEditor
                 |> updateWith MaterialEditorModel MaterialEditorMsg model
 
@@ -365,7 +365,7 @@ navigateTo route model =
 
         MailToGroupRoute courseId groupId ->
             MailEditor.initForGroup courseId groupId |> initWith MailEditorModel MailEditorMsg model NoUpdate
-        
+
         MailToCourseRoute courseId ->
             MailEditor.initForCourse courseId |> initWith MailEditorModel MailEditorMsg model NoUpdate
 
@@ -455,7 +455,7 @@ view msgMapper sharedState model =
 
                 MailToGroupRoute _ _ ->
                     "page-title-email"
-            
+
                 MailToCourseRoute _ ->
                     "page-title-email"
 

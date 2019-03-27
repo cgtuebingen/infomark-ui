@@ -27,19 +27,34 @@
 module Pages.SheetDetail exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
-import Api.Data.CourseRole exposing (CourseRole(..))
 import Api.Data.Course exposing (Course)
+import Api.Data.CourseRole exposing (CourseRole(..))
+import Api.Data.PointOverview exposing (PointOverview)
 import Api.Data.Sheet exposing (Sheet)
 import Api.Data.Task exposing (Task)
-import Api.Data.PointOverview exposing (PointOverview)
+import Api.Endpoint exposing (sheetFile, unwrap)
 import Api.Request.Account as AccountRequests
-import Api.Request.Sheet as SheetRequests
 import Api.Request.Courses as CourseRequests
-import Api.Endpoint exposing (unwrap, sheetFile)
+import Api.Request.Sheet as SheetRequests
 import Browser.Navigation exposing (pushUrl)
+import Components.CommonElements
+    exposing
+        ( dateElement
+        , datesDisplayContainer
+        , normalPage
+        , pageContainer
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowExtraSpacing
+        , rRowHeader
+        , rRowHeaderActionButtons
+        , rRowWarning
+        )
 import Components.Tasks.AdminView as TaskAdminView
 import Components.Tasks.StudentView as TaskStudentView
 import Dict exposing (Dict)
+import File.Download as Download
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -51,23 +66,9 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Time
+import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils as Utils
-import File.Download as Download
-import Utils.DateFormatter as DF
-import Components.CommonElements exposing 
-    ( pageContainer
-    , normalPage
-    , rContainer
-    , rRow
-    , rRowExtraSpacing
-    , rRowHeader
-    , rRowHeaderActionButtons
-    , rRowWarning
-    , r2Column
-    , datesDisplayContainer
-    , dateElement
-    )
 
 
 type Msg
@@ -162,7 +163,7 @@ update sharedState msg model =
             ( { model | sheetDetailResponse = response }, Cmd.none, NoUpdate )
 
         DownloadSheet courseId sheetId ->
-            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate)
+            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate )
 
         GetEnrollmentResponse (Success roles) ->
             let
@@ -180,16 +181,17 @@ update sharedState msg model =
                     in
                     case role of
                         Student ->
-                            ( {newModel | pointOverviewResponse = Loading}
-                            , Cmd.batch 
+                            ( { newModel | pointOverviewResponse = Loading }
+                            , Cmd.batch
                                 [ cmds
-                                , SheetRequests.sheetPointsGet 
-                                    model.course_id 
-                                    model.id 
+                                , SheetRequests.sheetPointsGet
+                                    model.course_id
+                                    model.id
                                     GetPointOverview
                                 ]
                             , NoUpdate
                             )
+
                         _ ->
                             ( newModel, cmds, NoUpdate )
 
@@ -205,7 +207,8 @@ update sharedState msg model =
         GetPointOverview response ->
             ( { model | pointOverviewResponse = response }
             , Cmd.none
-            , NoUpdate )
+            , NoUpdate
+            )
 
         GetEnrollmentResponse response ->
             ( model, Cmd.none, NoUpdate )
@@ -214,7 +217,7 @@ update sharedState msg model =
             updateTask sharedState model id Cmd.none taskMsg
 
         _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
 updateTask : SharedState -> Model -> Int -> Cmd Msg -> TaskMsgTypes -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -271,9 +274,8 @@ fillModelTaskDict model =
                                         , TaskAdminView.initFromTask model.course_id task
                                         )
                                     )
-                                |> Utils.flip List.append 
-                                    [ 
-                                        ( -1, TaskAdminView.initCreate model.course_id model.id)
+                                |> Utils.flip List.append
+                                    [ ( -1, TaskAdminView.initCreate model.course_id model.id )
                                     ]
                     in
                     ( { model
@@ -336,84 +338,99 @@ view sharedState model =
             ]
         ]
 
+
 viewSheetDetail : SharedState -> Model -> Html Msg
 viewSheetDetail sharedState model =
     let
-        maybePoints = case model.pointOverviewResponse of
-            Success points ->
-                points
-                    |> List.map (\p -> (p.acquired_points, p.max_points))
-                    |> List.foldl (\pt at -> 
-                        Tuple.mapBoth
-                            ( (+) <| Tuple.first pt)
-                            ( (+) <| Tuple.second pt)
-                            at
-                    ) (0, 0)
-                    |> (\pt ->
-                        (Tuple.first pt, Tuple.second pt, 
-                            case model.requiredPercentage of
-                                Just percentage ->
-                                    let
-                                        acquiredPerc = round <|
-                                            (toFloat <| Tuple.first pt) / 
-                                            (toFloat <| Tuple.second pt) * 100
-                                    in
-                                    if acquiredPerc < percentage then
-                                        TC.red
-                                    else if acquiredPerc < (percentage + 5) then
-                                        TC.gold
-                                    else
-                                        TC.dark_green
+        maybePoints =
+            case model.pointOverviewResponse of
+                Success points ->
+                    points
+                        |> List.map (\p -> ( p.acquired_points, p.max_points ))
+                        |> List.foldl
+                            (\pt at ->
+                                Tuple.mapBoth
+                                    ((+) <| Tuple.first pt)
+                                    ((+) <| Tuple.second pt)
+                                    at
+                            )
+                            ( 0, 0 )
+                        |> (\pt ->
+                                ( Tuple.first pt
+                                , Tuple.second pt
+                                , case model.requiredPercentage of
+                                    Just percentage ->
+                                        let
+                                            acquiredPerc =
+                                                round <|
+                                                    (toFloat <| Tuple.first pt)
+                                                        / (toFloat <| Tuple.second pt)
+                                                        * 100
+                                        in
+                                        if acquiredPerc < percentage then
+                                            TC.red
 
-                                Nothing ->
-                                    TC.dark_red
-                        )
-                    ) |> Just
+                                        else if acquiredPerc < (percentage + 5) then
+                                            TC.gold
 
-            _ ->
-                Nothing
+                                        else
+                                            TC.dark_green
+
+                                    Nothing ->
+                                        TC.dark_red
+                                )
+                           )
+                        |> Just
+
+                _ ->
+                    Nothing
     in
     case model.sheetDetailResponse of
         Success detail ->
             rContainer <|
-                [ rRowHeaderActionButtons detail.name Styles.headerStyle
-                    ([ ("Download", DownloadSheet model.course_id model.id, Styles.buttonGreenStyle) 
-                    ] ++ 
-                        if model.role == Just Admin then
-                            [ ("Edit", NavigateTo <| EditSheetRoute model.course_id model.id, Styles.buttonGreyStyle) ]
-                        else
-                            []
+                [ rRowHeaderActionButtons detail.name
+                    Styles.headerStyle
+                    ([ ( "Download", DownloadSheet model.course_id model.id, Styles.buttonGreenStyle )
+                     ]
+                        ++ (if model.role == Just Admin then
+                                [ ( "Edit", NavigateTo <| EditSheetRoute model.course_id model.id, Styles.buttonGreyStyle ) ]
+
+                            else
+                                []
+                           )
                     )
                 , if checkIfSheetStillActive sharedState detail.due_at then
-                    rRowWarning "Submission closed" <| 
-                        "The sheet was due " ++ 
-                        DF.shortDateFormatter sharedState detail.due_at ++
-                        " at " ++ DF.timeFormatter sharedState detail.due_at
-                else
-                    text ""
+                    rRowWarning "Submission closed" <|
+                        "The sheet was due "
+                            ++ DF.shortDateFormatter sharedState detail.due_at
+                            ++ " at "
+                            ++ DF.timeFormatter sharedState detail.due_at
 
+                  else
+                    text ""
                 , rRow <|
                     r2Column
                         [ datesDisplayContainer <|
-                            (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at) ++
-                            (dateElement "Maximale Punkte" <| text <| String.fromInt <| sumTasksPoints model )
+                            (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at)
+                                ++ (dateElement "Maximale Punkte" <| text <| String.fromInt <| sumTasksPoints model)
                         ]
                         [ case maybePoints of
-                            Just (acquired, max, color) ->
-                                div [] 
+                            Just ( acquired, max, color ) ->
+                                div []
                                     [ h4 [ classes [ TC.black, TC.fw6, TC.f5, TC.ttu, TC.lh_copy, TC.tracked, TC.mt3, TC.mb1 ] ]
-                                        [ text "Erreichte Punkte"]
+                                        [ text "Erreichte Punkte" ]
                                     , h1 [ classes [ color, TC.mt0 ], Styles.headerStyle ]
-                                        [ text <| 
-                                            (String.fromInt <| acquired) ++
-                                            "/" ++
-                                            (String.fromInt <| max) ]
+                                        [ text <|
+                                            (String.fromInt <| acquired)
+                                                ++ "/"
+                                                ++ (String.fromInt <| max)
+                                        ]
                                     ]
+
                             _ ->
                                 text ""
                         ]
                 ]
-
 
         Failure err ->
             text "Error loading"
@@ -425,16 +442,18 @@ viewSheetDetail sharedState model =
 sumTasksPoints : Model -> Int
 sumTasksPoints model =
     Dict.values model.taskDict
-        |> List.map (\taskModel -> 
-            case taskModel of
-                AdminTaskModel admin ->
-                    Maybe.withDefault 0 <| 
-                        String.toInt admin.max_points
-                StudentTaskModel student ->
-                    student.task.max_points
+        |> List.map
+            (\taskModel ->
+                case taskModel of
+                    AdminTaskModel admin ->
+                        Maybe.withDefault 0 <|
+                            String.toInt admin.max_points
 
-        )
-        |> List.foldl (+) 0 
+                    StudentTaskModel student ->
+                        student.task.max_points
+            )
+        |> List.foldl (+) 0
+
 
 viewTasks : SharedState -> Model -> Html Msg
 viewTasks sharedState model =
@@ -460,10 +479,12 @@ viewTasks sharedState model =
                         )
                     |> List.map (\( id, taskModel ) -> Html.map (TaskMsg id) taskModel)
                 )
+
         _ ->
             text ""
 
+
 checkIfSheetStillActive : SharedState -> Time.Posix -> Bool
 checkIfSheetStillActive sharedState deadlineTime =
-    (Time.posixToMillis deadlineTime) < 
-        (Maybe.withDefault 0 <| Maybe.map Time.posixToMillis sharedState.currentTime)
+    Time.posixToMillis deadlineTime
+        < (Maybe.withDefault 0 <| Maybe.map Time.posixToMillis sharedState.currentTime)

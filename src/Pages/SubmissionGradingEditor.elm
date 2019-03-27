@@ -7,6 +7,7 @@ module Pages.SubmissionGradingEditor exposing (Model, Msg(..), init, update, vie
 
 import Api.Data.Course exposing (Course)
 import Browser.Navigation exposing (pushUrl)
+import File.Download as Download
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -19,7 +20,6 @@ import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
-import File.Download as Download
 
 
 type Msg

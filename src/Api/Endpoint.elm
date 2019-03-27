@@ -5,19 +5,19 @@ module Api.Endpoint exposing
     , accountEnrollment
     , confirmEmail
     , course
+    , courseBids
     , courseEnrollment
     , courseEnrollmentUserDetail
-    , courseGroup
-    , courseBids
-    , courseGroupBid
-    , courseGroups
-    , courseSheets
-    , courseMaterials
-    , courses
-    , coursePoints
     , courseGrade
     , courseGrades
+    , courseGroup
+    , courseGroupBid
+    , courseGroups
+    , courseMaterials
     , courseMissingGrades
+    , coursePoints
+    , courseSheets
+    , courses
     , group
     , groupsEnrollment
     , material
@@ -27,8 +27,8 @@ module Api.Endpoint exposing
     , sessions
     , sheet
     , sheetFile
-    , sheetTasks
     , sheetPoints
+    , sheetTasks
     , submissions
     , task
     , taskPrivateFiles
@@ -165,7 +165,7 @@ courseGroupBid courseId groupId =
 
 courseBids : Int -> Endpoint
 courseBids courseId =
-    url [  "courses", String.fromInt courseId, "bids"] []
+    url [ "courses", String.fromInt courseId, "bids" ] []
 
 
 courseEnrollmentUserDetail : Int -> Int -> Endpoint
@@ -173,7 +173,7 @@ courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
 
 
-coursePoints : Int ->  Endpoint
+coursePoints : Int -> Endpoint
 coursePoints courseId =
     url [ "courses", String.fromInt courseId, "points" ] []
 
@@ -189,7 +189,7 @@ courseGrades courseId params =
 
 
 courseGrade : Int -> Int -> Endpoint
-courseGrade courseId gradeId  =
+courseGrade courseId gradeId =
     url [ "courses", String.fromInt courseId, "grades", String.fromInt gradeId ] []
 
 
@@ -210,7 +210,7 @@ material courseId materialId =
 
 materialFile : Int -> Int -> Endpoint
 materialFile courseId materialId =
-    url [ "courses", String.fromInt courseId, "materials", String.fromInt materialId, "file"] []
+    url [ "courses", String.fromInt courseId, "materials", String.fromInt materialId, "file" ] []
 
 
 sheet : Int -> Int -> Endpoint

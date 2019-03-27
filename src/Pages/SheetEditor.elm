@@ -5,24 +5,25 @@ import Api.Request.Courses as CoursesRequests
 import Api.Request.Sheet as SheetRequests
 import Array
 import Browser.Navigation exposing (pushUrl)
-import Components.CommonElements exposing 
-    ( dateInputElement
-    , fileUploader
-    , inputElement
-    , normalPage
-    , pageContainer
-    , r1Column
-    , r2Column
-    , rContainer
-    , rRow
-    , rRowButton
-    , rRowExtraSpacing
-    , sliderInputElement
-    , timeInputElement
-    , PbbState(..)
-    , PbbButtonState(..)
-    , simpleDialog
-    )
+import Components.CommonElements
+    exposing
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , dateInputElement
+        , fileUploader
+        , inputElement
+        , normalPage
+        , pageContainer
+        , r1Column
+        , r2Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowExtraSpacing
+        , simpleDialog
+        , sliderInputElement
+        , timeInputElement
+        )
 import Components.Dialog as Dialog
 import Components.Toasty
 import Date exposing (Date)
@@ -367,12 +368,13 @@ update sharedState msg model =
         UpdateResponse response ->
             updateHandleSend sharedState model response
 
-        RequestDelete -> --Show Dialog
-            ({ model | deleteSheetDialogState = True}, Cmd.none, NoUpdate)
+        RequestDelete ->
+            --Show Dialog
+            ( { model | deleteSheetDialogState = True }, Cmd.none, NoUpdate )
 
         Delete ->
-            (model, SheetRequests.sheetDelete model.course_id model.id DeleteResponse, NoUpdate)
-        
+            ( model, SheetRequests.sheetDelete model.course_id model.id DeleteResponse, NoUpdate )
+
         DeleteResponse response ->
             updateHandleDelete sharedState model response
 
@@ -405,18 +407,18 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
         DeleteSheetDialogShown visible ->
-            ({ model | deleteSheetDialogState = visible }, Cmd.none, NoUpdate)
+            ( { model | deleteSheetDialogState = visible }, Cmd.none, NoUpdate )
 
         NoOp ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
-updateHandleDelete : SharedState -> Model -> WebData () -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleDelete : SharedState -> Model -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleDelete sharedState model response =
     case response of
         RemoteData.Success _ ->
-            (model, perform <| NavigateTo <| CourseDetailRoute model.course_id, NoUpdate)
-        
+            ( model, perform <| NavigateTo <| CourseDetailRoute model.course_id, NoUpdate )
+
         RemoteData.Failure err ->
             handleLogoutErrors model
                 sharedState
@@ -690,26 +692,33 @@ viewForm sharedState model =
                     UtcOffset
                     model.errors
                     SetField
-        , rRowButton <| PbbButton <| PbbActive
-            (if model.createSheet then
-                "Erstellen"
+        , rRowButton <|
+            PbbButton <|
+                PbbActive
+                    (if model.createSheet then
+                        "Erstellen"
 
-             else
-                "Bearbeiten"
-            )
-            (if model.createSheet then
-                Create
+                     else
+                        "Bearbeiten"
+                    )
+                    (if model.createSheet then
+                        Create
 
-             else
-                Update
-            )
-        ] ++ if not model.createSheet then
-                [rRowButton <| PbbButton <| PbbActive
-                    "Löschen"
-                    RequestDelete
-                ]
-            else
-                []
+                     else
+                        Update
+                    )
+        ]
+            ++ (if not model.createSheet then
+                    [ rRowButton <|
+                        PbbButton <|
+                            PbbActive
+                                "Löschen"
+                                RequestDelete
+                    ]
+
+                else
+                    []
+               )
 
 
 viewDeleteSheetDialog : SharedState -> Model -> Html Msg
@@ -717,8 +726,8 @@ viewDeleteSheetDialog sharedState model =
     simpleDialog
         "Delete the sheet?"
         "Are you sure you want to delete the sheet? This cannot be undone. The sheet and everything associated with the sheet like submissions and tests are gone."
-        [ ("Delete", Styles.buttonRedStyle, Delete)
-        , ("Cancel", Styles.buttonGreenStyle, DeleteSheetDialogShown False)
+        [ ( "Delete", Styles.buttonRedStyle, Delete )
+        , ( "Cancel", Styles.buttonGreenStyle, DeleteSheetDialogShown False )
         ]
         model.deleteSheetDialogState
         deleteSheetDialogConfig

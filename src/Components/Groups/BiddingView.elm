@@ -1,44 +1,46 @@
-module Components.Groups.BiddingView exposing 
-    ( Msg(..)
-    , Model
+module Components.Groups.BiddingView exposing
+    ( Model
+    , Msg(..)
     , init
     , update
     , view
     )
-{-| Group view for unassigned Students:
-    - List group with time/dates and tutor
-    - Set a preference (1-10) for a group
--}
 
+{-| Group view for unassigned Students:
+- List group with time/dates and tutor
+- Set a preference (1-10) for a group
+-}
 
 import Api.Data.Group exposing (Group)
 import Api.Data.GroupBid exposing (GroupBid)
 import Api.Request.Courses as CourseRequests
-import Components.CommonElements exposing
-    ( inputElement
-    , sliderInputElement
-    , rRow
-    , rRowHeader
-    , r1Column
-    , r3Column
-    , rRowHeaderActionButtons
-    , rContainer
-    , rRowButton
-    )
+import Components.CommonElements
+    exposing
+        ( inputElement
+        , r1Column
+        , r3Column
+        , rContainer
+        , rRow
+        , rRowButton
+        , rRowHeader
+        , rRowHeaderActionButtons
+        , sliderInputElement
+        )
 import Components.UserAvatarEmailView as UserView
+import Debounce exposing (Debounce)
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import RemoteData exposing (RemoteData(..), WebData)
+import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Utils.Styles as Styles
-import RemoteData exposing (RemoteData(..), WebData)
-import SharedState exposing (SharedState, SharedStateUpdate(..))
-import Dict exposing (Dict)
-import Debounce exposing (Debounce)
-import Utils.Utils exposing (perform, handleLogoutErrors, split)
+import Utils.Utils exposing (handleLogoutErrors, perform, split)
 
 
-type Field = Rating Int
+type Field
+    = Rating Int
 
 
 type Msg
@@ -57,7 +59,7 @@ debounceConfig id =
     }
 
 
-type alias GroupMsgHandler = 
+type alias GroupMsgHandler =
     { group : Maybe Group
     , bid : Maybe Int
     , ratingDebounce : Debounce Int
@@ -65,7 +67,7 @@ type alias GroupMsgHandler =
 
 
 initGroupMsgHandler : Maybe Group -> Maybe Int -> GroupMsgHandler
-initGroupMsgHandler maybeGroup  maybeBid =
+initGroupMsgHandler maybeGroup maybeBid =
     { group = maybeGroup
     , bid = maybeBid
     , ratingDebounce = Debounce.init
@@ -74,23 +76,24 @@ initGroupMsgHandler maybeGroup  maybeBid =
 
 updateOrInitGroupMsgHandler : Model -> Int -> Maybe Group -> Maybe Int -> Model
 updateOrInitGroupMsgHandler model groupId maybeGroup maybeBid =
-    { model 
+    { model
         | groupMsgHandlers =
             case Dict.get groupId model.groupMsgHandlers of
                 Just gmhs ->
-                    Dict.update 
+                    Dict.update
                         groupId
-                        (Maybe.map (\_ ->
-                            case (maybeGroup, maybeBid) of
-                                (Just group, _) ->
-                                    { gmhs | group = Just group }
+                        (Maybe.map
+                            (\_ ->
+                                case ( maybeGroup, maybeBid ) of
+                                    ( Just group, _ ) ->
+                                        { gmhs | group = Just group }
 
-                                (_, Just bid) ->
-                                    { gmhs | bid = Just bid }
+                                    ( _, Just bid ) ->
+                                        { gmhs | bid = Just bid }
 
-                                (_, _) ->
-                                    gmhs
-                            ) 
+                                    ( _, _ ) ->
+                                        gmhs
+                            )
                         )
                         model.groupMsgHandlers
 
@@ -107,20 +110,19 @@ type alias Model =
     , groupResponse : WebData (List Group)
     , groupOldBidsResponse : WebData (List GroupBid)
     , groupMsgHandlers : Dict Int GroupMsgHandler
-    , errors : List (Field, String)
+    , errors : List ( Field, String )
     }
 
 
-init : Int -> (Model, Cmd Msg)
+init : Int -> ( Model, Cmd Msg )
 init courseId =
-    (
-        { courseId = courseId
-        , groupResponse = Loading
-        , groupOldBidsResponse = Loading
-        , groupMsgHandlers = Dict.empty
-        , errors = []
-        }
-    , Cmd.batch 
+    ( { courseId = courseId
+      , groupResponse = Loading
+      , groupOldBidsResponse = Loading
+      , groupMsgHandlers = Dict.empty
+      , errors = []
+      }
+    , Cmd.batch
         [ CourseRequests.courseGroupsGet courseId GetGroupsResponse
         , CourseRequests.coursesBidsGet courseId GetOldGroupBidsResponse
         ]
@@ -130,18 +132,18 @@ init courseId =
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
-        GetGroupsResponse response ->   
+        GetGroupsResponse response ->
             updateHandleGetGroupsResponse sharedState model response
 
         GetOldGroupBidsResponse response ->
             updateHandleGetOldBidsResponse sharedState model response
 
         GetGroupBidResponse response ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
         SendBid groupId bid ->
-            ( model 
-            , CourseRequests.coursesBidsPost 
+            ( model
+            , CourseRequests.coursesBidsPost
                 model.courseId
                 groupId
                 bid
@@ -156,28 +158,36 @@ update sharedState msg model =
                         toInt =
                             Maybe.withDefault 0 <| String.toInt val
 
-                        maybeDebounceCmd = Dict.get groupId model.groupMsgHandlers 
-                            |> Maybe.map (\gms ->
-                                Debounce.push (debounceConfig groupId) toInt gms.ratingDebounce)
+                        maybeDebounceCmd =
+                            Dict.get groupId model.groupMsgHandlers
+                                |> Maybe.map
+                                    (\gms ->
+                                        Debounce.push (debounceConfig groupId) toInt gms.ratingDebounce
+                                    )
 
-                        updatedGms = Dict.update 
-                            groupId 
-                            (Maybe.map (\gms -> 
-                                { gms 
-                                    | bid = Just toInt
-                                    , ratingDebounce = 
-                                        case maybeDebounceCmd of
-                                            Just debounceCmd ->
-                                                Tuple.first debounceCmd
-                                            Nothing ->
-                                                Debounce.init
-                                }
-                            )) 
-                            model.groupMsgHandlers 
+                        updatedGms =
+                            Dict.update
+                                groupId
+                                (Maybe.map
+                                    (\gms ->
+                                        { gms
+                                            | bid = Just toInt
+                                            , ratingDebounce =
+                                                case maybeDebounceCmd of
+                                                    Just debounceCmd ->
+                                                        Tuple.first debounceCmd
+
+                                                    Nothing ->
+                                                        Debounce.init
+                                        }
+                                    )
+                                )
+                                model.groupMsgHandlers
                     in
                     ( { model | groupMsgHandlers = updatedGms }
                     , Maybe.withDefault Cmd.none <| Maybe.map Tuple.second maybeDebounceCmd
-                    , NoUpdate )
+                    , NoUpdate
+                    )
 
         DebounceMsg groupId subMsg ->
             case Dict.get groupId model.groupMsgHandlers of
@@ -185,56 +195,56 @@ update sharedState msg model =
                     let
                         ( debounce, cmd ) =
                             Debounce.update
-                            (debounceConfig groupId)
-                            (Debounce.takeLast (\b -> perform <| SendBid groupId b))
-                            subMsg
-                            gmhs.ratingDebounce
+                                (debounceConfig groupId)
+                                (Debounce.takeLast (\b -> perform <| SendBid groupId b))
+                                subMsg
+                                gmhs.ratingDebounce
                     in
-                    (
-                        { model 
-                            | groupMsgHandlers = Dict.update 
-                                groupId 
-                                (Maybe.map (\_ -> { gmhs | ratingDebounce = debounce } )) 
+                    ( { model
+                        | groupMsgHandlers =
+                            Dict.update
+                                groupId
+                                (Maybe.map (\_ -> { gmhs | ratingDebounce = debounce }))
                                 model.groupMsgHandlers
-                        }
+                      }
                     , cmd
                     , NoUpdate
                     )
-                    
+
                 Nothing ->
-                    (model, Cmd.none, NoUpdate)
+                    ( model, Cmd.none, NoUpdate )
 
 
-updateHandleGetGroupsResponse : SharedState -> Model -> WebData (List Group) -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleGetGroupsResponse : SharedState -> Model -> WebData (List Group) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleGetGroupsResponse sharedState model response =
-    case response of 
+    case response of
         Success groups ->
-            ( List.foldl 
+            ( List.foldl
                 (\g m -> updateOrInitGroupMsgHandler m g.id (Just g) Nothing)
                 { model | groupResponse = response }
                 groups
             , Cmd.none
             , NoUpdate
             )
-        
+
         Failure err ->
             handleLogoutErrors model
                 sharedState
                 (\e ->
-                    ( { model | groupResponse = response}, Cmd.none, NoUpdate)
+                    ( { model | groupResponse = response }, Cmd.none, NoUpdate )
                 )
                 err
 
         _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
-updateHandleGetOldBidsResponse : SharedState -> Model -> WebData (List GroupBid) -> (Model, Cmd Msg, SharedStateUpdate)
+updateHandleGetOldBidsResponse : SharedState -> Model -> WebData (List GroupBid) -> ( Model, Cmd Msg, SharedStateUpdate )
 updateHandleGetOldBidsResponse sharedState model response =
     case response of
         Success bids ->
             ( List.foldl
-                (\b m -> updateOrInitGroupMsgHandler m b.groupId Nothing (Just b.bid) )
+                (\b m -> updateOrInitGroupMsgHandler m b.groupId Nothing (Just b.bid))
                 { model | groupOldBidsResponse = response }
                 bids
             , Cmd.none
@@ -245,47 +255,50 @@ updateHandleGetOldBidsResponse sharedState model response =
             handleLogoutErrors model
                 sharedState
                 (\e ->
-                    ( { model | groupOldBidsResponse = response}, Cmd.none, NoUpdate)
+                    ( { model | groupOldBidsResponse = response }, Cmd.none, NoUpdate )
                 )
                 err
+
         _ ->
-            (model, Cmd.none, NoUpdate)
+            ( model, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
     let
-        groupChunks = model.groupMsgHandlers |>
-            Dict.values |>
-                split 3 
+        groupChunks =
+            model.groupMsgHandlers
+                |> Dict.values
+                |> split 3
     in
     rContainer <|
-        List.map 
-            (\gbmsChunk -> 
+        List.map
+            (\gbmsChunk ->
                 case gbmsChunk of
-                    (c1 :: c2 :: c3 :: []) ->
+                    c1 :: c2 :: c3 :: [] ->
                         rRow <|
-                        r3Column 
-                            [ viewGroupBid sharedState model c1 ]
-                            [ viewGroupBid sharedState model c2 ] 
-                            [ viewGroupBid sharedState model c3 ]
+                            r3Column
+                                [ viewGroupBid sharedState model c1 ]
+                                [ viewGroupBid sharedState model c2 ]
+                                [ viewGroupBid sharedState model c3 ]
 
-                    (c1 :: c2 :: []) ->
+                    c1 :: c2 :: [] ->
                         rRow <|
-                        r3Column 
-                            [ viewGroupBid sharedState model c1 ]
-                            [ viewGroupBid sharedState model c2 ]
-                            [ div [classes [TC.db, TC.w_100]] [] ]
+                            r3Column
+                                [ viewGroupBid sharedState model c1 ]
+                                [ viewGroupBid sharedState model c2 ]
+                                [ div [ classes [ TC.db, TC.w_100 ] ] [] ]
 
-                    (c1 :: []) ->
-                        rRow <| 
-                        r3Column 
-                            [ viewGroupBid sharedState model c1 ]
-                            [ div [classes [TC.db, TC.w_100]] [] ]
-                            [ div [classes [TC.db, TC.w_100]] [] ]
+                    c1 :: [] ->
+                        rRow <|
+                            r3Column
+                                [ viewGroupBid sharedState model c1 ]
+                                [ div [ classes [ TC.db, TC.w_100 ] ] [] ]
+                                [ div [ classes [ TC.db, TC.w_100 ] ] [] ]
 
-                    _ -> text ""
-            ) 
+                    _ ->
+                        text ""
+            )
             groupChunks
 
 
@@ -294,26 +307,30 @@ viewGroupBid sharedState model data =
     case data.group of
         Just group ->
             let
-                tutor = group.tutor
-                curBid = Maybe.withDefault 1 data.bid
+                tutor =
+                    group.tutor
+
+                curBid =
+                    Maybe.withDefault 1 data.bid
             in
             div [ classes [ TC.w_100, TC.ph2 ] ] <|
-                [ h3 [ Styles.listHeadingStyle ] 
+                [ h3 [ Styles.listHeadingStyle ]
                     [ text <| "Group - " ++ tutor.firstname ++ " " ++ tutor.lastname
                     ]
-                , span [ Styles.textStyle, classes [TC.mb3, TC.db] ] 
+                , span [ Styles.textStyle, classes [ TC.mb3, TC.db ] ]
                     [ text <| group.description ]
-                 ] ++ sliderInputElement 
-                    { label = "Präferenz"
-                    , value = curBid
-                    , min = 1
-                    , max = 10
-                    , step = 1
-                    , valueLabel = String.fromInt curBid
-                    }
-                    (Rating group.id)
-                    model.errors
-                    SetBid
+                ]
+                    ++ sliderInputElement
+                        { label = "Präferenz"
+                        , value = curBid
+                        , min = 1
+                        , max = 10
+                        , step = 1
+                        , valueLabel = String.fromInt curBid
+                        }
+                        (Rating group.id)
+                        model.errors
+                        SetBid
 
         Nothing ->
             text ""

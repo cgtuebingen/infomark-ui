@@ -1,10 +1,17 @@
 module Components.CommonElements exposing
-    ( dateInputElement
+    ( PbbButtonState(..)
+    , PbbResultState(..)
+    , PbbState(..)
+    , dateElement
+    , dateInputElement
+    , datesDisplayContainer
     , fileUploader
     , inputElement
     , inputLabel
+    , multiButton
     , normalPage
     , pageContainer
+    , progressBarButton
     , r1Column
     , r2Column
     , r3Column
@@ -16,23 +23,17 @@ module Components.CommonElements exposing
     , rRowHeader
     , rRowHeaderActionButtons
     , rRowLabelButton
+    , rRowWarning
+    , searchElement
+    , simpleDialog
     , sliderInputElement
     , textAreaElement
     , timeInputElement
     , viewFormErrors
     , widePage
-    , progressBarButton
-    , multiButton
-    , PbbState(..)
-    , PbbButtonState(..)
-    , PbbResultState(..)
-    , simpleDialog
-    , rRowWarning
-    , datesDisplayContainer
-    , dateElement
-    , searchElement
     )
 
+import Components.Dialog as Dialog
 import Date exposing (Date)
 import DatePicker
 import File exposing (File)
@@ -41,12 +42,11 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, preventDefaultOn)
 import Html.Events.Extra exposing (onEnter)
 import Json.Decode as Decode exposing (Decoder)
+import Spinner
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import TimePicker exposing (TimeEvent(..), TimePicker)
 import Utils.Styles as Styles
-import Spinner
-import Components.Dialog as Dialog
 
 
 inputElement : { label : String, placeholder : String, fieldType : String, value : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
@@ -178,6 +178,7 @@ searchElement inputConfig field inputMsg clickMsg =
         ]
     ]
 
+
 datesDisplayContainer : List (Html msg) -> Html msg
 datesDisplayContainer childs =
     dl [ Styles.dateStyle ] childs
@@ -242,15 +243,15 @@ rRowHeader label =
         [ h1 [ Styles.headerStyle ] [ text label ] ]
 
 
-
 rRowWarning : String -> String -> Html msg
 rRowWarning header body =
     rRow <|
-        [ div [ classes [TC.bg_red, TC.b__white_60, TC.bw1, TC.br3, TC.ma2, TC.pa4, TC.mw8, TC.shadow_5] ]
-            [ h3 [Styles.listHeadingStyle, classes [TC.white, TC.mt0]] [text header ]
-            , span [Styles.textStyle, classes [TC.white] ] [text body]
+        [ div [ classes [ TC.bg_red, TC.b__white_60, TC.bw1, TC.br3, TC.ma2, TC.pa4, TC.mw8, TC.shadow_5 ] ]
+            [ h3 [ Styles.listHeadingStyle, classes [ TC.white, TC.mt0 ] ] [ text header ]
+            , span [ Styles.textStyle, classes [ TC.white ] ] [ text body ]
             ]
         ]
+
 
 rRowHeaderActionButtons : String -> Html.Attribute msg -> List ( String, msg, Html.Attribute msg ) -> Html msg
 rRowHeaderActionButtons label headerStyle actions =
@@ -267,18 +268,18 @@ rRowHeaderActionButtons label headerStyle actions =
         ]
     <|
         h1 [ headerStyle ] [ text label ]
-            :: [
-                div [] <| List.map
-                (\( actionLabel, actionMsg, baseStyle ) ->
-                    button
-                        [ baseStyle
-                        , classes [ TC.br_pill, TC.ph4_ns, TC.ph3, TC.pv3, TC.ml3, TC.mb3, TC.mb0_ns ]
-                        , onClick actionMsg
-                        ]
-                        [ text actionLabel ]
-                )
-                actions
-            ]
+            :: [ div [] <|
+                    List.map
+                        (\( actionLabel, actionMsg, baseStyle ) ->
+                            button
+                                [ baseStyle
+                                , classes [ TC.br_pill, TC.ph4_ns, TC.ph3, TC.pv3, TC.ml3, TC.mb3, TC.mb0_ns ]
+                                , onClick actionMsg
+                                ]
+                                [ text actionLabel ]
+                        )
+                        actions
+               ]
 
 
 rRowButton : PbbState msg -> Html msg
@@ -377,40 +378,45 @@ type PbbState msg
     | PbbProgressBar Int
     | PbbSpinner Spinner.Model
 
+
 type PbbButtonState msg
     = PbbActive String msg
     | PbbDisabled String
     | PbbResult PbbResultState
+
 
 type PbbResultState
     = PbbSuccess String
     | PbbFailure String
 
 
-progressBarButton : (PbbState msg) -> Html msg
+progressBarButton : PbbState msg -> Html msg
 progressBarButton barOrButtonState =
     let
-        baseButtonStyle = classes [ TC.mb4, TC.mt3, TC.w_100 ]
+        baseButtonStyle =
+            classes [ TC.mb4, TC.mt3, TC.w_100 ]
     in
     case barOrButtonState of
         PbbButton buttonState ->
             case buttonState of
                 PbbActive label msg ->
-                    button (baseButtonStyle :: [Styles.buttonGreyStyle, onClick msg]) [text label]
+                    button (baseButtonStyle :: [ Styles.buttonGreyStyle, onClick msg ]) [ text label ]
+
                 PbbDisabled label ->
-                    button (baseButtonStyle :: [Styles.buttonDisabled]) [text label]
+                    button (baseButtonStyle :: [ Styles.buttonDisabled ]) [ text label ]
 
                 PbbResult state ->
                     case state of
                         PbbSuccess label ->
-                            button (baseButtonStyle :: [Styles.buttonSuccessStyle]) [text label]
+                            button (baseButtonStyle :: [ Styles.buttonSuccessStyle ]) [ text label ]
+
                         PbbFailure label ->
-                            button (baseButtonStyle :: [Styles.buttonFailureStyle]) [text label]
+                            button (baseButtonStyle :: [ Styles.buttonFailureStyle ]) [ text label ]
 
         PbbProgressBar progress ->
-            div 
+            div
                 [ baseButtonStyle
-                , classes 
+                , classes
                     [ TC.pa2
                     , TC.f5
                     , TC.b
@@ -422,14 +428,14 @@ progressBarButton barOrButtonState =
                     , TC.b__dark_red
                     ]
                 ]
-                [ div 
-                    [ classes 
+                [ div
+                    [ classes
                         [ TC.bg_dark_red
                         ]
-                    , style "width" <| (String.fromInt progress) ++ "%"
+                    , style "width" <| String.fromInt progress ++ "%"
                     , style "height" "1.95rem"
                     ]
-                    [ text " "]
+                    [ text " " ]
                 ]
 
         PbbSpinner spinnerModel ->
@@ -446,19 +452,27 @@ progressBarButton barOrButtonState =
                 [ Spinner.view Styles.spinnerRedStyle spinnerModel ]
 
 
-multiButton : List (String, Bool, msg) -> Html msg
+multiButton : List ( String, Bool, msg ) -> Html msg
 multiButton actions =
-    div [] (actions |> List.map (\(label, active, msg) ->
-            button 
-                [ if active then Styles.buttonSuccessStyle else Styles.buttonGreyStyle 
-                , onClick msg
-                , classes [TC.mh0 ]
-                ] [text label]
+    div []
+        (actions
+            |> List.map
+                (\( label, active, msg ) ->
+                    button
+                        [ if active then
+                            Styles.buttonSuccessStyle
+
+                          else
+                            Styles.buttonGreyStyle
+                        , onClick msg
+                        , classes [ TC.mh0 ]
+                        ]
+                        [ text label ]
+                )
         )
-    )
 
 
-simpleDialog : String -> String -> List (String, Html.Attribute msg, msg) -> Dialog.State -> Dialog.Config msg -> Html msg
+simpleDialog : String -> String -> List ( String, Html.Attribute msg, msg ) -> Dialog.State -> Dialog.Config msg -> Html msg
 simpleDialog header body actions state config =
     Dialog.modalDialog div
         [ Styles.dialogOverlayStyle
@@ -473,20 +487,26 @@ simpleDialog header body actions state config =
                 [ classes [ TC.w_100, TC.mt4 ] ]
                 [ p [ Styles.textStyle ] [ text body ]
                 , div [ classes [ TC.fr, TC.mt3 ] ] <|
-                    List.map (\(label, buttonStyle, msg) ->
-                        button 
-                            [ classes [ TC.ml3 ]
-                            , buttonStyle
-                            , onClick msg
-                            ] [ text label ]
-                        ) actions
+                    List.map
+                        (\( label, buttonStyle, msg ) ->
+                            button
+                                [ classes [ TC.ml3 ]
+                                , buttonStyle
+                                , onClick msg
+                                ]
+                                [ text label ]
+                        )
+                        actions
                 ]
             ]
         )
         state
         config
 
+
+
 --Same for image uploader?
+
 
 fileUploader : Bool -> Maybe File -> msg -> msg -> msg -> (File -> List File -> msg) -> Html msg
 fileUploader hover file enterMsg exitMsg pickMsg gotFileMsg =
