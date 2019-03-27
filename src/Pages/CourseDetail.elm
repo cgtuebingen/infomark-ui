@@ -39,6 +39,7 @@ import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEn
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.User as User exposing (User)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
+import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
@@ -80,6 +81,7 @@ import Components.UserAvatarEmailView as UserView
 import Components.Groups.BiddingView as BiddingView
 import Components.Groups.AdminView as GroupAdminView
 import Components.Groups.GroupView as GroupView
+import Dict exposing (Dict)
 
 
 type Msg
@@ -93,6 +95,7 @@ type Msg
     | GroupsDisplayResponse (WebData (List Group)) -- Query all groups
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
+    | PointOverviewResponse (WebData (List PointOverview))
     | GroupMsg GroupMsgTypes
     | SheetRequestResponse (WebData (List Sheet))
     | SetField Field String
@@ -120,6 +123,7 @@ type alias Model =
     , searchUserForGroupRequest : WebData UserEnrollment
     , searchEnrollmentInput : String
     , searchGroupInput : String
+    , pointOverviewResponse : WebData (List PointOverview)
     }
 
 type GroupMsgTypes
@@ -150,11 +154,13 @@ init id =
       , searchUserForGroupRequest = NotAsked
       , searchEnrollmentInput = ""
       , searchGroupInput = ""
+      , pointOverviewResponse = Loading
       }
     , Cmd.batch
         [ AccountRequests.accountEnrollmentGet CourseRoleResponse
         , CoursesRequests.courseGet id CourseResponse
         , CoursesRequests.courseSheetsGet id SheetRequestResponse
+        , CoursesRequests.coursePointsGet id PointOverviewResponse
         ]
     )
 
@@ -293,6 +299,11 @@ update sharedState msg model =
             , subSharedState
             )
 
+        PointOverviewResponse response ->
+            ( { model | pointOverviewResponse = response }
+            , Cmd.none
+            , NoUpdate )
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
@@ -402,6 +413,39 @@ view sharedState model =
 
 viewCourseInfo : SharedState -> Model -> Html Msg
 viewCourseInfo sharedState model =
+    let
+        maybePoints = case (model.pointOverviewResponse, model.courseRequest) of
+            (Success points, Success course) ->
+                if List.isEmpty points then
+                    Nothing
+                else
+                    points
+                        |> List.map (\p -> (p.acquired_points, p.max_points))
+                        |> List.foldl (\pt at -> 
+                            Tuple.mapBoth
+                                ( (+) <| Tuple.first pt)
+                                ( (+) <| Tuple.second pt)
+                                at
+                        ) (0, 0)
+                        |> (\pt ->
+                            (Tuple.first pt, Tuple.second pt, 
+                                let
+                                    acquiredPerc = round <|
+                                        (toFloat <| Tuple.first pt) / 
+                                        (toFloat <| Tuple.second pt) * 100
+                                in
+                                if acquiredPerc < course.required_percentage then
+                                    TC.red
+                                else if acquiredPerc < (course.required_percentage + 5) then
+                                    TC.gold
+                                else
+                                    TC.dark_green
+                            )
+                        ) |> Just
+
+            (_, _) ->
+                Nothing
+    in
     case model.courseRequest of
         RemoteData.Success course ->
             div [ classes [TC.w_100, TC.b__black, TC.bw2, TC.bb, TC.pb3, TC.overflow_hidden] ]
@@ -410,7 +454,20 @@ viewCourseInfo sharedState model =
                         [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]
                         , datesDisplayContainer <|
                             (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at) ++
-                            (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
+                            (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at) ++
+                                case maybePoints of
+                                    Just (acquired, max, color) ->
+                                        [ dt [ classes [ TC.black, TC.fw6 ] ] [ text "Erreichte Punkte:"]
+                                        ,  h1 [ classes [ color, TC.mt0 ], Styles.headerStyle ]
+                                        [ text <| 
+                                            (String.fromInt <| acquired) ++
+                                            "/" ++
+                                            (String.fromInt <| max) ]
+                                        ]
+
+                                    Nothing ->
+                                        [ text "" ]
+                            
                         ]
                     ]
                     [ MD.toHtml [ Styles.textStyle ] <| course.description ]
@@ -564,6 +621,37 @@ viewDetermineGroupDisplay courseRole sharedState model =
 
 viewSheets : SharedState -> Model -> Html Msg
 viewSheets sharedState model =
+    let
+        baseStyle = [ TC.f3, TC.fw6, TC.lh_title ]
+        pointsDict = 
+            case (model.pointOverviewResponse, model.courseRequest) of
+                (Success points, Success course) ->
+                    points
+                        |> List.map (\p -> 
+                            let
+                                acquiredPerc = round <|
+                                    (toFloat <| p.acquired_points) / 
+                                    (toFloat <| p.max_points) * 100
+                            in
+                            (Maybe.withDefault -1 p.sheet_id,
+                                ( p.acquired_points
+                                , p.max_points
+                                , if acquiredPerc < course.required_percentage then
+                                    classes (TC.red :: baseStyle)
+                                else if acquiredPerc < (course.required_percentage + 5) then
+                                    classes (TC.gold :: baseStyle)
+                                else
+                                    classes (TC.dark_green :: baseStyle)
+                                )
+                            )
+                        )
+                        |> Dict.fromList
+
+                (_, _) ->
+                    Dict.empty
+
+        defaultStyle = classes (TC.black :: baseStyle)
+    in
     rContainer <|
         [ rRowHeader "Sheets"
         , div [classes [TC.ph4] ] <|
@@ -572,7 +660,19 @@ viewSheets sharedState model =
                     sheets |>
                         List.sortBy (\sheet -> Time.posixToMillis sheet.due_at ) |>
                         List.map (\sheet ->
-                            rRowHeaderActionButtons sheet.name Styles.listHeadingStyle <|
+                            let
+                                toDisplay = case Dict.get sheet.id pointsDict of
+                                    Just (acquired, max, labelStyle) ->
+                                        (sheet.name ++ " - " ++ 
+                                        (String.fromInt acquired) ++ "/" ++
+                                        (String.fromInt max), labelStyle)
+                                    
+                                    Nothing ->
+                                        (sheet.name, defaultStyle)
+                            in
+                            rRowHeaderActionButtons 
+                                (Tuple.first toDisplay)
+                                (Tuple.second toDisplay) <|
                                 ([
                                     ( "Download"
                                     , DownloadSheet model.courseId sheet.id
