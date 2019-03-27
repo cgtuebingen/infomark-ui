@@ -61,9 +61,6 @@ view sharedState model maybeMsg =
             , TC.items_center
             , TC.pa3
             , TC.ph0_l
-            , TC.w_third_l
-            , TC.w_50_m
-            , TC.w_100 
             ] 
         ]
         [ img
@@ -88,7 +85,6 @@ view sharedState model maybeMsg =
             , button 
                 ([ Styles.linkGreyStyle
                 , classes [ TC.mv0, TC.tl, TC.mh0 ]
-                , style "word-break" "break-word"
                 ] ++ (Maybe.map (\msg -> [ onClick <| msg model.id ]) maybeMsg
                     |> Maybe.withDefault [])
                 )

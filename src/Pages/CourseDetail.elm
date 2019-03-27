@@ -448,7 +448,14 @@ viewTeam sharedState model =
                     ( sortedTeam |>
                         List.map (\ue -> UserView.initFromUser ue.user) |>
                             List.map Tuple.first |>
-                                List.map (\uv -> UserView.view sharedState uv (Just WriteTo))
+                                List.map (\uv -> 
+                                    div [ classes 
+                                        [ TC.w_third_l
+                                        , TC.w_50_m
+                                        , TC.w_100 
+                                        ] 
+                                    ] [ UserView.view sharedState uv (Just WriteTo) ]
+                            )
                     )
                 ]
 
