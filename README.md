@@ -14,6 +14,4 @@ The server is implemented in [Go](https://golang.org/) and is available [here](h
 
 # Building
 
-1. Install Elm with these [Instructions](https://guide.elm-lang.org/install.html)
-2. Run `elm make src/Main.elm --output=elm.js` in the directory
-3. Serve `index.html` with a server of your choice
+Follow these [Instructions](https://github.com/cgtuebingen/infomark-ui/wiki/Installation) to set up the development environment and get an overview of the included build scripts.
