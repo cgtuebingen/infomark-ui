@@ -5,11 +5,14 @@ module Api.Request.Sheet exposing
     , sheetPut
     , sheetTasksGet
     , sheetTasksPost
+    , sheetPointsGet
     )
 
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.Task as Task exposing (Task)
-import Api.Endpoint exposing (sheet, sheetFile, sheetTasks, unwrap)
+import Api.Data.Grade as Grade exposing (Grade)
+import Api.Data.PointOverview as PointOverview exposing (PointOverview)
+import Api.Endpoint exposing (sheet, sheetFile, sheetTasks, sheetPoints, unwrap)
 import Api.Helper exposing (deleteExpectNothing, get, post, postFile, putExpectNothing)
 import File exposing (File)
 import Http
@@ -46,10 +49,17 @@ sheetTasksPost courseId id taskNew msg =
         msg
         Task.decoder
 
-
 sheetTasksGet : Int -> Int -> (WebData (List Task) -> msg) -> Cmd msg
 sheetTasksGet courseId id msg =
     get (unwrap <| sheetTasks courseId id)
         msg
     <|
         Decode.list Task.decoder
+
+
+sheetPointsGet : Int -> Int -> (WebData (List PointOverview) -> msg) -> Cmd msg
+sheetPointsGet courseId sheetId msg =
+    get (unwrap <| sheetPoints courseId sheetId)
+        msg
+    <|
+        Decode.list PointOverview.decoder

@@ -22,6 +22,7 @@ module Api.Request.Courses exposing
     , coursesPost
     , courseMaterialsGet
     , courseMaterialsPost
+    , coursePointsGet
     )
 
 import Api.Data.Material as Material exposing (Material)
@@ -32,6 +33,7 @@ import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.Submission as Submission exposing (Submission)
 import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
+import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Endpoint
     exposing
         ( course
@@ -43,6 +45,7 @@ import Api.Endpoint
         , courseGroups
         , courseSheets
         , courses
+        , coursePoints
         , submissions
         , courseMaterials
         , unwrap
@@ -271,3 +274,11 @@ courseMaterialsPost id materialNew msg =
         (Http.jsonBody <| Material.encoder materialNew)
         msg
         Material.decoder
+
+
+coursePointsGet : Int -> (WebData (List PointOverview) -> msg) -> Cmd msg
+coursePointsGet id msg =
+    get (unwrap <| coursePoints id)
+        msg
+    <|
+        Decode.list PointOverview.decoder

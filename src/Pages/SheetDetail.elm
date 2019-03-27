@@ -28,10 +28,13 @@ module Pages.SheetDetail exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.CourseRole exposing (CourseRole(..))
+import Api.Data.Course exposing (Course)
 import Api.Data.Sheet exposing (Sheet)
 import Api.Data.Task exposing (Task)
+import Api.Data.PointOverview exposing (PointOverview)
 import Api.Request.Account as AccountRequests
 import Api.Request.Sheet as SheetRequests
+import Api.Request.Courses as CourseRequests
 import Api.Endpoint exposing (unwrap, sheetFile)
 import Browser.Navigation exposing (pushUrl)
 import Components.Tasks.AdminView as TaskAdminView
@@ -61,6 +64,7 @@ import Components.CommonElements exposing
     , rRowHeader
     , rRowHeaderActionButtons
     , rRowWarning
+    , r2Column
     , datesDisplayContainer
     , dateElement
     )
@@ -73,6 +77,8 @@ type Msg
     | GetTaskFetchResponse (WebData (List Task))
     | GetEnrollmentResponse (WebData (List AccountEnrollment))
     | GetSheetDetailResponse (WebData Sheet)
+    | GetPointOverview (WebData (List PointOverview))
+    | GetCourseResponse (WebData Course)
     | DownloadSheet Int Int
 
 
@@ -89,10 +95,12 @@ type TaskModel
 type alias Model =
     { id : Int
     , course_id : Int
+    , requiredPercentage : Maybe Int
     , role : Maybe CourseRole
     , taskResponse : WebData (List Task)
     , taskDict : Dict Int TaskModel
     , sheetDetailResponse : WebData Sheet
+    , pointOverviewResponse : WebData (List PointOverview)
     }
 
 
@@ -104,12 +112,15 @@ init course_id id =
       , taskDict = Dict.empty
       , taskResponse = Loading
       , sheetDetailResponse = Loading
+      , pointOverviewResponse = NotAsked
+      , requiredPercentage = Nothing
       }
     , Cmd.batch
         -- Query the role and all tasks
         [ SheetRequests.sheetTasksGet course_id id GetTaskFetchResponse
         , SheetRequests.sheetGet course_id id GetSheetDetailResponse
         , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
+        , CourseRequests.courseGet course_id GetCourseResponse
         ]
     )
 
@@ -167,16 +178,43 @@ update sharedState msg model =
                         ( newModel, cmds ) =
                             fillModelTaskDict { model | role = maybeRole }
                     in
-                    ( newModel, cmds, NoUpdate )
+                    case role of
+                        Student ->
+                            ( {newModel | pointOverviewResponse = Loading}
+                            , Cmd.batch 
+                                [ cmds
+                                , SheetRequests.sheetPointsGet 
+                                    model.course_id 
+                                    model.id 
+                                    GetPointOverview
+                                ]
+                            , NoUpdate
+                            )
+                        _ ->
+                            ( newModel, cmds, NoUpdate )
 
                 Nothing ->
                     ( model, Utils.perform <| NavigateTo CoursesRoute, NoUpdate )
+
+        GetCourseResponse (Success course) ->
+            ( { model | requiredPercentage = Just <| course.required_percentage }
+            , Cmd.none
+            , NoUpdate
+            )
+
+        GetPointOverview response ->
+            ( { model | pointOverviewResponse = response }
+            , Cmd.none
+            , NoUpdate )
 
         GetEnrollmentResponse response ->
             ( model, Cmd.none, NoUpdate )
 
         TaskMsg id taskMsg ->
             updateTask sharedState model id Cmd.none taskMsg
+
+        _ ->
+            (model, Cmd.none, NoUpdate)
 
 
 updateTask : SharedState -> Model -> Int -> Cmd Msg -> TaskMsgTypes -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -300,6 +338,41 @@ view sharedState model =
 
 viewSheetDetail : SharedState -> Model -> Html Msg
 viewSheetDetail sharedState model =
+    let
+        maybePoints = case model.pointOverviewResponse of
+            Success points ->
+                points
+                    |> List.map (\p -> (p.acquired_points, p.max_points))
+                    |> List.foldl (\pt at -> 
+                        Tuple.mapBoth
+                            ( (+) <| Tuple.first pt)
+                            ( (+) <| Tuple.second pt)
+                            at
+                    ) (0, 0)
+                    |> (\pt ->
+                        (Tuple.first pt, Tuple.second pt, 
+                            case model.requiredPercentage of
+                                Just percentage ->
+                                    let
+                                        acquiredPerc = round <|
+                                            (toFloat <| Tuple.first pt) / 
+                                            (toFloat <| Tuple.second pt) * 100
+                                    in
+                                    if acquiredPerc < percentage then
+                                        TC.red
+                                    else if acquiredPerc < (percentage + 5) then
+                                        TC.gold
+                                    else
+                                        TC.dark_green
+
+                                Nothing ->
+                                    TC.dark_red
+                        )
+                    ) |> Just
+
+            _ ->
+                Nothing
+    in
     case model.sheetDetailResponse of
         Success detail ->
             rContainer <|
@@ -318,9 +391,27 @@ viewSheetDetail sharedState model =
                         " at " ++ DF.timeFormatter sharedState detail.due_at
                 else
                     text ""
-                , datesDisplayContainer <|
-                    (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at) ++
-                    (dateElement "Maximale Punkte" <| text <| String.fromInt <| sumTasksPoints model )
+
+                , rRow <|
+                    r2Column
+                        [ datesDisplayContainer <|
+                            (dateElement "Abgabezeit" <| DF.dateAndTimeFormatter sharedState detail.due_at) ++
+                            (dateElement "Maximale Punkte" <| text <| String.fromInt <| sumTasksPoints model )
+                        ]
+                        [ case maybePoints of
+                            Just (acquired, max, color) ->
+                                div [] 
+                                    [ h4 [ classes [ TC.black, TC.fw6, TC.f5, TC.ttu, TC.lh_copy, TC.tracked, TC.mt3, TC.mb1 ] ]
+                                        [ text "Erreichte Punkte"]
+                                    , h1 [ classes [ color, TC.mt0 ], Styles.headerStyle ]
+                                        [ text <| 
+                                            (String.fromInt <| acquired) ++
+                                            "/" ++
+                                            (String.fromInt <| max) ]
+                                    ]
+                            _ ->
+                                text ""
+                        ]
                 ]
 
 

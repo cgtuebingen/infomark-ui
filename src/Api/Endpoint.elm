@@ -14,6 +14,7 @@ module Api.Endpoint exposing
     , courseSheets
     , courseMaterials
     , courses
+    , coursePoints
     , group
     , groupsEnrollment
     , material
@@ -24,6 +25,7 @@ module Api.Endpoint exposing
     , sheet
     , sheetFile
     , sheetTasks
+    , sheetPoints
     , submissions
     , task
     , taskPrivateFiles
@@ -168,6 +170,11 @@ courseEnrollmentUserDetail courseId userId =
     url [ "courses", String.fromInt courseId, "enrollments", String.fromInt userId ] []
 
 
+coursePoints : Int ->  Endpoint
+coursePoints courseId =
+    url [ "courses", String.fromInt courseId, "points" ] []
+
+
 group : Int -> Int -> Endpoint
 group courseId id =
     url [ "courses", String.fromInt courseId, "groups", String.fromInt id ] []
@@ -201,6 +208,11 @@ sheetFile courseId id =
 sheetTasks : Int -> Int -> Endpoint
 sheetTasks courseId id =
     url [ "courses", String.fromInt courseId, "sheets", String.fromInt id, "tasks" ] []
+
+
+sheetPoints : Int -> Int -> Endpoint
+sheetPoints courseId sheetId =
+    url [ "courses", String.fromInt courseId, "sheets", String.fromInt sheetId, "points" ] []
 
 
 task : Int -> Int -> Endpoint
