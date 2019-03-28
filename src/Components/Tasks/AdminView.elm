@@ -14,6 +14,7 @@ module Components.Tasks.AdminView exposing
 import Api.Data.Task exposing (Task)
 import Api.Request.Sheet as SheetRequests
 import Api.Request.Task as TaskRequests
+import Browser.Navigation exposing (reload)
 import Components.CommonElements
     exposing
         ( PbbButtonState(..)
@@ -92,7 +93,6 @@ type Msg
     | TaskUpdateRequest (WebData ())
     | FileUploadResponse FileType (WebData ())
     | UploadProgress Http.Progress
-    | DoneUploading
     | ToggleCollapse
 
 
@@ -234,17 +234,25 @@ update sharedState msg model =
                                 model.uploading
                     }
 
+                uploadDone =
+                    not (anythingUploading newModel)
+                        && (uploadSuccess newModel || uploadFailure newModel)
+
                 finalModel =
-                    if
-                        not (anythingUploading newModel)
-                            && (uploadSuccess newModel || uploadFailure newModel)
-                    then
+                    if uploadDone then
                         { newModel | uploadDoneTime = sharedState.currentTime }
 
                     else
                         newModel
             in
-            ( finalModel, Cmd.none, NoUpdate )
+            ( finalModel
+            , if uploadDone then
+                reload
+
+              else
+                Cmd.none
+            , NoUpdate
+            )
 
         UploadProgress progress ->
             let
@@ -296,9 +304,6 @@ update sharedState msg model =
             uploadFiles model
 
         TaskUpdateRequest response ->
-            ( model, Cmd.none, NoUpdate )
-
-        DoneUploading ->
             ( model, Cmd.none, NoUpdate )
 
         ToggleCollapse ->
