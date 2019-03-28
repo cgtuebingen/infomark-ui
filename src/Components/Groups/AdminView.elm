@@ -165,6 +165,13 @@ view sharedState model =
                     showGroup sharedState model (Tuple.first gu) allGroups (Tuple.second gu)
                 )
         )
+            ++ [ div [ classes [ TC.ph4 ] ] <|
+                    [ rRowHeaderActionButtons "Create group"
+                        Styles.listHeadingStyle
+                        [ ( "Create", CreateGroup model.course_id, Styles.buttonGreenStyle )
+                        ]
+                    ]
+               ]
 
 
 showGroup : SharedState -> Model -> Group -> List Group -> List UserEnrollment -> Html Msg
