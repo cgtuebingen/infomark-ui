@@ -351,7 +351,16 @@ update sharedState msg model =
                     ( { newModel | errors = [] }, newCmd, NoUpdate )
 
         CreateResponse response ->
-            updateHandleSend sharedState model response
+            let
+                newModel =
+                    case response of
+                        Success sheet ->
+                            fillModelFromRequest sharedState model sheet
+
+                        _ ->
+                            model
+            in
+            updateHandleSend sharedState newModel response
 
         Update ->
             case validate modelValidator model of

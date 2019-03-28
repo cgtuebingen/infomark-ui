@@ -29,6 +29,7 @@ module Api.Endpoint exposing
     , sheetFile
     , sheetPoints
     , sheetTasks
+    , submissionFile
     , submissions
     , task
     , taskPrivateFiles
@@ -266,3 +267,8 @@ taskSubmission courseId taskId =
 submissions : Int -> List QueryParameter -> Endpoint
 submissions courseId params =
     url [ "courses", String.fromInt courseId, "submissions" ] params
+
+
+submissionFile : Int -> Int -> Endpoint
+submissionFile courseId submissionId =
+    url [ "courses", String.fromInt courseId, "submissions", String.fromInt submissionId, "file" ] []

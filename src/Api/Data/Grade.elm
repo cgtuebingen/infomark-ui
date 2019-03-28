@@ -17,6 +17,7 @@ type alias Grade =
     , feedback : String
     , tutor_id : Int
     , submission_id : Int
+    , student_id : Int
     }
 
 
@@ -34,6 +35,7 @@ decoder =
         |> required "feedback" Decode.string
         |> required "tutor_id" Decode.int
         |> required "submission_id" Decode.int
+        |> required "student_id" Decode.int
 
 
 encoder : Grade -> Encode.Value
@@ -50,4 +52,5 @@ encoder model =
         , ( "feedback", Encode.string model.feedback )
         , ( "tutor_id", Encode.int model.public_execution_state )
         , ( "submission_id", Encode.int model.submission_id )
+        , ( "student_id", Encode.int model.student_id )
         ]

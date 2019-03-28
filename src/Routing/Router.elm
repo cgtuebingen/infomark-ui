@@ -343,7 +343,7 @@ navigateTo route model =
             SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
 
         SubmissionGradingRoute courseId taskId groupId ->
-            SubmissionGradingEditor.init taskId groupId |> initWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model NoUpdate
+            SubmissionGradingEditor.init courseId taskId groupId |> initWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model NoUpdate
 
         AdminRoute ->
             Admin.init |> initWith AdminModel AdminMsg model NoUpdate
