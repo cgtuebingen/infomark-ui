@@ -43,6 +43,10 @@ initModelFromMode mode =
     }
 
 
+
+-- Mail to User route: not relevant right now ignore that
+
+
 initForUser : Int -> ( Model, Cmd Msg )
 initForUser userId =
     ( initModelFromMode <| User <| Dict.fromList [ ( userId, Loading ) ]
@@ -50,11 +54,24 @@ initForUser userId =
     )
 
 
+
+-- Mail to group route: Tutors send their students mails
+-- Retrive all Groups
+-- In the update thingy all groups need to be filtered for the groups of the
+-- tutor and the GroupIds to be stored in the model.
+-- Is the message lost after some inactivity???
+
+
 initForGroup : Int -> Int -> ( Model, Cmd Msg )
 initForGroup courseId groupId =
     ( initModelFromMode <| Group courseId groupId Loading
     , Cmd.none
     )
+
+
+
+-- Mail to course route: Admins can send the entire course a Mail.
+-- Just need to get the CourseId
 
 
 initForCourse : Int -> ( Model, Cmd Msg )
@@ -65,14 +82,14 @@ initForCourse courseId =
 
 
 type Msg
-    = NavigateTo Route
-    | SendMessage
-    | SendMessageResponse (WebData ())
-    | AddUser User
-    | SearchUserByMailResponse (WebData User)
-    | UserResponse (WebData User)
-    | GroupResponse (WebData Group)
-    | CourseResponse (WebData Course)
+    = NavigateTo Route -- route somewhere else
+    | SendMessage -- tell the server to send a mail
+    | SendMessageResponse (WebData ()) -- the response of the server to a send request
+    | AddUser User -- add a user to which you want to send stuff... ignore for now
+    | SearchUserByMailResponse (WebData User) -- ignore for now
+    | UserResponse (WebData User) -- Response for user request (init)
+    | GroupResponse (WebData Group) -- Response for group request (init)
+    | CourseResponse (WebData Course) -- Response for Course request (init)
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
