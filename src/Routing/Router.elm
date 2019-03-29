@@ -228,6 +228,10 @@ update sharedState msg model =
             SheetDetail.update sharedState (SheetDetail.UploadProgressMsg progress) sheetDetail
                 |> updateWith SheetDetailModel SheetDetailMsg model
 
+        ( SpinnerMsg spinnerMsg, SubmissionGradingEditorModel submissionEditor ) ->
+            SubmissionGradingEditor.update sharedState (SubmissionGradingEditor.SpinnerMsg spinnerMsg) submissionEditor
+                |> updateWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model
+
         ( SubmissionGradingEditorMsg submissionEditorMsg, SubmissionGradingEditorModel submissionEditor ) ->
             SubmissionGradingEditor.update sharedState submissionEditorMsg submissionEditor
                 |> updateWith SubmissionGradingEditorModel SubmissionGradingEditorMsg model
