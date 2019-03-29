@@ -361,7 +361,7 @@ updateGroupDisplay sharedState model =
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init ownGroups [] Student
+                                GroupView.init model.courseId ownGroups [] Student
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
@@ -377,7 +377,7 @@ updateGroupDisplay sharedState model =
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init ownGroups allGroups Tutor
+                                GroupView.init model.courseId ownGroups allGroups Tutor
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
