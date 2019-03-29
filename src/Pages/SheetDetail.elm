@@ -29,6 +29,7 @@ module Pages.SheetDetail exposing (Model, Msg(..), init, update, view)
 import Api.Data.AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole exposing (CourseRole(..))
+import Api.Data.Group exposing (Group)
 import Api.Data.PointOverview exposing (PointOverview)
 import Api.Data.Sheet exposing (Sheet)
 import Api.Data.Task exposing (Task)
@@ -81,6 +82,7 @@ type Msg
     | GetSheetDetailResponse (WebData Sheet)
     | GetPointOverview (WebData (List PointOverview))
     | GetCourseResponse (WebData Course)
+    | GetOwnGroupsResponse (WebData (List Group))
     | DownloadSheet Int Int
 
 
@@ -102,6 +104,7 @@ type alias Model =
     , requiredPercentage : Maybe Int
     , role : Maybe CourseRole
     , taskResponse : WebData (List Task)
+    , ownGroupsResponse : WebData (List Group)
     , taskDict : Dict Int TaskModel
     , sheetDetailResponse : WebData Sheet
     , pointOverviewResponse : WebData (List PointOverview)
@@ -115,6 +118,7 @@ init course_id id =
       , role = Nothing
       , taskDict = Dict.empty
       , taskResponse = Loading
+      , ownGroupsResponse = Loading
       , sheetDetailResponse = Loading
       , pointOverviewResponse = NotAsked
       , requiredPercentage = Nothing
@@ -125,6 +129,7 @@ init course_id id =
         , SheetRequests.sheetGet course_id id GetSheetDetailResponse
         , AccountRequests.accountEnrollmentGet GetEnrollmentResponse
         , CourseRequests.courseGet course_id GetCourseResponse
+        , CourseRequests.courseOwnGroupGet course_id GetOwnGroupsResponse
         ]
     )
 
@@ -223,6 +228,9 @@ update sharedState msg model =
         TaskMsg id taskMsg ->
             updateTask sharedState model id Cmd.none taskMsg
 
+        GetOwnGroupsResponse response ->
+            ( { model | ownGroupsResponse = response }, Cmd.none, NoUpdate )
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
@@ -261,6 +269,13 @@ getUpdateForTasks sharedState model id taskMsg =
                     TaskStudentView.update sharedState subMsg taskModel
             in
             Just ( StudentTaskModel newModel, Cmd.map StudentTaskMsg newCmd, newSharedState )
+
+        ( TutorTaskMsg subMsg, Just (TutorTaskModel taskModel) ) ->
+            let
+                ( newModel, newCmd, newSharedState ) =
+                    TaskTutorView.update sharedState subMsg taskModel
+            in
+            Just ( TutorTaskModel newModel, Cmd.map TutorTaskMsg newCmd, newSharedState )
 
         ( _, _ ) ->
             Nothing
@@ -328,7 +343,33 @@ fillModelTaskDict model =
                     )
 
                 Tutor ->
-                    ( model, Cmd.none )
+                    case model.ownGroupsResponse of
+                        Success groups ->
+                            let
+                                taskIdModelCmdsList =
+                                    tasks
+                                        |> List.map (\task -> ( task.id, TaskTutorView.init model.course_id task groups ))
+                            in
+                            ( { model
+                                | taskDict =
+                                    taskIdModelCmdsList
+                                        |> List.map
+                                            (\( id, ( taskModel, _ ) ) ->
+                                                ( id, TutorTaskModel taskModel )
+                                            )
+                                        |> Dict.fromList
+                              }
+                            , Cmd.batch
+                                (taskIdModelCmdsList
+                                    |> List.map
+                                        (\( id, ( _, cmd ) ) ->
+                                            Cmd.map (TaskMsg id) <| Cmd.map TutorTaskMsg cmd
+                                        )
+                                )
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
 
         --TODO create tutor view
         ( _, _ ) ->

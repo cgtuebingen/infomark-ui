@@ -48,4 +48,24 @@ update sharedState msg model =
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
-    div [] []
+    CE.rRowHeaderActionButtons model.task.name Styles.listHeadingStyle <|
+        case model.ownGroups of
+            [] ->
+                []
+
+            [ singleGroup ] ->
+                [ ( "Benoten"
+                  , NavigateTo <| SubmissionGradingRoute model.courseId model.task.id singleGroup.id
+                  , Styles.buttonGreyStyle
+                  )
+                ]
+
+            groups ->
+                groups
+                    |> List.map
+                        (\g ->
+                            ( "Gruppe - " ++ String.fromInt g.id
+                            , NavigateTo <| SubmissionGradingRoute model.courseId model.task.id g.id
+                            , Styles.buttonGreyStyle
+                            )
+                        )
