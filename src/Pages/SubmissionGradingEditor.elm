@@ -253,6 +253,7 @@ view sharedState model =
                                 ]
                             ++ (model.fusedGradeDict
                                     |> Dict.values
+                                    |> List.sortWith compareFusedGradeEntries
                                     |> List.map (viewTask sharedState model task)
                                )
                     ]
@@ -532,3 +533,21 @@ setField model field value =
                         )
                         model.fusedGradeDict
             }
+
+
+compareFusedGradeEntries : FusedGrade -> FusedGrade -> Order
+compareFusedGradeEntries fgA fgB =
+    let
+        joinedName =
+            \fg -> fg.user.lastname ++ " " ++ fg.user.firstname
+    in
+    case ( String.isEmpty fgA.grade.feedback, String.isEmpty fgB.grade.feedback ) of
+        ( True, False ) ->
+            LT
+
+        ( False, True ) ->
+            GT
+
+        ( _, _ ) ->
+            -- Sort By name
+            compare (joinedName fgA) (joinedName fgB)
