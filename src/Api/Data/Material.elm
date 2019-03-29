@@ -49,8 +49,8 @@ typeDecoder : Decoder MaterialType
 typeDecoder =
     Decode.int
         |> Decode.andThen
-            (\str ->
-                case str of
+            (\v ->
+                case v of
                     0 ->
                         Decode.succeed Slide
 

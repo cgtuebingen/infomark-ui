@@ -18,6 +18,7 @@ module Api.Endpoint exposing
     , coursePoints
     , courseSheets
     , courses
+    , grade
     , group
     , groupsEnrollment
     , material
@@ -272,3 +273,8 @@ submissions courseId params =
 submissionFile : Int -> Int -> Endpoint
 submissionFile courseId submissionId =
     url [ "courses", String.fromInt courseId, "submissions", String.fromInt submissionId, "file" ] []
+
+
+grade : Int -> Int -> Endpoint
+grade courseId gradeId =
+    url [ "courses", String.fromInt courseId, "grades", String.fromInt gradeId ] []

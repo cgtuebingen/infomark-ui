@@ -1,5 +1,6 @@
 module Api.Request.Task exposing
     ( taskGet
+    , taskGradePut
     , taskPrivateFilesPost
     , taskPublicFilesPost
     , taskPut
@@ -12,7 +13,17 @@ module Api.Request.Task exposing
 import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.Task as Task exposing (Task)
 import Api.Data.TaskRatingResponse as TaskRatingResponse exposing (TaskRatingResponse)
-import Api.Endpoint exposing (task, taskPrivateFiles, taskPublicFiles, taskRating, taskResult, taskSubmission, unwrap)
+import Api.Endpoint
+    exposing
+        ( grade
+        , task
+        , taskPrivateFiles
+        , taskPublicFiles
+        , taskRating
+        , taskResult
+        , taskSubmission
+        , unwrap
+        )
 import Api.Helper exposing (get, patchExpectNothing, postExpectNothing, postFile, putExpectNothing)
 import File exposing (File)
 import Http
@@ -68,3 +79,10 @@ taskRatingGet courseId taskId msg =
 taskSubmissionPost : Int -> Int -> File -> (WebData () -> msg) -> Cmd msg
 taskSubmissionPost courseId taskId file msg =
     postFile (unwrap <| taskSubmission courseId taskId) file msg
+
+
+taskGradePut : Int -> Int -> Grade -> (WebData () -> msg) -> Cmd msg
+taskGradePut courseId gradeId gradeUpdate msg =
+    putExpectNothing (unwrap <| grade courseId gradeId)
+        (Http.jsonBody <| Grade.encoder gradeUpdate)
+        msg

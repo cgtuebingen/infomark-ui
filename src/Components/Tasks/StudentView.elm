@@ -29,6 +29,7 @@ import Components.CommonElements
         , rRow
         , rRowButton
         , rRowExtraSpacing
+        , renderInTextBox
         , sliderInputElement
         )
 import Debounce exposing (Debounce)
@@ -247,7 +248,7 @@ view sharedState model deadlineReached =
             , rRow <|
                 r1Column <|
                     [ inputLabel "Test Results"
-                    , displayResults
+                    , renderInTextBox
                         (case model.gradeResponse of
                             Success grade ->
                                 grade.public_test_log
@@ -258,6 +259,7 @@ view sharedState model deadlineReached =
                             _ ->
                                 "Undefined"
                         )
+                        True
                     ]
             ]
                 ++ (case model.gradeResponse of
@@ -269,8 +271,9 @@ view sharedState model deadlineReached =
                                 [ rRow <|
                                     r1Column <|
                                         [ inputLabel "Feedback"
-                                        , displayResults
+                                        , renderInTextBox
                                             grade.feedback
+                                            True
                                         ]
                                 , h2 [ classes [ TC.pa4, TC.mt4, TC.bt, TC.bb, TC.bw2, TC.dark_red, TC.b__black ] ]
                                     [ text <|
@@ -346,13 +349,6 @@ view sharedState model deadlineReached =
                                 else
                                     PbbActive "Upload" UploadSubmission
                    ]
-
-
-displayResults : String -> Html msg
-displayResults content =
-    div [ classes [ TC.pa4, TC.bg_black_10, TC.shadow_5, TC.br3, TC.overflow_scroll ] ]
-        [ MD.toHtml [ Styles.textStyle ] content
-        ]
 
 
 type alias Error =

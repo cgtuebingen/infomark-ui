@@ -24,6 +24,7 @@ module Components.CommonElements exposing
     , rRowHeaderActionButtons
     , rRowLabelButton
     , rRowWarning
+    , renderInTextBox
     , searchElement
     , simpleDialog
     , sliderInputElement
@@ -42,6 +43,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, preventDefaultOn)
 import Html.Events.Extra exposing (onEnter)
 import Json.Decode as Decode exposing (Decoder)
+import Markdown as MD
 import Spinner
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
@@ -371,6 +373,17 @@ r3Column child1 child2 child3 =
     , div [ classes [ TC.fl, TC.w_100, TC.w_50_m, TC.w_33_l, TC.pl2_ns ] ]
         child3
     ]
+
+
+renderInTextBox : String -> Bool -> Html msg
+renderInTextBox content renderMarkdown =
+    div [ classes [ TC.pa4, TC.bg_black_10, TC.shadow_5, TC.br3, TC.overflow_scroll ] ]
+        [ if renderMarkdown then
+            MD.toHtml [ Styles.textStyle ] content
+
+          else
+            span [ Styles.textStyle ] [ text content ]
+        ]
 
 
 type PbbState msg
