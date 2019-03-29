@@ -92,7 +92,7 @@ type Msg
     | EnrollmentsResponse (WebData (List UserEnrollment)) -- List all enrollments in the course. Only used for students and tutors
     | SearchUserForEnrollmentResponse (WebData (List UserEnrollment)) -- Search for a specific user to change the enrollment
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
-    | GroupDisplayResponse (WebData Group) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
+    | OwnGroupsResponse (WebData (List Group)) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
     | GroupsDisplayResponse (WebData (List Group)) -- Query all groups
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
@@ -118,7 +118,7 @@ type alias Model =
     , enrollmentsRequest : WebData (List UserEnrollment)
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
-    , groupRequest : WebData Group
+    , ownGroupsRequest : WebData (List Group)
     , groupsRequest : WebData (List Group)
     , groupModel : Maybe GroupModel
     , searchUserForGroupRequest : WebData UserEnrollment
@@ -150,7 +150,7 @@ init id =
       , enrollmentsRequest = NotAsked
       , searchUserForEnrollmentRequest = NotAsked
       , enrollmentChangedRequest = NotAsked
-      , groupRequest = NotAsked
+      , ownGroupsRequest = NotAsked
       , groupsRequest = NotAsked
       , groupModel = Nothing
       , searchUserForGroupRequest = NotAsked
@@ -180,11 +180,11 @@ determineInitialRoleRequests model role =
         Tutor ->
             ( { model
                 | enrollmentsRequest = Loading
-                , groupRequest = Loading
+                , ownGroupsRequest = Loading
               }
             , Cmd.batch
                 [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
-                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
+                , CoursesRequests.courseOwnGroupGet model.courseId OwnGroupsResponse
                 , CoursesRequests.courseGroupsGet model.courseId GroupsDisplayResponse
                 ]
             )
@@ -192,11 +192,11 @@ determineInitialRoleRequests model role =
         Student ->
             ( { model
                 | enrollmentsRequest = Loading
-                , groupRequest = Loading
+                , ownGroupsRequest = Loading
               }
             , Cmd.batch
                 [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
-                , CoursesRequests.courseOwnGroupGet model.courseId GroupDisplayResponse
+                , CoursesRequests.courseOwnGroupGet model.courseId OwnGroupsResponse
                 ]
             )
 
@@ -265,8 +265,8 @@ update sharedState msg model =
         WriteEmailMsg _ ->
             ( model, Cmd.none, NoUpdate )
 
-        GroupDisplayResponse response ->
-            updateGroupDisplay sharedState { model | groupRequest = response }
+        OwnGroupsResponse response ->
+            updateGroupDisplay sharedState { model | ownGroupsRequest = response }
 
         GroupsDisplayResponse response ->
             updateGroupDisplay sharedState { model | groupsRequest = response }
@@ -319,7 +319,7 @@ update sharedState msg model =
 
 updateGroupDisplay : SharedState -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 updateGroupDisplay sharedState model =
-    case ( model.groupRequest, model.courseRole ) of
+    case ( model.ownGroupsRequest, model.courseRole ) of
         ( Failure err, Just Student ) ->
             handleLogoutErrors model
                 sharedState
@@ -352,7 +352,7 @@ updateGroupDisplay sharedState model =
                 )
                 err
 
-        ( Success group, _ ) ->
+        ( Success ownGroups, _ ) ->
             case ( model.groupsRequest, model.courseRole ) of
                 ( _, Just Student ) ->
                     let
@@ -361,7 +361,7 @@ updateGroupDisplay sharedState model =
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init group [] Student
+                                GroupView.init ownGroups [] Student
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
@@ -370,14 +370,14 @@ updateGroupDisplay sharedState model =
                     , NoUpdate
                     )
 
-                ( Success groups, Just Tutor ) ->
+                ( Success allGroups, Just Tutor ) ->
                     let
                         groupInit =
                             Tuple.mapBoth
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init group groups Tutor
+                                GroupView.init ownGroups allGroups Tutor
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit

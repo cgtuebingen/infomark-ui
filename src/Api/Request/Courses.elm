@@ -48,9 +48,9 @@ import Api.Endpoint
         , courseEnrollmentUserDetail
         , courseGrade
         , courseGrades
-        , courseGroup
         , courseGroupBid
         , courseGroups
+        , courseGroupsOwn
         , courseMaterials
         , courseMissingGrades
         , coursePoints
@@ -199,11 +199,12 @@ courseGroupsPost id groupNew msg =
         Group.decoder
 
 
-courseOwnGroupGet : Int -> (WebData Group -> msg) -> Cmd msg
+courseOwnGroupGet : Int -> (WebData (List Group) -> msg) -> Cmd msg
 courseOwnGroupGet id msg =
-    get (unwrap <| courseGroup id)
+    get (unwrap <| courseGroupsOwn id)
         msg
-        Group.decoder
+    <|
+        Decode.list Group.decoder
 
 
 coursesBidsGet : Int -> (WebData (List GroupBid) -> msg) -> Cmd msg

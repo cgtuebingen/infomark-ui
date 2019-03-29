@@ -53,6 +53,7 @@ import Components.CommonElements
         )
 import Components.Tasks.AdminView as TaskAdminView
 import Components.Tasks.StudentView as TaskStudentView
+import Components.Tasks.TutorView as TaskTutorView
 import Dict exposing (Dict)
 import File.Download as Download
 import Html exposing (..)
@@ -86,11 +87,13 @@ type Msg
 type TaskMsgTypes
     = AdminTaskMsg TaskAdminView.Msg
     | StudentTaskMsg TaskStudentView.Msg
+    | TutorTaskMsg TaskTutorView.Msg
 
 
 type TaskModel
     = AdminTaskModel TaskAdminView.Model
     | StudentTaskModel TaskStudentView.Model
+    | TutorTaskModel TaskTutorView.Model
 
 
 type alias Model =
@@ -147,6 +150,10 @@ update sharedState msg model =
                             StudentTaskModel _ ->
                                 StudentTaskMsg <|
                                     TaskStudentView.UploadProgress progress
+
+                            _ ->
+                                TutorTaskMsg <|
+                                    TaskTutorView.NoOp
                         )
                 )
                 ( model, Cmd.none, NoUpdate )
@@ -451,6 +458,9 @@ sumTasksPoints model =
 
                     StudentTaskModel student ->
                         student.task.max_points
+
+                    TutorTaskModel tutor ->
+                        tutor.task.max_points
             )
         |> List.foldl (+) 0
 
@@ -475,6 +485,12 @@ viewTasks sharedState model =
                                     , Html.map StudentTaskMsg <|
                                         TaskStudentView.view sharedState taskModel <|
                                             checkIfSheetStillActive sharedState detail.due_at
+                                    )
+
+                                TutorTaskModel taskModel ->
+                                    ( taskModel.id
+                                    , Html.map TutorTaskMsg <|
+                                        TaskTutorView.view sharedState taskModel
                                     )
                         )
                     |> List.map (\( id, taskModel ) -> Html.map (TaskMsg id) taskModel)

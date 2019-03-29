@@ -10,9 +10,9 @@ module Api.Endpoint exposing
     , courseEnrollmentUserDetail
     , courseGrade
     , courseGrades
-    , courseGroup
     , courseGroupBid
     , courseGroups
+    , courseGroupsOwn
     , courseMaterials
     , courseMissingGrades
     , coursePoints
@@ -155,9 +155,9 @@ courseGroups id =
     url [ "courses", String.fromInt id, "groups" ] []
 
 
-courseGroup : Int -> Endpoint
-courseGroup id =
-    url [ "courses", String.fromInt id, "group" ] []
+courseGroupsOwn : Int -> Endpoint
+courseGroupsOwn id =
+    url [ "courses", String.fromInt id, "groups", "own" ] []
 
 
 courseGroupBid : Int -> Int -> Endpoint

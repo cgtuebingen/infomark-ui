@@ -22,17 +22,19 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 
 
 type alias Model =
-    { group : Group
+    { ownGroups : List Group
+    , group : Maybe Group
     , role : CourseRole
     , allGroups : List Group
     }
 
 
-init : Group -> List Group -> CourseRole -> ( Model, Cmd Msg )
-init ownGroup groups role =
-    ( { group = ownGroup
+init : List Group -> List Group -> CourseRole -> ( Model, Cmd Msg )
+init ownGroups allGroups role =
+    ( { ownGroups = ownGroups
       , role = role
-      , allGroups = groups
+      , group = Nothing
+      , allGroups = allGroups
       }
     , Cmd.none
     )
@@ -50,7 +52,7 @@ update sharedState msg model =
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         OverwriteGroup group ->
-            ( { model | group = group }, Cmd.none, NoUpdate )
+            ( { model | group = Just <| group }, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
