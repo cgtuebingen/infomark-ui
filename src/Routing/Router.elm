@@ -137,7 +137,7 @@ update sharedState msg model =
                     parseUrl location
 
                 ( newModel, newCmd, newSharedStateUpdate ) =
-                    navigateTo route model
+                    navigateTo route sharedState model
             in
             ( { newModel | route = route }
             , newCmd
@@ -307,8 +307,8 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
 
-navigateTo : Route -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
-navigateTo route model =
+navigateTo : Route -> SharedState -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
+navigateTo route sharedState model =
     case route of
         LoginRoute ->
             Login.init |> initWith LoginModel LoginMsg model NoUpdate
@@ -317,7 +317,7 @@ navigateTo route model =
             Registration.init |> initWith RegistrationModel RegistrationMsg model NoUpdate
 
         DashboardRoute ->
-            Dashboard.init |> initWith DashboardModel DashboardMsg model NoUpdate
+            Dashboard.init sharedState |> initWith DashboardModel DashboardMsg model NoUpdate
 
         CoursesRoute ->
             Courses.init |> initWith CoursesModel CoursesMsg model NoUpdate

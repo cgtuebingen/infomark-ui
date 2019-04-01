@@ -14,6 +14,7 @@ module Api.Request.Courses exposing
     , coursePut
     , courseSheetsGet
     , courseSheetsPost
+    , courseTaskMissing
     , coursesBidsGet
     , coursesBidsPost
     , coursesEnrollmentDelete
