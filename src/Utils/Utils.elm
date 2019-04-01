@@ -1,4 +1,4 @@
-module Utils.Utils exposing (flip, handleLogoutErrors, perform, split, tupleMapThree)
+module Utils.Utils exposing (flip, handleLogoutErrors, perform, split, tupleExtend, tupleMapThree)
 
 import Browser.Navigation exposing (pushUrl)
 import Http
@@ -51,3 +51,8 @@ flip f b a =
 tupleMapThree : (a -> x) -> (b -> y) -> (c -> z) -> ( a, b, c ) -> ( x, y, z )
 tupleMapThree funcA funcB funcC ( x, y, z ) =
     ( funcA x, funcB y, funcC z )
+
+
+tupleExtend : ( a, b ) -> c -> ( a, b, c )
+tupleExtend ( a, b ) c =
+    ( a, b, c )
