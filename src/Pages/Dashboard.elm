@@ -17,6 +17,9 @@
 module Pages.Dashboard exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.Course exposing (Course)
+import Api.Data.MissingGrade exposing (MissingGrade)
+import Api.Data.MissingTask exposing (MissingTask)
+import Api.Request.Courses as CourseRequests
 import Browser.Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)

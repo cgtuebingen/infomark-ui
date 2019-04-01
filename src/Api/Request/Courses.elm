@@ -36,6 +36,7 @@ import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.Material as Material exposing (Material)
 import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
+import Api.Data.MissingTask as MissingTask exposing (MissingTask)
 import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.Submission as Submission exposing (Submission)
@@ -53,6 +54,7 @@ import Api.Endpoint
         , courseGroupsOwn
         , courseMaterials
         , courseMissingGrades
+        , courseMissingTasks
         , coursePoints
         , courseSheets
         , courses
@@ -333,3 +335,11 @@ courseGradeMissing courseId msg =
         msg
     <|
         Decode.list MissingGrade.decoder
+
+
+courseTaskMissing : Int -> (WebData (List MissingTask) -> msg) -> Cmd msg
+courseTaskMissing courseId msg =
+    get (unwrap <| courseMissingTasks courseId)
+        msg
+    <|
+        Decode.list MissingTask.decoder
