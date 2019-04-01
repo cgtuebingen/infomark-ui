@@ -36,6 +36,7 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
+import Api.Data.Material as Material exposing (Material, MaterialType(..))
 import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Data.Sheet as Sheet exposing (Sheet)
 import Api.Data.User as User exposing (User)
@@ -44,6 +45,7 @@ import Api.Endpoint exposing (sheetFile, unwrap)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
 import Api.Request.Groups as GroupsRequests
+import Api.Request.Material as MaterialRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements
     exposing
@@ -99,13 +101,14 @@ type Msg
     | PointOverviewResponse (WebData (List PointOverview))
     | GroupMsg GroupMsgTypes
     | SheetRequestResponse (WebData (List Sheet))
+    | MaterialRequestResponse (WebData (List Material))
     | SetField Field String
     | SearchUserForEnrollment
     | SearchUserForGroup
     | ChangeEnrollment UserEnrollment
     | ChangeGroup Int GroupEnrollmentChange
     | WriteTo Int
-    | DownloadSheet Int Int
+    | Download String
     | WriteEmailMsg Int
 
 
@@ -114,6 +117,7 @@ type alias Model =
     , courseRole : Maybe CourseRole
     , courseRequest : WebData Course
     , sheetRequest : WebData (List Sheet)
+    , materialRequest : WebData (List Material)
     , courseRoleRequest : WebData (List AccountEnrollment)
     , enrollmentsRequest : WebData (List UserEnrollment)
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
@@ -146,6 +150,7 @@ init id =
       , courseRole = Nothing
       , courseRequest = Loading
       , sheetRequest = Loading
+      , materialRequest = Loading
       , courseRoleRequest = Loading
       , enrollmentsRequest = NotAsked
       , searchUserForEnrollmentRequest = NotAsked
@@ -162,6 +167,7 @@ init id =
         [ AccountRequests.accountEnrollmentGet CourseRoleResponse
         , CoursesRequests.courseGet id CourseResponse
         , CoursesRequests.courseSheetsGet id SheetRequestResponse
+        , CoursesRequests.courseMaterialsGet id MaterialRequestResponse
         , CoursesRequests.coursePointsGet id PointOverviewResponse
         ]
     )
@@ -256,8 +262,11 @@ update sharedState msg model =
         SheetRequestResponse response ->
             ( { model | sheetRequest = response }, Cmd.none, NoUpdate )
 
-        DownloadSheet courseId sheetId ->
-            ( model, Download.url <| unwrap <| sheetFile courseId sheetId, NoUpdate )
+        MaterialRequestResponse response ->
+            ( { model | materialRequest = response }, Cmd.none, NoUpdate )
+
+        Download url ->
+            ( model, Download.url url, NoUpdate )
 
         WriteTo userId ->
             ( model, UserView.updateFromUserAvatar sharedState userId, NoUpdate )
@@ -428,6 +437,8 @@ view sharedState model =
                     [ viewDetermineTeamOrSearch role sharedState model
                     , viewDetermineGroupDisplay role sharedState model
                     , viewSheets sharedState model
+                    , viewMaterials sharedState model Slide
+                    , viewMaterials sharedState model Supplementary
                     ]
                 ]
 
@@ -725,7 +736,7 @@ viewSheets sharedState model =
                                     (Tuple.second toDisplay)
                                 <|
                                     ([ ( "Download"
-                                       , DownloadSheet model.courseId sheet.id
+                                       , Download <| unwrap <| sheetFile model.courseId sheet.id
                                        , Styles.buttonGreyStyle
                                        )
                                      , ( "Show"
@@ -751,6 +762,64 @@ viewSheets sharedState model =
                                     Styles.listHeadingStyle
                                     [ ( "Create"
                                       , NavigateTo <| CreateSheetRoute model.courseId
+                                      , Styles.buttonGreenStyle
+                                      )
+                                    ]
+
+                              else
+                                text ""
+                            ]
+
+                _ ->
+                    [ div [] [ text "Loading" ] ]
+        ]
+
+
+viewMaterials : SharedState -> Model -> MaterialType -> Html Msg
+viewMaterials sharedState model materialType =
+    let
+        ( materialTypeLabel, createNewLabel ) =
+            case materialType of
+                Slide ->
+                    ( "Folien", "Neue Folie" )
+
+                Supplementary ->
+                    ( "Material", "Neues Material" )
+    in
+    rContainer <|
+        [ rRowHeader materialTypeLabel
+        , div [ classes [ TC.ph4 ] ] <|
+            case model.materialRequest of
+                Success materials ->
+                    materials
+                        |> List.filter (\m -> m.material_type == materialType)
+                        |> List.sortBy (\m -> Time.posixToMillis m.lecture_at)
+                        |> List.map
+                            (\m ->
+                                rRowHeaderActionButtons m.name Styles.listHeadingStyle <|
+                                    ([ ( "Download"
+                                       , Download <| Maybe.withDefault "" <| m.file_url
+                                       , Styles.buttonGreyStyle
+                                       )
+                                     ]
+                                        ++ (if model.courseRole == Just Admin then
+                                                [ ( "Edit"
+                                                  , NavigateTo <| EditMaterialRoute model.courseId m.id
+                                                  , Styles.buttonGreyStyle
+                                                  )
+                                                ]
+
+                                            else
+                                                []
+                                           )
+                                    )
+                            )
+                        |> flip List.append
+                            [ if model.courseRole == Just Admin then
+                                rRowHeaderActionButtons createNewLabel
+                                    Styles.listHeadingStyle
+                                    [ ( "Create"
+                                      , NavigateTo <| CreateMaterialRoute model.courseId
                                       , Styles.buttonGreenStyle
                                       )
                                     ]
