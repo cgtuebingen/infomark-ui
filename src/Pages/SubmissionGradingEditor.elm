@@ -39,7 +39,6 @@ type Msg
     | GetGrades (WebData (List Grade))
     | GetGroups (WebData (List Group))
     | GetTask (WebData Task)
-    | GetUserInfo Int (WebData User)
     | GetSendGradeResponse Int (WebData ())
     | ToggleGroupChanger
     | SetField Field String
@@ -52,21 +51,15 @@ type alias Model =
     { getGradesResponse : WebData (List Grade)
     , getGroupsResponse : WebData (List Group)
     , getTaskResponse : WebData Task
-    , getUserResponses : Dict Int (WebData User)
     , getGradeSendResponse : Dict Int (WebData ())
-    , fusedGradeDict : Dict Int FusedGrade
     , gradeDoneTime : Dict Int Time.Posix
+    , gradesDict : Dict Int Grade
+    , feedbackDict : Dict Int String
     , courseId : Int
     , groupId : Int
     , taskId : Int
     , groupChangerVisible : Bool
     , spinner : Spinner.Model
-    }
-
-
-type alias FusedGrade =
-    { grade : Grade
-    , user : User
     }
 
 
@@ -80,10 +73,10 @@ init courseId taskId groupId =
     ( { getGradesResponse = Loading
       , getGroupsResponse = Loading
       , getTaskResponse = Loading
-      , getUserResponses = Dict.empty
       , getGradeSendResponse = Dict.empty
-      , fusedGradeDict = Dict.empty
       , gradeDoneTime = Dict.empty
+      , gradesDict = Dict.empty
+      , feedbackDict = Dict.empty
       , courseId = courseId
       , groupId = groupId
       , taskId = taskId
@@ -105,16 +98,11 @@ update sharedState msg model =
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         GetGrades response ->
-            ( fillFusedGradeDict
+            ( fillGradeDict
                 { model
                     | getGradesResponse = response
                 }
-            , case response of
-                Success grades ->
-                    getAllUsers grades
-
-                _ ->
-                    Cmd.none
+            , Cmd.none
             , NoUpdate
             )
 
@@ -123,15 +111,6 @@ update sharedState msg model =
 
         GetTask response ->
             ( { model | getTaskResponse = response }, Cmd.none, NoUpdate )
-
-        GetUserInfo gradeId response ->
-            ( fillFusedGradeDict
-                { model
-                    | getUserResponses = Dict.insert gradeId response model.getUserResponses
-                }
-            , Cmd.none
-            , NoUpdate
-            )
 
         GetSendGradeResponse gradeId response ->
             let
@@ -173,18 +152,18 @@ update sharedState msg model =
             ( setField model field value, Cmd.none, NoUpdate )
 
         SendGrade gradeId ->
-            case Dict.get gradeId model.fusedGradeDict of
-                Just fusedGrade ->
+            case ( Dict.get gradeId model.gradesDict, Dict.get gradeId model.feedbackDict ) of
+                ( Just grade, Just feedback ) ->
                     ( model
                     , TaskRequests.taskGradePut
                         model.courseId
                         gradeId
-                        fusedGrade.grade
+                        { grade | feedback = feedback }
                         (GetSendGradeResponse gradeId)
                     , NoUpdate
                     )
 
-                Nothing ->
+                ( _, _ ) ->
                     ( model, Cmd.none, NoUpdate )
 
         DownloadSubmission url ->
@@ -251,10 +230,20 @@ view sharedState model =
                                             )
                                     )
                                 ]
-                            ++ (model.fusedGradeDict
+                            ++ (model.gradesDict
                                     |> Dict.values
-                                    |> List.sortWith compareFusedGradeEntries
-                                    |> List.map (viewTask sharedState model task)
+                                    |> List.sortWith compareGradeEntries
+                                    |> List.map
+                                        (\g ->
+                                            ( g
+                                            , Maybe.withDefault "" <|
+                                                Dict.get g.id model.feedbackDict
+                                            )
+                                        )
+                                    |> List.map
+                                        (\( g, f ) ->
+                                            viewTask sharedState model task g f
+                                        )
                                )
                     ]
 
@@ -263,8 +252,8 @@ view sharedState model =
         ]
 
 
-viewTask : SharedState -> Model -> Task -> FusedGrade -> Html Msg
-viewTask sharedState model task fusedGrade =
+viewTask : SharedState -> Model -> Task -> Grade -> String -> Html Msg
+viewTask sharedState model task grade feedback =
     let
         noSubmissionElement =
             span [ Styles.headerStyle, classes [ TC.red ] ] [ text "No Submission" ]
@@ -274,7 +263,7 @@ viewTask sharedState model task fusedGrade =
             CE.r2Column
                 [ UserView.view
                     sharedState
-                    (Tuple.first <| UserView.initFromUser fusedGrade.user)
+                    (Tuple.first <| UserView.initFromUser grade.user)
                     Nothing
                 ]
                 [ div
@@ -288,7 +277,7 @@ viewTask sharedState model task fusedGrade =
                         , TC.mv3
                         ]
                     ]
-                    [ case fusedGrade.grade.file_url of
+                    [ case grade.file_url of
                         Just url ->
                             if String.isEmpty url then
                                 noSubmissionElement
@@ -306,7 +295,7 @@ viewTask sharedState model task fusedGrade =
                     ]
                 ]
         ]
-            ++ (case fusedGrade.grade.file_url of
+            ++ (case grade.file_url of
                     Just url ->
                         if String.isEmpty url then
                             [ text "" ]
@@ -316,7 +305,7 @@ viewTask sharedState model task fusedGrade =
                                 CE.r1Column <|
                                     [ CE.inputLabel "Public Test Results"
                                     , CE.renderInTextBox
-                                        (case fusedGrade.grade.public_execution_state of
+                                        (case grade.public_execution_state of
                                             Pending ->
                                                 "Pending Test"
 
@@ -324,7 +313,7 @@ viewTask sharedState model task fusedGrade =
                                                 "Running Test"
 
                                             Finished ->
-                                                fusedGrade.grade.public_test_log
+                                                grade.public_test_log
                                         )
                                         True
                                     ]
@@ -332,7 +321,7 @@ viewTask sharedState model task fusedGrade =
                                 CE.r1Column <|
                                     [ CE.inputLabel "Private Test Results"
                                     , CE.renderInTextBox
-                                        (case fusedGrade.grade.private_execution_state of
+                                        (case grade.private_execution_state of
                                             Pending ->
                                                 "Pending Test"
 
@@ -340,7 +329,7 @@ viewTask sharedState model task fusedGrade =
                                                 "Running Test"
 
                                             Finished ->
-                                                fusedGrade.grade.private_test_log
+                                                grade.private_test_log
                                         )
                                         True
                                     ]
@@ -354,22 +343,22 @@ viewTask sharedState model task fusedGrade =
                         CE.textAreaElement
                             { label = "Feedback"
                             , placeholder = "Write some nice feedback for your student."
-                            , value = fusedGrade.grade.feedback
+                            , value = feedback
                             }
-                            (Feedback fusedGrade.grade.id)
+                            (Feedback grade.id)
                             []
                             -- TODO do not ignore errors
                             SetField
                , CE.rRowExtraSpacing <|
                     CE.sliderInputElement
                         { label = "Punkte"
-                        , value = fusedGrade.grade.acquired_points
+                        , value = grade.acquired_points
                         , min = 0
                         , max = task.max_points
                         , step = 1
-                        , valueLabel = String.fromInt fusedGrade.grade.acquired_points ++ " Punkte"
+                        , valueLabel = String.fromInt grade.acquired_points ++ " Punkte"
                         }
-                        (Points fusedGrade.grade.id)
+                        (Points grade.id)
                         []
                         -- TODO do not ignore errors
                         SetField
@@ -380,10 +369,10 @@ viewTask sharedState model task fusedGrade =
                                 (\up cur ->
                                     Time.posixToMillis cur - Time.posixToMillis up > 1500
                                 )
-                                (Dict.get fusedGrade.grade.id model.gradeDoneTime)
+                                (Dict.get grade.id model.gradeDoneTime)
                                 sharedState.currentTime
                     in
-                    case ( Dict.get fusedGrade.grade.id model.getGradeSendResponse, stateShownLongEnough ) of
+                    case ( Dict.get grade.id model.getGradeSendResponse, stateShownLongEnough ) of
                         ( Just (Success _), Just False ) ->
                             CE.PbbButton <| CE.PbbResult <| CE.PbbSuccess "Erfolgreich benotet"
 
@@ -396,20 +385,20 @@ viewTask sharedState model task fusedGrade =
                         ( _, _ ) ->
                             let
                                 testDoneButtonState =
-                                    if String.isEmpty fusedGrade.grade.feedback then
+                                    if String.isEmpty feedback then
                                         CE.PbbDisabled "You need to write Feedback"
 
                                     else
-                                        CE.PbbActive "Benoten" (SendGrade fusedGrade.grade.id)
+                                        CE.PbbActive "Benoten" (SendGrade grade.id)
 
                                 submissionAvailable =
-                                    (fusedGrade.grade.file_url /= Just "")
-                                        && (fusedGrade.grade.file_url /= Nothing)
+                                    (grade.file_url /= Just "")
+                                        && (grade.file_url /= Nothing)
 
                                 testFinished =
-                                    fusedGrade.grade.private_execution_state
+                                    grade.private_execution_state
                                         == Finished
-                                        && fusedGrade.grade.public_execution_state
+                                        && grade.public_execution_state
                                         == Finished
                             in
                             CE.PbbButton <|
@@ -424,51 +413,19 @@ viewTask sharedState model task fusedGrade =
                ]
 
 
-getAllUsers : List Grade -> Cmd Msg
-getAllUsers grades =
-    grades
-        |> List.map (\g -> g.user_id)
-        |> List.map (\uid -> UserRequests.userGet uid <| GetUserInfo uid)
-        |> Cmd.batch
-
-
-fillFusedGradeDict : Model -> Model
-fillFusedGradeDict model =
+fillGradeDict : Model -> Model
+fillGradeDict model =
     case model.getGradesResponse of
         Success grades ->
             grades
-                |> List.map (\g -> g.user_id)
-                -- Get all ids
-                |> Set.fromList
-                |> Set.diff (Set.fromList <| Dict.keys model.getUserResponses)
-                -- Check if all ids are in the user dict
-                |> (\s ->
-                        if Set.isEmpty s then
-                            -- All data is available
-                            grades
-                                |> List.map
-                                    (\g ->
-                                        case Dict.get g.user_id model.getUserResponses of
-                                            Just (Success user) ->
-                                                -- User request is gone through too
-                                                -- Prepare dict entry
-                                                Just ( g.id, { grade = g, user = user } )
-
-                                            _ ->
-                                                -- Not done. Return nothing
-                                                Nothing
-                                    )
-                                |> List.filterMap identity
-                                -- Filter all nothings..
-                                |> Dict.fromList
-                                -- ...and create the dict...
-                                |> (\d -> { model | fusedGradeDict = d })
-                            -- ...which is written to the model
-
-                        else
-                            -- Data is not completely loaded
-                            model
-                   )
+                |> List.map (\g -> ( g.id, g ))
+                |> Dict.fromList
+                |> Tuple.pair
+                    (grades
+                        |> List.map (\g -> ( g.id, g.feedback ))
+                        |> Dict.fromList
+                    )
+                |> (\( fd, gd ) -> { model | gradesDict = gd, feedbackDict = fd })
 
         _ ->
             -- Nothing is loaded. Return the old state
@@ -480,68 +437,40 @@ setField model field value =
     case field of
         Feedback id ->
             { model
-                | fusedGradeDict =
+                | feedbackDict =
                     Dict.update id
-                        (\maybeFusedGrade ->
-                            case maybeFusedGrade of
-                                Just fusedGrade ->
-                                    let
-                                        grade =
-                                            fusedGrade.grade
-
-                                        gradeUpdate =
-                                            { grade
-                                                | feedback = value
-                                            }
-                                    in
-                                    Just
-                                        { fusedGrade
-                                            | grade = gradeUpdate
-                                        }
-
-                                Nothing ->
-                                    Nothing
-                        )
-                        model.fusedGradeDict
+                        (Maybe.map (\_ -> value))
+                        model.feedbackDict
             }
 
         Points id ->
             { model
-                | fusedGradeDict =
+                | gradesDict =
                     Dict.update id
-                        (\maybeFusedGrade ->
-                            case maybeFusedGrade of
-                                Just fusedGrade ->
-                                    let
-                                        grade =
-                                            fusedGrade.grade
-
-                                        gradeUpdate =
-                                            { grade
-                                                | acquired_points =
-                                                    Maybe.withDefault 0 <|
-                                                        String.toInt value
-                                            }
-                                    in
+                        (\maybeGrade ->
+                            case maybeGrade of
+                                Just grade ->
                                     Just
-                                        { fusedGrade
-                                            | grade = gradeUpdate
+                                        { grade
+                                            | acquired_points =
+                                                Maybe.withDefault 0 <|
+                                                    String.toInt value
                                         }
 
                                 Nothing ->
                                     Nothing
                         )
-                        model.fusedGradeDict
+                        model.gradesDict
             }
 
 
-compareFusedGradeEntries : FusedGrade -> FusedGrade -> Order
-compareFusedGradeEntries fgA fgB =
+compareGradeEntries : Grade -> Grade -> Order
+compareGradeEntries fgA fgB =
     let
         joinedName =
             \fg -> fg.user.lastname ++ " " ++ fg.user.firstname
     in
-    case ( String.isEmpty fgA.grade.feedback, String.isEmpty fgB.grade.feedback ) of
+    case ( String.isEmpty fgA.feedback, String.isEmpty fgB.feedback ) of
         ( True, False ) ->
             LT
 

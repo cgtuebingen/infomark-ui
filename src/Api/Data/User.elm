@@ -27,11 +27,11 @@ decoder =
         |> required "first_name" Decode.string
         |> required "last_name" Decode.string
         |> optional "avatar_url" (Decode.nullable Decode.string) Nothing
-        |> required "email" Decode.string
-        |> required "student_number" Decode.string
-        |> required "semester" Decode.int
-        |> required "subject" Decode.string
-        |> required "language" Decode.string
+        |> optional "email" Decode.string ""
+        |> optional "student_number" Decode.string ""
+        |> optional "semester" Decode.int 0
+        |> optional "subject" Decode.string ""
+        |> optional "language" Decode.string ""
         |> optional "root" (Decode.nullable Decode.bool) Nothing
 
 
