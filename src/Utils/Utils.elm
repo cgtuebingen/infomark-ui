@@ -1,4 +1,12 @@
-module Utils.Utils exposing (flip, handleLogoutErrors, perform, split, tupleExtend, tupleMapThree)
+module Utils.Utils exposing
+    ( flip
+    , handleLogoutErrors
+    , perform
+    , split
+    , tupleExtend
+    , tupleMapThree
+    , unzipTripple
+    )
 
 import Browser.Navigation exposing (pushUrl)
 import Http
@@ -56,3 +64,12 @@ tupleMapThree funcA funcB funcC ( x, y, z ) =
 tupleExtend : ( a, b ) -> c -> ( a, b, c )
 tupleExtend ( a, b ) c =
     ( a, b, c )
+
+
+unzipTripple : List ( a, b, c ) -> ( List a, List b, List c )
+unzipTripple tripples =
+    let
+        step ( x, y, z ) ( xs, ys, zs ) =
+            ( x :: xs, y :: ys, z :: zs )
+    in
+    List.foldr step ( [], [], [] ) tripples

@@ -23,9 +23,11 @@ import Api.Data.Group exposing (Group)
 import Api.Data.MissingGrade exposing (MissingGrade)
 import Api.Data.MissingTask exposing (MissingTask)
 import Api.Data.Sheet exposing (Sheet)
+import Api.Data.Task exposing (Task)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CourseRequests
 import Api.Request.Sheet as SheetRequests
+import Api.Request.Task as TaskRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements as CE
 import Dict exposing (Dict)
@@ -37,13 +39,14 @@ import I18n
 import Maybe.Extra exposing (isJust)
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
+import Set exposing (Set)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
-import Utils.Utils exposing (perform, tupleExtend)
+import Utils.Utils exposing (perform, tupleExtend, unzipTripple)
 
 
 type Msg
@@ -51,7 +54,8 @@ type Msg
     | GetCourses (WebData (List Course))
     | GetAccountEnrollments (WebData (List AccountEnrollment))
     | GetMissingItem Int TodoRequest
-    | GetSheet Int (WebData Sheet)
+    | GetSheet (WebData Sheet)
+    | GetTasks (WebData (List Task))
     | GetOwnGroup Int (WebData (List Group))
 
 
@@ -78,6 +82,7 @@ type alias Model =
     , getAccountEnrollments : WebData (List AccountEnrollment)
     , fusedEnrollmentDict : Dict Int FusedEnrollment
     , sheetDict : Dict Int Sheet
+    , taskDict : Dict Int Task
     }
 
 
@@ -94,13 +99,17 @@ init sharedState =
       , getAccountEnrollments = Loading
       , fusedEnrollmentDict = Dict.empty
       , sheetDict = Dict.empty
+      , taskDict = Dict.empty
       }
     , case ( sharedState.userMail, sharedState.role ) of
+        -- Check if we are a global admin
         ( Just _, Just role ) ->
             if role.root then
+                -- In this case the dashboard has nothing to show..
                 perform <| NavigateTo CoursesRoute
 
             else
+                -- We are a mere mortal. Start the default requests to populate the view
                 startRequests
 
         ( _, _ ) ->
@@ -132,8 +141,14 @@ update sharedState msg model =
                 (updateFusedEnrollmentWithTodosAndNextRequests model courseId response)
                 NoUpdate
 
-        GetSheet taskId response ->
-            ( updateSheetsDict model taskId response
+        GetSheet response ->
+            ( updateSheetsDict model response
+            , Cmd.none
+            , NoUpdate
+            )
+
+        GetTasks response ->
+            ( updateTasksDict model response
             , Cmd.none
             , NoUpdate
             )
@@ -213,8 +228,8 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                         let
                             firstDueDate =
                                 missingTasks
-                                    |> List.map (\mt -> mt.task.id)
-                                    |> List.map (\tid -> Dict.get tid model.sheetDict)
+                                    |> List.map (\mt -> mt.sheet_id)
+                                    |> List.map (\sid -> Dict.get sid model.sheetDict)
                                     |> List.filterMap identity
                                     -- Remove nothings
                                     |> List.map (\sheet -> sheet.due_at)
@@ -223,7 +238,7 @@ viewCourseWithTodos sharedState model fusedEnrollment =
 
                             taskWithSheet =
                                 missingTasks
-                                    |> List.map (\mt -> ( mt, Dict.get mt.task.id model.sheetDict ))
+                                    |> List.map (\mt -> ( mt, Dict.get mt.sheet_id model.sheetDict ))
                                     |> List.filterMap
                                         (\( mt, sheet ) ->
                                             case sheet of
@@ -268,23 +283,31 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                             sheettaskWithGrades =
                                 missingGrades
                                     |> List.foldl
+                                        -- This gets tricky. Maybe not the nicest code around...
                                         (\mg d ->
+                                            -- We're gonna create a dict with the sheet.id as key, which
+                                            -- Contains another dict with the task.id as the key..
                                             Dict.update mg.sheet_id
                                                 (\maybeEntry ->
                                                     case maybeEntry of
+                                                        -- Check if we already have values in the key
                                                         Just entry ->
+                                                            -- We have values..
                                                             Just <|
+                                                                -- So update the dict containing the missing grades
                                                                 Dict.update mg.task_id
                                                                     (\secondEntry ->
                                                                         secondEntry
                                                                             |> Maybe.map (\es -> es ++ [ mg ])
-                                                                            |> Maybe.withDefault []
+                                                                            |> Maybe.withDefault [ mg ]
                                                                             |> Just
                                                                     )
                                                                     entry
 
                                                         Nothing ->
+                                                            -- No previous key and thus no dict..
                                                             Just <|
+                                                                -- Just create a dict containing the items
                                                                 Dict.fromList [ ( mg.task_id, [ mg ] ) ]
                                                 )
                                                 d
@@ -309,6 +332,12 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                                                                         |> Maybe.map (\s -> s.name)
                                                                         |> Maybe.withDefault ""
                                                                    )
+                                                                ++ " "
+                                                                ++ (Dict.get taskId model.taskDict
+                                                                        |> Maybe.map (\t -> t.name)
+                                                                        |> Maybe.withDefault ""
+                                                                   )
+                                                                ++ " - "
                                                                 ++ (String.fromInt <|
                                                                         List.length mgs
                                                                    )
@@ -363,14 +392,31 @@ updateFusedEnrollmentWithTodosAndNextRequests model courseId todoRequest =
                             |> (\todo ->
                                     case todo of
                                         TaskTodo tasks ->
-                                            List.map (\t -> ( t.course_id, t.sheet_id, t.task.id )) tasks
+                                            List.map
+                                                (\t ->
+                                                    ( t.course_id
+                                                    , t.sheet_id
+                                                    )
+                                                )
+                                                tasks
 
                                         GradeTodo grades ->
-                                            List.map (\g -> ( g.course_id, g.sheet_id, g.task_id )) grades
+                                            List.map
+                                                (\g ->
+                                                    ( g.course_id
+                                                    , g.sheet_id
+                                                    )
+                                                )
+                                                grades
                                )
+                            |> Set.fromList
+                            |> Set.toList
                             |> List.map
-                                (\( cid, sid, tid ) ->
-                                    SheetRequests.sheetGet cid sid (GetSheet tid)
+                                (\( cid, sid ) ->
+                                    Cmd.batch
+                                        [ SheetRequests.sheetGet cid sid GetSheet
+                                        , SheetRequests.sheetTasksGet cid sid GetTasks
+                                        ]
                                 )
                             |> Cmd.batch
 
@@ -397,16 +443,35 @@ updateFusedEnrollmentWithGroups model courseId groupRequest =
            )
 
 
-updateSheetsDict : Model -> Int -> WebData Sheet -> Model
-updateSheetsDict model taskId sheetRequest =
+updateSheetsDict : Model -> WebData Sheet -> Model
+updateSheetsDict model sheetRequest =
     sheetRequest
         |> RemoteData.toMaybe
         |> Maybe.map
             (\sheet ->
                 { model
                     | sheetDict =
-                        Dict.insert taskId sheet model.sheetDict
+                        Dict.insert sheet.id sheet model.sheetDict
                 }
+            )
+        |> Maybe.withDefault model
+
+
+updateTasksDict : Model -> WebData (List Task) -> Model
+updateTasksDict model tasksRequest =
+    tasksRequest
+        |> RemoteData.toMaybe
+        |> Maybe.map
+            (\tasks ->
+                List.foldl
+                    (\task m ->
+                        { m
+                            | taskDict =
+                                Dict.insert task.id task m.taskDict
+                        }
+                    )
+                    model
+                    tasks
             )
         |> Maybe.withDefault model
 
@@ -418,11 +483,14 @@ fillFusedEnrollmentAndDecideRequests model =
             \m ->
                 case ( m.getCourses, m.getAccountEnrollments ) of
                     ( Success _, Success _ ) ->
+                        -- Only if both requests are successful
                         m.fusedEnrollmentDict
                             |> Dict.values
                             |> List.map
                                 (\fe ->
                                     case fe.role of
+                                        -- Decide what requests we need to send.
+                                        -- In short for students the missing tasks and groups
                                         Student ->
                                             [ Cmd.map (GetMissingItem fe.course.id) <|
                                                 CourseRequests.courseTaskMissing
@@ -434,6 +502,7 @@ fillFusedEnrollmentAndDecideRequests model =
                                             ]
                                                 |> Cmd.batch
 
+                                        -- and for tutors the missing grades and their groups
                                         Tutor ->
                                             [ Cmd.map
                                                 (GetMissingItem fe.course.id)
@@ -458,11 +527,14 @@ fillFusedEnrollmentAndDecideRequests model =
     (case ( model.getCourses, model.getAccountEnrollments ) of
         ( Success courses, Success enrollments ) ->
             enrollments
+                -- For every enrolled course...
                 |> List.map
                     (\e ->
                         courses
+                            -- Go through every overall course
                             |> List.filter (\c -> c.id == e.course_id)
                             |> List.head
+                            -- And match the first course which matches the enrollment id
                             |> Maybe.map
                                 (\c ->
                                     { course = c
@@ -470,14 +542,19 @@ fillFusedEnrollmentAndDecideRequests model =
                                     , missingItems = Nothing
                                     , groups = Nothing
                                     }
+                                 -- Fill the fusedEnrollment record
                                 )
                     )
                 |> List.filterMap identity
+                -- Remove all maybe values
                 |> List.map (\fe -> ( fe.course.id, fe ))
+                -- and prepare the key value pairs for the dict
                 |> Dict.fromList
                 |> (\fe -> { model | fusedEnrollmentDict = fe })
 
+        -- Write the dict
         ( _, _ ) ->
             model
     )
+        -- Setup the complete update
         |> (\m -> ( m, nextRequests m, NoUpdate ))
