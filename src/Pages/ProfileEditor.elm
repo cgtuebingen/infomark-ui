@@ -732,7 +732,7 @@ userToModel model user =
                     url
 
                 Nothing ->
-                    "assets/defaultAvatar.png"
+                    "images/defaultAvatar.png"
     }
 
 

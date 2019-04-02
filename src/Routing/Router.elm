@@ -504,15 +504,15 @@ navView sharedState model =
             I18n.get sharedState.translations
 
         navItems =
-            [ ( t "page-title-courses", Just "assets/school-white.svg", NavigateTo CoursesRoute ) ]
+            [ ( t "page-title-courses", Just "images/school-white.svg", NavigateTo CoursesRoute ) ]
                 ++ (if sharedState.role == Just { root = True } then
-                        [ ( t "page-title-admin", Just "assets/database-settings-white.svg", NavigateTo AdminRoute ) ]
+                        [ ( t "page-title-admin", Just "images/database-settings-white.svg", NavigateTo AdminRoute ) ]
 
                     else
                         []
                    )
-                ++ [ ( t "page-title-profile", Just "assets/account-settings-white.svg", NavigateTo ProfileEditorRoute )
-                   , ( t "action-logout", Just "assets/logout-variant-white.svg", Logout )
+                ++ [ ( t "page-title-profile", Just "images/account-settings-white.svg", NavigateTo ProfileEditorRoute )
+                   , ( t "action-logout", Just "images/logout-variant-white.svg", Logout )
                    ]
     in
     nav
@@ -528,7 +528,7 @@ navView sharedState model =
         ]
         [ input
             [ type_ "image"
-            , src "/assets/Logo_white.svg"
+            , src "/images/Logo_white.svg"
             , onClick <| NavigateTo DashboardRoute
             , classes
                 [ TC.link

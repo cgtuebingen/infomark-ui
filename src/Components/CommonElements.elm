@@ -172,7 +172,7 @@ searchElement inputConfig field inputMsg clickMsg =
             []
         , input
             [ type_ "image"
-            , src "assets/magnify.svg"
+            , src "images/magnify.svg"
             , classes [ TC.ml2, TC.w2, TC.h2, TC.pa1, TC.dim ]
             , onClick clickMsg
             ]

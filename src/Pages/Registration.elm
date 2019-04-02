@@ -202,7 +202,7 @@ view sharedState model =
                     , TC.mv4
                     ]
                 ]
-                [ img [ src "/assets/Logo.svg" ] [] ]
+                [ img [ src "/images/Logo.svg" ] [] ]
             , Html.form
                 [ classes
                     [ TC.mw7

@@ -613,7 +613,7 @@ viewUserSearchResult sharedState model maybeUserEnrollment =
                             avatarUrl
 
                         Nothing ->
-                            "assets/defaultAvatar.png"
+                            "images/defaultAvatar.png"
             in
             div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph5_l ] ]
                 [ UserView.view sharedState (Tuple.first <| UserView.initFromUser user) Nothing

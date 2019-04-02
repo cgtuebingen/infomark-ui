@@ -499,11 +499,11 @@ viewRenderCourse sharedState course enrollment =
                     []
 
                 Just _ ->
-                    [ ( "assets/logout-variant.svg", RequestDisenroll course ) ]
+                    [ ( "images/logout-variant.svg", RequestDisenroll course ) ]
             )
                 ++ (if sharedState.role == Just { root = True } then
-                        [ ( "assets/pencil.svg", NavigateTo <| EditCourseRoute course.id )
-                        , ( "assets/delete.svg", RequestDelete course )
+                        [ ( "images/pencil.svg", NavigateTo <| EditCourseRoute course.id )
+                        , ( "images/delete.svg", RequestDelete course )
                         ]
 
                     else

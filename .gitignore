@@ -7,3 +7,11 @@ elm.js
 elm.min.js
 # vscode
 .vscode
+/build/icons
+/build/images
+/build/static
+/build/styles
+/build/translations
+/build/*.js
+/build/*.html
+/build/*.json

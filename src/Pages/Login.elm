@@ -167,7 +167,7 @@ view sharedState model =
                     , TC.mv4
                     ]
                 ]
-                [ img [ src "/assets/Logo.svg" ] [] ]
+                [ img [ src "/images/Logo.svg" ] [] ]
             , Html.form
                 [ classes
                     [ TC.mw7
@@ -260,7 +260,7 @@ viewLoginError error =
             ]
         , Styles.textStyle
         ]
-        [ img [ src "/assets/alert-circle.svg", classes [ TC.w2, TC.mr3 ] ] []
+        [ img [ src "/images/alert-circle.svg", classes [ TC.w2, TC.mr3 ] ] []
         , text error
         ]
 

@@ -42,7 +42,7 @@ initFromUser user =
                     avatarUrl
 
                 Nothing ->
-                    "assets/defaultAvatar.png"
+                    "images/defaultAvatar.png"
       }
     , Cmd.none
     )
