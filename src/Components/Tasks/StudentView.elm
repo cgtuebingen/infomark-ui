@@ -4,6 +4,7 @@ module Components.Tasks.StudentView exposing
     , init
     , update
     , view
+    , subscriptions
     )
 
 {-| The non admin counter part of TaskEditor.
@@ -11,7 +12,7 @@ Can be used to upload submissions and view the
 public test results.
 -}
 
-import Api.Data.Grade exposing (Grade)
+import Api.Data.Grade exposing (Grade, ExecutionState)
 import Api.Data.Task exposing (Task)
 import Api.Data.TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Request.Task as TaskRequests
@@ -44,6 +45,7 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Time
+import Task
 import Utils.Styles as Styles
 import Utils.Utils exposing (perform)
 
@@ -68,6 +70,7 @@ type Msg
     | DragLeave
     | NoOp
     | DebounceMsg Debounce.Msg
+    | Tick Time.Posix
 
 
 type alias Model =
@@ -83,6 +86,8 @@ type alias Model =
     , collapse : Bool
     , hover : Bool
     , ratingDebounce : Debounce Int
+    , lastPublicTestStateCheck : Maybe Time.Posix
+    , pollForPublicTestLogTimeSubscription : Bool
     }
 
 
@@ -100,6 +105,9 @@ init courseId task =
       , collapse = True
       , hover = False
       , ratingDebounce = Debounce.init
+      , lastPublicTestStateCheck = Nothing
+      --, lastPublicTestStateCheck = Task.perform NoUpdate Time.now
+      , pollForPublicTestLogTimeSubscription = False
       }
     , Cmd.batch
         [ TaskRequests.taskResultGet courseId task.id GetGradeResponse
@@ -107,6 +115,9 @@ init courseId task =
         ]
     )
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Time.every 1000 Tick
 
 debounceConfig : Debounce.Config Msg
 debounceConfig =
@@ -131,6 +142,8 @@ update sharedState msg model =
             ( { model
                 | uploadDoneTime = sharedState.currentTime
                 , uploading = Success ()
+                , lastPublicTestStateCheck = sharedState.currentTime
+                , pollForPublicTestLogTimeSubscription = True
               }
             , Cmd.none
             , NoUpdate
@@ -139,7 +152,7 @@ update sharedState msg model =
         UploadSubmissionResponse response ->
             let
                 newModel =
-                    { model | uploading = response }
+                    { model | uploading = response  }
 
                 finalModel =
                     if
@@ -230,6 +243,32 @@ update sharedState msg model =
 
         NoOp ->
             ( model, Cmd.none, NoUpdate )
+
+        Tick time ->
+            let
+                dummy = Debug.log("hi")
+                timeNow = Time.posixToMillis (Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime)
+                timeChecked = Time.posixToMillis (Maybe.withDefault (Time.millisToPosix 0) model.lastPublicTestStateCheck)
+
+                pollAgain = (case model.gradeResponse of
+                    Success grade ->
+                        (grade.public_execution_state /= Api.Data.Grade.Finished)
+
+                    Loading ->
+                        False
+
+                    _ ->
+                        False
+                    )
+            in
+
+            if (model.pollForPublicTestLogTimeSubscription == True) && (timeNow - timeChecked > 2000) then
+                ( {model | pollForPublicTestLogTimeSubscription = pollAgain}
+                , TaskRequests.taskResultGet model.courseId model.task.id GetGradeResponse
+                , NoUpdate
+                )
+            else
+                (model, Cmd.none, NoUpdate)
 
 
 view : SharedState -> Model -> Bool -> Html Msg
