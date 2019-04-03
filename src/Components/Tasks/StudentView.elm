@@ -133,7 +133,7 @@ update sharedState msg model =
                 | uploadDoneTime = sharedState.currentTime
                 , uploading = Success ()
               }
-            , Cmd.none
+            , delay 1000 UpdateGrade
             , NoUpdate
             )
 
