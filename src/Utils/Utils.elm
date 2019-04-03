@@ -6,6 +6,7 @@ module Utils.Utils exposing
     , tupleExtend
     , tupleMapThree
     , unzipTripple
+    , delay
     )
 
 import Browser.Navigation exposing (pushUrl)
@@ -14,12 +15,18 @@ import List
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Task
+import Time
+import Process
 
 
 perform : msg -> Cmd msg
 perform =
     Task.perform identity << Task.succeed
 
+delay : Float -> msg -> Cmd msg
+delay time msg =
+    Process.sleep time
+        |> Task.perform (\_ -> msg)
 
 handleLogoutErrors : model -> SharedState -> (Http.Error -> ( model, Cmd msg, SharedStateUpdate )) -> Http.Error -> ( model, Cmd msg, SharedStateUpdate )
 handleLogoutErrors model sharedState handler err =

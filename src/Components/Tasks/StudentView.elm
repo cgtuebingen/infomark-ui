@@ -11,7 +11,7 @@ Can be used to upload submissions and view the
 public test results.
 -}
 
-import Api.Data.Grade exposing (Grade)
+import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.Task exposing (Task)
 import Api.Data.TaskRatingResponse exposing (TaskRatingResponse)
 import Api.Request.Task as TaskRequests
@@ -45,7 +45,7 @@ import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Time
 import Utils.Styles as Styles
-import Utils.Utils exposing (perform)
+import Utils.Utils exposing (delay, handleLogoutErrors, perform)
 
 
 type Field
@@ -58,6 +58,7 @@ type Msg
     | UploadProgress Http.Progress
     | GetCurrentRatingResponse (WebData TaskRatingResponse)
     | GetGradeResponse (WebData Grade) -- Change return type
+    | UpdateGrade
     | RateTask Field String
     | SendRating Int
     | RateResponse (WebData ())
@@ -181,7 +182,10 @@ update sharedState msg model =
             ( model, Cmd.none, NoUpdate )
 
         GetGradeResponse response ->
-            ( { model | gradeResponse = response }, Cmd.none, NoUpdate )
+            updateHandleGradeResponse sharedState model response
+
+        UpdateGrade ->
+            ( model, TaskRequests.taskResultGet model.courseId model.id GetGradeResponse, NoUpdate )
 
         RateTask _ rating ->
             let
@@ -353,3 +357,46 @@ view sharedState model deadlineReached =
 
 type alias Error =
     ( Field, String )
+
+
+updateHandleGradeResponse : SharedState -> Model -> WebData Grade -> ( Model, Cmd Msg, SharedStateUpdate )
+updateHandleGradeResponse sharedState model response =
+    case response of
+        Success grade ->
+            if grade.public_execution_state == Grade.Finished then
+                ( { model
+                    | gradeResponse = response
+                  }
+                , Cmd.none
+                , NoUpdate
+                )
+
+            else
+                ( { model
+                    | gradeResponse = response
+                  }
+                , delay 5000 UpdateGrade
+                , NoUpdate
+                )
+
+        Failure err ->
+            handleLogoutErrors
+                model
+                sharedState
+                (\e ->
+                    ( { model
+                        | gradeResponse = response
+                      }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+                )
+                err
+
+        _ ->
+            ( { model
+                | gradeResponse = response
+              }
+            , Cmd.none
+            , NoUpdate
+            )
