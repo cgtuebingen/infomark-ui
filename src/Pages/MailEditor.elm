@@ -17,6 +17,10 @@ module Pages.MailEditor exposing
 import Api.Data.Course as Course exposing (Course)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.User as User exposing (User)
+import Api.Request.Courses as CourseRequest
+import Api.Request.Groups as GroupRequest
+import Api.Request.User as UserRequest
+import Browser.Navigation exposing (pushUrl)
 import Dict exposing (Dict)
 import Html exposing (..)
 import RemoteData exposing (RemoteData(..), WebData)
@@ -50,22 +54,19 @@ initModelFromMode mode =
 initForUser : Int -> ( Model, Cmd Msg )
 initForUser userId =
     ( initModelFromMode <| User <| Dict.fromList [ ( userId, Loading ) ]
-    , Cmd.none
+    , UserRequest.userGet userId UserResponse
     )
 
 
 
--- Mail to group route: Tutors send their students mails
--- Retrive all Groups
--- In the update thingy all groups need to be filtered for the groups of the
--- tutor and the GroupIds to be stored in the model.
--- Is the message lost after some inactivity???
+-- Mail to group route: Tutors send mail to one of their groups, groupId given
+-- Retrive group for meta data like group name
 
 
 initForGroup : Int -> Int -> ( Model, Cmd Msg )
 initForGroup courseId groupId =
     ( initModelFromMode <| Group courseId groupId Loading
-    , Cmd.none
+    , GroupRequest.groupsGet courseId groupId GroupResponse
     )
 
 
@@ -77,7 +78,7 @@ initForGroup courseId groupId =
 initForCourse : Int -> ( Model, Cmd Msg )
 initForCourse courseId =
     ( initModelFromMode <| Course courseId Loading
-    , Cmd.none
+    , CourseRequest.courseGet courseId CourseResponse
     )
 
 
@@ -96,7 +97,7 @@ update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         NavigateTo route ->
-            ( model, Cmd.none, NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
         SendMessage ->
             ( model, Cmd.none, NoUpdate )
