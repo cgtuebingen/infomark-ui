@@ -6,6 +6,7 @@ module Api.Endpoint exposing
     , confirmEmail
     , course
     , courseBids
+    , courseEmail
     , courseEnrollment
     , courseEnrollmentUserDetail
     , courseGrade
@@ -21,6 +22,7 @@ module Api.Endpoint exposing
     , courses
     , grade
     , group
+    , groupEmail
     , groupsEnrollment
     , material
     , materialFile
@@ -134,6 +136,22 @@ courses =
 course : Int -> Endpoint
 course id =
     url [ "courses", String.fromInt id ] []
+
+
+courseEmail : Int -> Endpoint
+courseEmail id =
+    url [ "courses", String.fromInt id, "emails" ] []
+
+
+groupEmail : Int -> Int -> Endpoint
+groupEmail courseId groupId =
+    url
+        [ "courses"
+        , String.fromInt courseId
+        , String.fromInt groupId
+        , "emails"
+        ]
+        []
 
 
 courseSheets : Int -> Endpoint
