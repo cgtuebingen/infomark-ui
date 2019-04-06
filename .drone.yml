@@ -18,23 +18,17 @@ steps:
   - name: 2f746d702f6361636865
     path: /cache
 
-- name: install
+- name: build
   pull: default
-  image: node:8.6.0
+  image: patwie/elm-app
   commands:
   - node -v
   - npm -v
-  - npm install elm
-
-- name: build
-  pull: default
-  image: node:8.6.0
-  commands:
-  - node_modules/elm/bin/elm make src/Main.elm --output=elm.js
+  - elm-app build
 
 - name: test
   pull: default
-  image: node:8.6.0
+  image: node:11.13.0
   commands:
   - "echo \"none\""
 
@@ -49,13 +43,32 @@ steps:
   - name: 2f746d702f6361636865
     path: /cache
 
+- name: create_release
+  pull: default
+  image: patwie/tar
+  commands:
+    - tar -czvf infomark-ui.tar.gz build/ README.md
+
+- name: publish_release
+  image: plugins/github-release
+  settings:
+    api_key:
+      from_secret: github_token
+    files:
+      - infomark-ui.tar.gz
+    checksum:
+      - md5
+      - sha256
+  when:
+    event: tag
+
+
 volumes:
 - name: 2f746d702f6361636865
   host:
     path: /tmp/cache
 
----
-kind: signature
-hmac: 85edb8ff73e5b9f41a0fbe860da66abded93f1c6cd70f1ed6f8eb2e525286058
-
+# ---
+# kind: signature
+# hmac: f89382f27cd2d9cb412622fc536e1d62f94832683339e3cb49d1ce9b321821a7
 ...
