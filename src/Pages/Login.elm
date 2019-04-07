@@ -29,6 +29,7 @@ import Time
 import Toasty
 import Types exposing (Language(..), Translations)
 import Utils.Styles as Styles
+import Utils.Utils as Utils
 import Validate exposing (Validator, ifBlank, validate)
 
 
@@ -38,7 +39,6 @@ type alias Model =
     , loginProgress : WebData Role
     , errors : List Error
     , spinner : Spinner.Model
-    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -49,7 +49,6 @@ init =
       , loginProgress = NotAsked
       , errors = []
       , spinner = Spinner.init
-      , toasties = Toasty.initialState
       }
     , Cmd.none
     )
@@ -60,7 +59,7 @@ type Msg
     | SetField Field String
     | Login
     | LoginResponse (WebData Role)
-    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
+    | ShowToastAndRedirect Components.Toasty.Toast
     | SpinnerMsg Spinner.Msg
 
 
@@ -98,18 +97,28 @@ update sharedState msg model =
 
                         _ ->
                             "Something went wrong"
-
-                ( newModel, newCmd ) =
-                    ( { model | loginProgress = RemoteData.Failure err }, Cmd.none )
-                        |> addToast (Components.Toasty.Error "Error" errorString)
             in
-            ( newModel, newCmd, NoUpdate )
+            ( { model | loginProgress = RemoteData.Failure err }
+            , Cmd.none
+            , ShowToast <| Components.Toasty.Error "Error" errorString
+            )
 
         LoginResponse (RemoteData.Success role) ->
-            ( model, pushUrl sharedState.navKey (reverseRoute CoursesRoute), UpdateRoleAndMail role model.email )
+            ( model
+            , Utils.perform <|
+                ShowToastAndRedirect <|
+                    Components.Toasty.Success "Logged in" "You are now logged in."
+            , UpdateRoleAndMail role model.email
+            )
 
         LoginResponse _ ->
             ( model, Cmd.none, NoUpdate )
+
+        ShowToastAndRedirect toast ->
+            ( model
+            , Utils.perform <| NavigateTo DashboardRoute
+            , ShowToast toast
+            )
 
         SpinnerMsg spinmsg ->
             let
@@ -117,13 +126,6 @@ update sharedState msg model =
                     Spinner.update spinmsg model.spinner
             in
             ( { model | spinner = spinnerModel }, Cmd.none, NoUpdate )
-
-        ToastyMsg subMsg ->
-            let
-                ( newModel, newCmd ) =
-                    Toasty.update Components.Toasty.config ToastyMsg subMsg model
-            in
-            ( newModel, newCmd, NoUpdate )
 
 
 type alias LoginBody =
@@ -148,8 +150,7 @@ view sharedState model =
             , TC.w_100
             ]
         ]
-        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
-        , div
+        [ div
             [ classes
                 [ TC.v_mid
                 , TC.dtc
@@ -290,8 +291,3 @@ modelValidator =
         [ ifBlank .email ( Email, "Bitte gib deine E-Mail ein." )
         , ifBlank .plain_password ( Password, "Bitte gib dein Passwort ein." )
         ]
-
-
-addToast : Components.Toasty.Toast -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-addToast toast ( model, cmd ) =
-    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, cmd )

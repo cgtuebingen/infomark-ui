@@ -9,6 +9,7 @@ import Browser
 import Browser.Navigation exposing (Key)
 import Components.CommonElements exposing (inputElement)
 import Components.Dialog as Dialog
+import Components.Toasty
 import Decoders
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -38,6 +39,7 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Spinner
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
+import Toasty
 import Types exposing (Language(..), Translations)
 import Url exposing (Url)
 import Utils.PersistantState as PersistantState
@@ -53,6 +55,7 @@ type alias Model =
     , loginDialogState : Dialog.State
     , plain_password : String -- Only used for the modal refresh login dialog
     , errors : List Error
+    , toasties : Toasty.Stack Components.Toasty.Toast
     }
 
 
@@ -80,6 +83,7 @@ type CurrentModel
 type Msg
     = UrlChange Url
     | NavigateTo Route
+    | ToastyMsg (Toasty.Msg Components.Toasty.Toast)
     | SelectedLanguage Language
     | LoginDialogShown Bool
     | SetField Field String
@@ -123,6 +127,7 @@ init url lang =
       , loginDialogState = False
       , plain_password = ""
       , errors = []
+      , toasties = Toasty.initialState
       }
     , Utils.perform <| UrlChange url
     )
@@ -149,6 +154,10 @@ update sharedState msg model =
             , Browser.Navigation.pushUrl sharedState.navKey (reverseRoute route)
             , NoUpdate
             )
+
+        ( ToastyMsg subMsg, _ ) ->
+            Toasty.update Components.Toasty.config ToastyMsg subMsg model
+                |> (Utils.flip Utils.tupleExtend) NoUpdate
 
         ( SelectedLanguage lang, _ ) ->
             ( { model | selectedLanguage = lang }
@@ -645,7 +654,13 @@ tabPage sharedState model =
             , TC.helvetica
             ]
         ]
-        [ loginDialog sharedState model
+        [ Toasty.view Components.Toasty.config
+            Components.Toasty.view
+            ToastyMsg
+            model.toasties
+        , loginDialog
+            sharedState
+            model
         , navView sharedState model
         , pageView sharedState model
         , footerView sharedState model
@@ -710,7 +725,8 @@ noTabPage sharedState model =
             , TC.helvetica
             ]
         ]
-        [ pageView sharedState model
+        [ Toasty.view Components.Toasty.config Components.Toasty.view ToastyMsg model.toasties
+        , pageView sharedState model
         , footerView sharedState model
         ]
 
@@ -837,6 +853,10 @@ updateWith toModel toMsg model ( subModel, subCmd, subSharedStateUpdate ) =
                 RefreshLogin ->
                     -- Intercept the request if a login is needed again
                     ( { model | loginDialogState = True }, Cmd.none, NoUpdate )
+
+                ShowToast toast ->
+                    Toasty.addToastIfUnique Components.Toasty.config ToastyMsg toast ( model, Cmd.none )
+                        |> Utils.flip Utils.tupleExtend NoUpdate
 
                 _ ->
                     ( model, PersistantState.sharedStateUpdateToStorage subSharedStateUpdate, subSharedStateUpdate )

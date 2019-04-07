@@ -4,6 +4,7 @@ import Api.Data.Role as Role exposing (Role)
 import Browser.Navigation
 import Time exposing (Posix, Zone)
 import Types exposing (Language(..), Translations)
+import Components.Toasty
 
 
 type alias SharedState =
@@ -24,6 +25,7 @@ type SharedStateUpdate
     | UpdateLanguage Language Translations
     | UpdateRoleAndMail Role String
     | RefreshLogin
+    | ShowToast Components.Toasty.Toast
 
 
 update : SharedState -> SharedStateUpdate -> SharedState
@@ -46,4 +48,7 @@ update sharedState sharedStateUpdate =
             sharedState
 
         RefreshLogin ->
+            sharedState
+
+        ShowToast _ ->
             sharedState
