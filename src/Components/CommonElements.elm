@@ -25,6 +25,7 @@ module Components.CommonElements exposing
     , rRowLabelButton
     , rRowWarning
     , renderInTextBox
+    , renderTerminalBox
     , searchElement
     , simpleDialog
     , sliderInputElement
@@ -383,6 +384,13 @@ renderInTextBox content renderMarkdown =
 
           else
             span [ Styles.textStyle ] [ text content ]
+        ]
+
+renderTerminalBox : String -> Html msg
+renderTerminalBox content =
+    pre [ classes [ TC.pa4, TC.bg_black_90, TC.near_white, TC.shadow_5, TC.br3, TC.overflow_scroll, TC.f7 ] ]
+        [
+         text content
         ]
 
 

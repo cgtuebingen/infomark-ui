@@ -30,6 +30,7 @@ import Components.CommonElements
         , rRowButton
         , rRowExtraSpacing
         , renderInTextBox
+        , renderTerminalBox
         , sliderInputElement
         )
 import Debounce exposing (Debounce)
@@ -252,7 +253,7 @@ view sharedState model deadlineReached =
             , rRow <|
                 r1Column <|
                     [ inputLabel "Test Results"
-                    , renderInTextBox
+                    , renderTerminalBox
                         (case model.gradeResponse of
                             Success grade ->
                                 grade.public_test_log
@@ -263,7 +264,6 @@ view sharedState model deadlineReached =
                             _ ->
                                 "Undefined"
                         )
-                        True
                     ]
             ]
                 ++ (case model.gradeResponse of
