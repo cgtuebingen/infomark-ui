@@ -359,7 +359,16 @@ update sharedState msg model =
                     ( { newModel | errors = [] }, newCmd, NoUpdate )
 
         CreateResponse response ->
-            updateHandleSend sharedState model response
+            let
+                newModel =
+                    case response of
+                        Success material ->
+                            fillModelFromRequest sharedState model material
+
+                        _ ->
+                            model
+            in
+            updateHandleSend sharedState newModel response
 
         Update ->
             case validate modelValidator model of
@@ -496,7 +505,7 @@ updateHandleSend sharedState model response =
 
                 -- File deleted?
                 ( False, _ ) ->
-                    ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.course_id model.id), NoUpdate )
+                    ( model, pushUrl sharedState.navKey (reverseRoute <| CourseDetailRoute model.course_id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
@@ -533,7 +542,7 @@ updateHandleFileUpload : SharedState -> Model -> WebData () -> ( Model, Cmd Msg,
 updateHandleFileUpload sharedState model response =
     case response of
         Success _ ->
-            ( model, pushUrl sharedState.navKey (reverseRoute <| SheetDetailRoute model.course_id model.id), NoUpdate )
+            ( model, pushUrl sharedState.navKey (reverseRoute <| CourseDetailRoute model.course_id), NoUpdate )
 
         Failure err ->
             handleLogoutErrors model
