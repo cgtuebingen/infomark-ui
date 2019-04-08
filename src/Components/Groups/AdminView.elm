@@ -23,7 +23,9 @@ import Api.Request.Groups as GroupRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements
     exposing
-        ( inputElement
+        ( PbbButtonState(..)
+        , PbbState(..)
+        , inputElement
         , multiButton
         , r1Column
         , r2Column
@@ -50,6 +52,7 @@ type Msg
     = GetGroupsResponse (WebData (List Group))
     | GetEnrollmentResponse Int (WebData (List UserEnrollment))
     | SendMailToGroup Int Int
+    | SendMailToCourse Int
     | ToggleUsers Int
     | ReassignUser User Group Group
     | ReassignUserResponse (List Int) (WebData ())
@@ -119,6 +122,12 @@ update sharedState msg model =
             , NoUpdate
             )
 
+        SendMailToCourse courseId ->
+            ( model
+            , pushUrl sharedState.navKey (reverseRoute <| MailToCourseRoute courseId)
+            , NoUpdate
+            )
+
         ToggleUsers groupId ->
             let
                 up =
@@ -172,6 +181,11 @@ view sharedState model =
                         ]
                     ]
                ]
+            ++ [ rRowButton <|
+                    PbbButton <|
+                        PbbActive "Send E-Mail To Course" <|
+                            SendMailToCourse model.course_id
+               ]
 
 
 showGroup : SharedState -> Model -> Group -> List Group -> List UserEnrollment -> Html Msg
@@ -181,6 +195,7 @@ showGroup sharedState model group allGroups participants =
             Styles.listHeadingStyle
             [ ( "Edit", EditGroup model.course_id group.id, Styles.buttonGreyStyle )
             , ( "Users", ToggleUsers group.id, Styles.buttonGreyStyle )
+            , ( "Mail", SendMailToGroup group.courseId group.id, Styles.buttonGreyStyle )
             ]
         ]
             ++ (if model.userVisibleForGroup == Just group.id then

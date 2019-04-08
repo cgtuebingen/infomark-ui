@@ -148,6 +148,7 @@ groupEmail courseId groupId =
     url
         [ "courses"
         , String.fromInt courseId
+        , "groups"
         , String.fromInt groupId
         , "emails"
         ]
