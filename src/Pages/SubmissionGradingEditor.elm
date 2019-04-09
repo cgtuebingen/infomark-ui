@@ -304,7 +304,7 @@ viewTask sharedState model task grade feedback =
                             [ CE.rRowExtraSpacing <|
                                 CE.r1Column <|
                                     [ CE.inputLabel "Public Test Results"
-                                    , CE.renderInTextBox
+                                    , CE.renderInTerminalBox
                                         (case grade.public_execution_state of
                                             Pending ->
                                                 "Pending Test"
@@ -315,12 +315,11 @@ viewTask sharedState model task grade feedback =
                                             Finished ->
                                                 grade.public_test_log
                                         )
-                                        True
                                     ]
                             , CE.rRowExtraSpacing <|
                                 CE.r1Column <|
                                     [ CE.inputLabel "Private Test Results"
-                                    , CE.renderInTextBox
+                                    , CE.renderInTerminalBox
                                         (case grade.private_execution_state of
                                             Pending ->
                                                 "Pending Test"
@@ -331,7 +330,6 @@ viewTask sharedState model task grade feedback =
                                             Finished ->
                                                 grade.private_test_log
                                         )
-                                        True
                                     ]
                             ]
 

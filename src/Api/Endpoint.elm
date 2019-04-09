@@ -23,6 +23,7 @@ module Api.Endpoint exposing
     , grade
     , group
     , groupEmail
+    , groupSubmissionFile
     , groupsEnrollment
     , material
     , materialFile
@@ -248,6 +249,20 @@ sheet courseId id =
 sheetFile : Int -> Int -> Endpoint
 sheetFile courseId id =
     url [ "courses", String.fromInt courseId, "sheets", String.fromInt id, "file" ] []
+
+
+groupSubmissionFile : Int -> Int -> Int -> Endpoint
+groupSubmissionFile courseId taskId groupId =
+    url
+        [ "courses"
+        , String.fromInt courseId
+        , "tasks"
+        , String.fromInt taskId
+        , "groups"
+        , String.fromInt groupId
+        , "file"
+        ]
+        []
 
 
 sheetTasks : Int -> Int -> Endpoint

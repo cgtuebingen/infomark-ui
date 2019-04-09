@@ -2,8 +2,10 @@ module Components.Tasks.TutorView exposing (Model, Msg(..), init, update, view)
 
 import Api.Data.Group exposing (Group)
 import Api.Data.Task exposing (Task)
+import Api.Endpoint exposing (groupSubmissionFile, unwrap)
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements as CE
+import File.Download as Download
 import Html exposing (..)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -14,6 +16,7 @@ import Utils.Styles as Styles
 
 type Msg
     = NavigateTo Route
+    | DownloadAll Int Int Int
     | NoOp
 
 
@@ -42,6 +45,12 @@ update sharedState msg model =
         NavigateTo route ->
             ( model, pushUrl sharedState.navKey (reverseRoute route), NoUpdate )
 
+        DownloadAll courseId taskId groupId ->
+            ( model
+            , Download.url <| unwrap <| groupSubmissionFile courseId taskId groupId
+            , NoUpdate
+            )
+
         NoOp ->
             ( model, Cmd.none, NoUpdate )
 
@@ -54,7 +63,11 @@ view sharedState model =
                 []
 
             [ singleGroup ] ->
-                [ ( "Benoten"
+                [ ( "Download All"
+                  , DownloadAll model.courseId singleGroup.id model.task.id
+                  , Styles.buttonGreyStyle
+                  )
+                , ( "Benoten"
                   , NavigateTo <| SubmissionGradingRoute model.courseId model.task.id singleGroup.id
                   , Styles.buttonGreyStyle
                   )
