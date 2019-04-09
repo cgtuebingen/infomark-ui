@@ -29,8 +29,8 @@ import Components.CommonElements
         , rRow
         , rRowButton
         , rRowExtraSpacing
+        , renderInTerminalBox
         , renderInTextBox
-        , renderTerminalBox
         , sliderInputElement
         )
 import Debounce exposing (Debounce)
@@ -253,7 +253,7 @@ view sharedState model deadlineReached =
             , rRow <|
                 r1Column <|
                     [ inputLabel "Test Results"
-                    , renderTerminalBox
+                    , renderInTerminalBox
                         (case model.gradeResponse of
                             Success grade ->
                                 grade.public_test_log
@@ -294,7 +294,7 @@ view sharedState model deadlineReached =
                 ++ [ rRow <|
                         r1Column <|
                             sliderInputElement
-                                { label = "Rating"
+                                { label = "Rating (1 horrible, 5 great)"
                                 , value = model.rating
                                 , min = 0
                                 , max = 5
