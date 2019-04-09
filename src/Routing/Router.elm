@@ -33,6 +33,7 @@ import Pages.RequestPasswordReset as RequestPasswordReset
 import Pages.SheetDetail as SheetDetail
 import Pages.SheetEditor as SheetEditor
 import Pages.SubmissionGradingEditor as SubmissionGradingEditor
+import Pages.Terms as Terms
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), parseUrl, reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -64,6 +65,7 @@ type CurrentModel
     | RegistrationModel Registration.Model
     | DashboardModel Dashboard.Model
     | AdminModel Admin.Model
+    | TermsOfUseModel Terms.Model
     | CoursesModel Courses.Model
     | CourseDetailModel CourseDetail.Model
     | CourseEditorModel CourseEditor.Model
@@ -99,6 +101,7 @@ type Msg
     | RegistrationMsg Registration.Msg
     | DashboardMsg Dashboard.Msg
     | AdminMsg Admin.Msg
+    | TermsMsg Terms.Msg
     | CoursesMsg Courses.Msg
     | CourseDetailMsg CourseDetail.Msg
     | CourseEditorMsg CourseEditor.Msg
@@ -157,7 +160,7 @@ update sharedState msg model =
 
         ( ToastyMsg subMsg, _ ) ->
             Toasty.update Components.Toasty.config ToastyMsg subMsg model
-                |> (Utils.flip Utils.tupleExtend) NoUpdate
+                |> Utils.flip Utils.tupleExtend NoUpdate
 
         ( SelectedLanguage lang, _ ) ->
             ( { model | selectedLanguage = lang }
@@ -248,6 +251,10 @@ update sharedState msg model =
         ( AdminMsg adminMsg, AdminModel admin ) ->
             Admin.update sharedState adminMsg admin
                 |> updateWith AdminModel AdminMsg model
+
+        ( TermsMsg termsMsg, TermsOfUseModel terms ) ->
+            Terms.update sharedState termsMsg terms
+                |> updateWith TermsOfUseModel TermsMsg model
 
         ( ProfileEditorMsg profileEditorMsg, ProfileEditorModel profileEditor ) ->
             ProfileEditor.update sharedState profileEditorMsg profileEditor
@@ -361,6 +368,9 @@ navigateTo route sharedState model =
         AdminRoute ->
             Admin.init |> initWith AdminModel AdminMsg model NoUpdate
 
+        TermsOfUseRoute ->
+            Terms.init |> initWith TermsOfUseModel TermsMsg model NoUpdate
+
         ProfileEditorRoute ->
             ProfileEditor.init |> initWith ProfileEditorModel ProfileEditorMsg model NoUpdate
 
@@ -403,6 +413,9 @@ view msgMapper sharedState model =
 
         title =
             case model.route of
+                TermsOfUseRoute ->
+                    "page-title-terms"
+
                 LoginRoute ->
                     "page-title-login"
 
@@ -639,7 +652,13 @@ footerView sharedState model =
             ]
             [ button [ Styles.linkGreyStyle, onClick <| SelectedLanguage German ] [ text "Deutsch" ]
             , button [ Styles.linkGreyStyle, onClick <| SelectedLanguage English ] [ text "English" ]
-            , a [ Styles.linkGreyStyle ] [ text "Terms of Use" ]
+            , button
+                [ Styles.linkGreyStyle
+                , onClick <|
+                    NavigateTo
+                        TermsOfUseRoute
+                ]
+                [ text "Terms of Use" ]
             ]
         ]
 
@@ -801,6 +820,10 @@ pageView sharedState model =
         GroupEditorModel groupEditor ->
             GroupEditor.view sharedState groupEditor
                 |> Html.map GroupEditorMsg
+
+        TermsOfUseModel termsView ->
+            Terms.view sharedState termsView
+                |> Html.map TermsMsg
 
         NotFound ->
             div

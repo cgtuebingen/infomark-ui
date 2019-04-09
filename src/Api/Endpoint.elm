@@ -42,6 +42,7 @@ module Api.Endpoint exposing
     , taskRating
     , taskResult
     , taskSubmission
+    , terms
     , unwrap
     , updatePassword
     , user
@@ -142,6 +143,11 @@ course id =
 courseEmail : Int -> Endpoint
 courseEmail id =
     url [ "courses", String.fromInt id, "emails" ] []
+
+
+terms : Endpoint
+terms =
+    url [ "privacy_statement" ] []
 
 
 groupEmail : Int -> Int -> Endpoint

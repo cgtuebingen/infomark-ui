@@ -14,6 +14,7 @@ type Route
     | CourseDetailRoute Int
     | CreateSheetRoute Int
     | EditSheetRoute Int Int
+    | TermsOfUseRoute
     | CreateMaterialRoute Int
     | EditMaterialRoute Int Int
     | SheetDetailRoute Int Int
@@ -78,6 +79,9 @@ reverseRoute route =
                 AdminRoute ->
                     [ "admin" ]
 
+                TermsOfUseRoute ->
+                    [ "terms" ]
+
                 ProfileEditorRoute ->
                     [ "profile" ]
 
@@ -132,6 +136,7 @@ routeParser =
         , Url.Parser.map RequestPasswordResetRoute (Url.Parser.s "request_reset")
         , Url.Parser.map PasswordResetRoute (Url.Parser.s "password_reset" </> Url.Parser.string </> Url.Parser.string)
         , Url.Parser.map CreateGroupRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.s "create")
+        , Url.Parser.map TermsOfUseRoute (Url.Parser.s "terms")
         , Url.Parser.map EditGroupRoute (Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.int </> Url.Parser.s "edit")
         , Url.Parser.map MailToUsersRoute (Url.Parser.s "email" </> Url.Parser.s "user" </> Url.Parser.int)
         , Url.Parser.map MailToGroupRoute (Url.Parser.s "email" </> Url.Parser.s "course" </> Url.Parser.int </> Url.Parser.s "group" </> Url.Parser.int)
