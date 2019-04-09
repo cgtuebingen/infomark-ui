@@ -24,8 +24,8 @@ module Components.CommonElements exposing
     , rRowHeaderActionButtons
     , rRowLabelButton
     , rRowWarning
+    , renderInTerminalBox
     , renderInTextBox
-    , renderTerminalBox
     , searchElement
     , simpleDialog
     , sliderInputElement
@@ -386,11 +386,11 @@ renderInTextBox content renderMarkdown =
             span [ Styles.textStyle ] [ text content ]
         ]
 
-renderTerminalBox : String -> Html msg
-renderTerminalBox content =
+
+renderInTerminalBox : String -> Html msg
+renderInTerminalBox content =
     pre [ classes [ TC.pa4, TC.bg_black_90, TC.near_white, TC.shadow_5, TC.br3, TC.overflow_scroll, TC.f7 ] ]
-        [
-         text content
+        [ text content
         ]
 
 
