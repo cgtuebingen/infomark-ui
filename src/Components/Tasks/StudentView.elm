@@ -250,6 +250,49 @@ view sharedState model deadlineReached =
                     [ inputLabel "Submission"
                     , fileUploader model.hover model.submission DragEnter DragLeave Pick GotFiles
                     ]
+            , if model.uploading == Loading then
+                rRowButton <| PbbProgressBar model.uploadPercentage
+
+              else
+                let
+                    success =
+                        RemoteData.isSuccess model.uploading
+
+                    failure =
+                        RemoteData.isFailure model.uploading
+
+                    filesSelected =
+                        case model.submission of
+                            Just _ ->
+                                True
+
+                            Nothing ->
+                                False
+
+                    stateShownLongEnough =
+                        Maybe.map2
+                            (\up cur ->
+                                Time.posixToMillis cur - Time.posixToMillis up > 1500
+                            )
+                            model.uploadDoneTime
+                            sharedState.currentTime
+                in
+                rRowButton <|
+                    PbbButton <|
+                        if success && stateShownLongEnough == Just False then
+                            PbbResult <| PbbSuccess "Success"
+
+                        else if failure && stateShownLongEnough == Just False then
+                            PbbResult <| PbbFailure "Failure"
+
+                        else if deadlineReached then
+                            PbbDisabled "Submission closed"
+
+                        else if not filesSelected then
+                            PbbDisabled "Upload"
+
+                        else
+                            PbbActive "Upload" UploadSubmission
             , rRow <|
                 r1Column <|
                     [ inputLabel "Test Results"
@@ -309,49 +352,6 @@ view sharedState model deadlineReached =
                                 Rating
                                 []
                                 RateTask
-                   , if model.uploading == Loading then
-                        rRowButton <| PbbProgressBar model.uploadPercentage
-
-                     else
-                        let
-                            success =
-                                RemoteData.isSuccess model.uploading
-
-                            failure =
-                                RemoteData.isFailure model.uploading
-
-                            filesSelected =
-                                case model.submission of
-                                    Just _ ->
-                                        True
-
-                                    Nothing ->
-                                        False
-
-                            stateShownLongEnough =
-                                Maybe.map2
-                                    (\up cur ->
-                                        Time.posixToMillis cur - Time.posixToMillis up > 1500
-                                    )
-                                    model.uploadDoneTime
-                                    sharedState.currentTime
-                        in
-                        rRowButton <|
-                            PbbButton <|
-                                if success && stateShownLongEnough == Just False then
-                                    PbbResult <| PbbSuccess "Success"
-
-                                else if failure && stateShownLongEnough == Just False then
-                                    PbbResult <| PbbFailure "Failure"
-
-                                else if deadlineReached then
-                                    PbbDisabled "Submission closed"
-
-                                else if not filesSelected then
-                                    PbbDisabled "Upload"
-
-                                else
-                                    PbbActive "Upload" UploadSubmission
                    ]
 
 

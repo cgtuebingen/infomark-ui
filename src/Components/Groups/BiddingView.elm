@@ -323,7 +323,7 @@ viewGroupBid sharedState model data =
                     [ text <| group.description ]
                 ]
                     ++ sliderInputElement
-                        { label = "Präferenz"
+                        { label = "Präferenz (1 = Nein, 10 = Unbedingt)"
                         , value = curBid
                         , min = 1
                         , max = 10
