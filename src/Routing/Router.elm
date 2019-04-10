@@ -644,7 +644,7 @@ footerView sharedState model =
             ]
             [ text "© 2019 "
             , b [ classes [ TC.ttu ] ]
-                [ text "University Tübingen" ]
+                [ text "Lehrstuhl Computergrafik, University Tübingen" ]
             , text "., All Rights Reserved"
             ]
         , div
