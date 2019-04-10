@@ -508,6 +508,9 @@ view msgMapper sharedState model =
                 PasswordResetRoute _ _ ->
                     noTabPage sharedState model
 
+                TermsOfUseRoute ->
+                    noTabPage sharedState model
+
                 _ ->
                     tabPage sharedState model
     in

@@ -3,6 +3,7 @@ module Pages.Terms exposing (Model, Msg(..), init, update, view)
 import Api.Request.Terms as TermsRequest
 import Components.CommonElements as CE
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Http
 import Markdown as MD
 import RemoteData exposing (RemoteData(..), WebData)
@@ -56,15 +57,31 @@ view sharedState model =
         ]
         [ div
             [ classes
-                [ TC.dtc
+                [ TC.v_mid
+                , TC.dtc
                 , TC.tc
                 , TC.ph3
                 , TC.ph4_l
                 ]
             ]
-            [ CE.rContainer <|
-                [ CE.rRow <|
-                    [ MD.toHtml [ Styles.textStyle ] <| model.terms ]
+            [ div
+                [ classes
+                    [ TC.w3
+                    , TC.dib
+                    , TC.mv4
+                    ]
+                ]
+                [ img [ src "/images/Logo.svg" ] [] ]
+            , div
+                [ classes
+                    [ TC.tl
+                    , TC.bn
+                    ]
+                ]
+                [ CE.rContainer <|
+                    [ CE.rRow <|
+                        [ MD.toHtml [ Styles.textStyle ] <| model.terms ]
+                    ]
                 ]
             ]
         ]
