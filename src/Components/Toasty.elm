@@ -7,13 +7,14 @@ import Tachyons.Classes as TC
 import Toasty
 
 
-{-| This theme defines toasts of three variants: "Success", "Warning" and "Error".
+{-| This theme defines toasts of three variants: "Success", "Warning", "Error", "Info.
 Each of them accepts a title and an optional secondary text.
 -}
 type Toast
     = Success String String
     | Warning String String
     | Error String String
+    | Info String String
 
 
 {-| Default theme configuration.
@@ -40,6 +41,7 @@ containerAttrs =
         , TC.list
         , TC.pa0
         , TC.ma0
+        , TC.mt4
         ]
     ]
 
@@ -84,6 +86,9 @@ view toast =
         Error title message ->
             genericToast toastyFailure title message
 
+        Info title message ->
+            genericToast toastyInfo title message
+
 
 toastySuccess =
     classes [ TC.bg_dark_green, TC.white ]
@@ -95,6 +100,10 @@ toastyFailure =
 
 toastyWarning =
     classes [ TC.bg_orange, TC.black ]
+
+
+toastyInfo =
+    classes [ TC.bg_dark_blue, TC.white ]
 
 
 genericToast : Html.Attribute msg -> String -> String -> Html msg

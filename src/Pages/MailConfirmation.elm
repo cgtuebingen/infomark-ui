@@ -8,6 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import I18n
+import Components.Toasty
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -39,7 +40,10 @@ update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 update sharedState msg model =
     case msg of
         ConfirmationResponse (Success response) ->
-            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+            ( model
+            , pushUrl sharedState.navKey (reverseRoute LoginRoute)
+            , ShowToast <| Components.Toasty.Success "Success" "Your email has been confirmed"
+            )
 
         ConfirmationResponse response ->
             ( { model | confirmationProgress = response }, Cmd.none, NoUpdate )

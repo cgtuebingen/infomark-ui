@@ -33,6 +33,7 @@ import Components.CommonElements
         , renderInTextBox
         , sliderInputElement
         )
+import Components.Toasty
 import Debounce exposing (Debounce)
 import File exposing (File)
 import File.Select as Select
@@ -45,6 +46,7 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
 import Tachyons.Classes as TC
 import Time
+import Toasty
 import Utils.Styles as Styles
 import Utils.Utils exposing (delay, handleLogoutErrors, perform)
 
@@ -135,7 +137,7 @@ update sharedState msg model =
                 , uploading = Success ()
               }
             , delay 1000 UpdateGrade
-            , NoUpdate
+            , ShowToast <| Components.Toasty.Success "Success" "Your files have been uploaded"
             )
 
         UploadSubmissionResponse response ->
@@ -199,10 +201,13 @@ update sharedState msg model =
             ( { model | rating = toInt, ratingDebounce = debounce }, cmd, NoUpdate )
 
         SendRating rating ->
-            ( model, TaskRequests.taskRatingPost model.courseId model.id rating RateResponse, NoUpdate )
+            ( model
+            , TaskRequests.taskRatingPost model.courseId model.id rating RateResponse
+            , ShowToast <| Components.Toasty.Success "Success" "Your rating has been changed"
+            )
 
         RateResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            ( model , Cmd.none , NoUpdate )
 
         ToggleCollapse ->
             ( { model | collapse = not model.collapse }, Cmd.none, NoUpdate )

@@ -143,7 +143,10 @@ updateHandleRegistrationResponse : SharedState -> Model -> WebData User -> ( Mod
 updateHandleRegistrationResponse sharedState model response =
     case response of
         Success _ ->
-            ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+            ( { model | registrationProgress = response }
+            , pushUrl sharedState.navKey (reverseRoute LoginRoute)
+            , ShowToast <| Components.Toasty.Success "Success" "Confirmation email has been sent"
+             )
 
         Failure (Http.BadBody error) ->
             ( { model | registrationProgress = response }, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )

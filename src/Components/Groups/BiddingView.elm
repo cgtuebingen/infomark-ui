@@ -28,6 +28,7 @@ import Components.CommonElements
         , rRowHeaderActionButtons
         , sliderInputElement
         )
+import Components.Toasty
 import Components.UserAvatarEmailView as UserView
 import Debounce exposing (Debounce)
 import Dict exposing (Dict)
@@ -250,7 +251,7 @@ updateHandleGetOldBidsResponse sharedState model response =
                 { model | groupOldBidsResponse = response }
                 bids
             , Cmd.none
-            , NoUpdate
+            , ShowToast <| Components.Toasty.Success "Success" "Your bids have been updated"
             )
 
         Failure err ->
