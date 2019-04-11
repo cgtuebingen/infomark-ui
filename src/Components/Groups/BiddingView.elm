@@ -151,7 +151,7 @@ update sharedState msg model =
                 groupId
                 bid
                 GetGroupBidResponse
-            , NoUpdate
+            , ShowToast <| Components.Toasty.Info "Info" "Your bids have been sent"
             )
 
         SetBid field val ->
@@ -251,7 +251,7 @@ updateHandleGetOldBidsResponse sharedState model response =
                 { model | groupOldBidsResponse = response }
                 bids
             , Cmd.none
-            , ShowToast <| Components.Toasty.Success "Success" "Your bids have been updated"
+            , NoUpdate
             )
 
         Failure err ->

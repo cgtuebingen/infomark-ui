@@ -15,3 +15,5 @@ elm.min.js
 /build/*.js
 /build/*.html
 /build/*.json
+
+node_modules/
