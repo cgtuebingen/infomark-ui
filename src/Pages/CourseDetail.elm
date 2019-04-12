@@ -493,7 +493,7 @@ viewCourseInfo sharedState model =
     in
     case model.courseRequest of
         RemoteData.Success course ->
-            div [ classes [ TC.w_100, TC.b__black, TC.bw2, TC.bb, TC.pb3, TC.overflow_hidden ] ]
+            div [ classes [ TC.w_100, TC.b__gray, "small-border", TC.bb, TC.pb3, TC.overflow_hidden ] ]
                 (r2Column
                     [ div []
                         [ h1 [ classes [ TC.mb3, TC.mt0, TC.lh_title ] ] [ text course.name ]

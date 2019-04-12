@@ -207,7 +207,7 @@ update sharedState msg model =
             )
 
         RateResponse response ->
-            ( model , Cmd.none , NoUpdate )
+            ( model, Cmd.none, NoUpdate )
 
         ToggleCollapse ->
             ( { model | collapse = not model.collapse }, Cmd.none, NoUpdate )

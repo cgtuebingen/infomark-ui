@@ -266,7 +266,7 @@ rRowHeaderActionButtons label headerStyle actions =
             , TC.flex_wrap
             , TC.items_center
             , TC.bb
-            , TC.bw2
+            , "small-border"
             ]
         ]
     <|

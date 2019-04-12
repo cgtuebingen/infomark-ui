@@ -148,3 +148,7 @@
     background: #A51E37;
     cursor: pointer;
 }
+
+.small-border {
+	border-width: 1pt;
+}
