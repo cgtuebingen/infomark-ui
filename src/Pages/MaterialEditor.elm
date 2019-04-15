@@ -69,6 +69,7 @@ type Msg
     | DeleteResponse (WebData ())
     | SetField Field String
     | SetMaterialType MaterialType
+    | SetRequiredRole Int
     | GotFiles File (List File)
     | Pick
     | DragEnter
@@ -97,6 +98,7 @@ type alias Model =
     , materialResponse : WebData Material
     , createMaterial : Bool
     , materialType : MaterialType
+    , requiredRole : Int
     , hover : Bool
     , file : Maybe File
     , fileChanged : Bool
@@ -132,6 +134,7 @@ initModel =
       , materialResponse = NotAsked
       , createMaterial = True
       , materialType = Slide
+      , requiredRole = 0
       , hover = False
       , file = Nothing
       , fileChanged = False
@@ -175,7 +178,15 @@ createRequest model =
     case ( model.publishedPosix, model.lecturePosix ) of
         ( Just publish, Just lecture ) ->
             ( model
-            , CoursesRequests.courseMaterialsPost model.course_id (setupMaterial model.name publish lecture model.materialType) CreateResponse
+            , CoursesRequests.courseMaterialsPost model.course_id
+                (setupMaterial
+                    model.name
+                    publish
+                    lecture
+                    model.materialType
+                    model.requiredRole
+                )
+                CreateResponse
             )
 
         ( _, _ ) ->
@@ -188,7 +199,15 @@ updateRequest model =
     case ( model.publishedPosix, model.lecturePosix ) of
         ( Just publish, Just lecture ) ->
             ( model
-            , MaterialRequests.materialPut model.course_id model.id (setupMaterial model.name publish lecture model.materialType) UpdateResponse
+            , MaterialRequests.materialPut model.course_id
+                model.id
+                (setupMaterial model.name
+                    publish
+                    lecture
+                    model.materialType
+                    model.requiredRole
+                )
+                UpdateResponse
             )
 
         ( _, _ ) ->
@@ -227,14 +246,15 @@ fillModelFromRequest sharedState model material =
     }
 
 
-setupMaterial : String -> Time.Posix -> Time.Posix -> MaterialType -> Material
-setupMaterial name publish lecture materialType =
+setupMaterial : String -> Time.Posix -> Time.Posix -> MaterialType -> Int -> Material
+setupMaterial name publish lecture materialType requiredRole =
     { id = 0
     , file_url = Nothing
     , name = name
     , material_type = materialType
     , published_at = publish
     , lecture_at = lecture
+    , required_role = requiredRole
     }
 
 
@@ -418,6 +438,12 @@ update sharedState msg model =
 
         SetMaterialType matType ->
             ( { model | materialType = matType }
+            , Cmd.none
+            , NoUpdate
+            )
+
+        SetRequiredRole role ->
+            ( { model | requiredRole = role }
             , Cmd.none
             , NoUpdate
             )
@@ -659,11 +685,18 @@ viewForm sharedState model =
                     model.errors
                     SetField
         , rRow <|
-            r1Column <|
+            r2Column
                 [ inputLabel "Material Type"
                 , multiButton
                     [ ( "Slide", model.materialType == Slide, SetMaterialType Slide )
                     , ( "Supplementary", model.materialType == Supplementary, SetMaterialType Supplementary )
+                    ]
+                ]
+                [ inputLabel "Required Role"
+                , multiButton
+                    [ ( "Student", model.requiredRole == 0, SetRequiredRole 0 )
+                    , ( "Tutor", model.requiredRole == 1, SetRequiredRole 1 )
+                    , ( "Admin", model.requiredRole == 2, SetRequiredRole 2 )
                     ]
                 ]
         , rRow <|

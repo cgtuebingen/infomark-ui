@@ -45,11 +45,13 @@ import Utils.Utils exposing (handleLogoutErrors, perform)
 type Field
     = Description
     | SearchByMail
+    | SearchByQuery
 
 
 type Msg
     = NavigateTo Route
     | SearchUserByEmail
+    | SearchUsersByQuery
     | SearchUserResponse (WebData (List UserEnrollment))
     | SetUserAsTutor User
     | SetField Field String
@@ -66,6 +68,7 @@ type alias Model =
     , description : String
     , groupId : Int
     , searchByEmailInput : String
+    , searchByQueryInput : String
     , searchResponse : WebData (List UserEnrollment)
     , createGroup : Bool
     , errors : List ( Field, String )
@@ -79,6 +82,7 @@ initModel =
     , description = ""
     , groupId = 0
     , searchByEmailInput = ""
+    , searchByQueryInput = ""
     , searchResponse = NotAsked
     , createGroup = False
     , errors = []
@@ -120,6 +124,14 @@ update sharedState msg model =
         SearchUserByEmail ->
             ( { model | searchResponse = Loading }
             , CourseRequests.coursesEnrollmentGetByEmail model.courseId model.searchByEmailInput SearchUserResponse
+            , NoUpdate
+            )
+
+        SearchUsersByQuery ->
+            ( { model | searchResponse = Loading }
+            , CourseRequests.coursesEnrollmentGetByQuery model.courseId
+                model.searchByQueryInput
+                SearchUserResponse
             , NoUpdate
             )
 
@@ -195,13 +207,13 @@ view sharedState model =
                         [ h1 [ Styles.headerStyle ] [ text "Search For Tutor" ]
                         ]
                         (searchElement
-                            { placeholder = "Search by E-Mail"
-                            , fieldType = "email"
+                            { placeholder = "Find User"
+                            , fieldType = "text"
                             , value = model.searchByEmailInput
                             }
-                            SearchByMail
+                            SearchByQuery
                             SetField
-                            SearchUserByEmail
+                            SearchUsersByQuery
                         )
                 , rRow <|
                     [ case model.searchResponse of
@@ -300,6 +312,9 @@ setField field value model =
 
         SearchByMail ->
             { model | searchByEmailInput = value }
+
+        SearchByQuery ->
+            { model | searchByQueryInput = value }
 
 
 fillRequestFromModel : Model -> User -> Group

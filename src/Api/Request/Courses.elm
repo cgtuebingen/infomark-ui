@@ -21,6 +21,7 @@ module Api.Request.Courses exposing
     , coursesEnrollmentGet
     , coursesEnrollmentGetAll
     , coursesEnrollmentGetByEmail
+    , coursesEnrollmentGetByQuery
     , coursesEnrollmentGetTeam
     , coursesEnrollmentPost
     , coursesEnrollmentsUserDelete
@@ -145,6 +146,15 @@ coursesEnrollmentGetByEmail courseId emailToSearch msg =
     let
         params =
             [ Url.Builder.string "email" emailToSearch ]
+    in
+    coursesEnrollmentGet courseId params msg
+
+
+coursesEnrollmentGetByQuery : Int -> String -> (WebData (List UserEnrollment) -> msg) -> Cmd msg
+coursesEnrollmentGetByQuery courseId query msg =
+    let
+        params =
+            [ Url.Builder.string "q" query ]
     in
     coursesEnrollmentGet courseId params msg
 
