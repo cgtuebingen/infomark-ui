@@ -20,6 +20,7 @@ type alias Material =
     , material_type : MaterialType
     , published_at : Posix
     , lecture_at : Posix
+    , required_role : Int
     }
 
 
@@ -32,6 +33,7 @@ decoder =
         |> required "kind" typeDecoder
         |> required "publish_at" Iso8601.decoder
         |> required "lecture_at" Iso8601.decoder
+        |> required "required_role" Decode.int
 
 
 encoder : Material -> Encode.Value
@@ -42,6 +44,7 @@ encoder model =
         , ( "kind", typeEncoder model.material_type )
         , ( "publish_at", Iso8601.encode model.published_at )
         , ( "lecture_at", Iso8601.encode model.lecture_at )
+        , ( "required_role", Encode.int model.required_role )
         ]
 
 
