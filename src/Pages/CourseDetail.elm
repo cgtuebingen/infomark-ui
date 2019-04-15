@@ -434,11 +434,11 @@ view sharedState model =
             pageContainer <|
                 [ widePage <| [ viewCourseInfo sharedState model ]
                 , normalPage <|
-                    [ viewDetermineTeamOrSearch role sharedState model
-                    , viewDetermineGroupDisplay role sharedState model
-                    , viewSheets sharedState model
+                    [ viewSheets sharedState model
                     , viewMaterials sharedState model Slide
                     , viewMaterials sharedState model Supplementary
+                    , viewDetermineGroupDisplay role sharedState model
+                    , viewDetermineTeamOrSearch role sharedState model
                     ]
                 ]
 
