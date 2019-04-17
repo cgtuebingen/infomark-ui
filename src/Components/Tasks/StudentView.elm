@@ -156,8 +156,44 @@ update sharedState msg model =
 
                     else
                         newModel
+
+                newUpdate =
+                    case response of
+                        Success _ ->
+                            NoUpdate
+
+                        Failure (Http.BadStatus status) ->
+                            case status of
+                                500 ->
+                                    ShowToast <|
+                                        Components.Toasty.Error "Error"
+                                            "Server rejected file. Too large or no .zip file"
+
+                                401 ->
+                                    ShowToast <|
+                                        Components.Toasty.Error "Error"
+                                            "Your session run out"
+
+                                _ ->
+                                    NoUpdate
+
+                        Failure Http.Timeout ->
+                            ShowToast <|
+                                Components.Toasty.Error "Error"
+                                    "Your request timed out, make sure your internet connection is strong enough"
+
+                        Failure Http.NetworkError ->
+                            ShowToast <|
+                                Components.Toasty.Error "Error"
+                                    "You lost your network connection"
+
+                        Failure _ ->
+                            NoUpdate
+
+                        _ ->
+                            NoUpdate
             in
-            ( finalModel, Cmd.none, NoUpdate )
+            ( finalModel, Cmd.none, newUpdate )
 
         UploadProgress progress ->
             let
@@ -213,7 +249,31 @@ update sharedState msg model =
             ( { model | collapse = not model.collapse }, Cmd.none, NoUpdate )
 
         GotFiles file files ->
-            ( { model | hover = False, submission = Just file }, Cmd.none, NoUpdate )
+            case ( File.size file < 7340032, String.contains ".zip" <| File.name file ) of
+                ( True, True ) ->
+                    ( { model | hover = False, submission = Just file }, Cmd.none, NoUpdate )
+
+                ( False, _ ) ->
+                    ( { model
+                        | hover = False
+                        , submission = Nothing
+                      }
+                    , Cmd.none
+                    , ShowToast <|
+                        Components.Toasty.Error "Error"
+                            "Only files with a size of up to 7mb are allowed"
+                    )
+
+                ( _, False ) ->
+                    ( { model
+                        | hover = False
+                        , submission = Nothing
+                      }
+                    , Cmd.none
+                    , ShowToast <|
+                        Components.Toasty.Error "Error"
+                            "Only zip files are allowed for submissions"
+                    )
 
         Pick ->
             ( model, Select.files [ "application/zip" ] GotFiles, NoUpdate )
