@@ -313,6 +313,19 @@ view sharedState model deadlineReached =
             [ rRow <|
                 r1Column <|
                     [ inputLabel "Submission"
+                    , h5
+                        [ classes
+                            [ TC.normal
+                            , TC.black_80
+                            , TC.mt0
+                            , TC.mb1
+                            ]
+                        ]
+                        [ text <|
+                            ("Upload a Zip-file that contains all package "
+                                ++ "directories from the 'src' folder of your Eclipse project."
+                            )
+                        ]
                     , fileUploader model.hover model.submission DragEnter DragLeave Pick GotFiles
                     ]
             , if model.uploading == Loading then
