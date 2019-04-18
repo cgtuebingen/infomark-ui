@@ -68,7 +68,12 @@ update sharedState msg model =
 
         -- TODO: Start the web request here.
         RequestResetResponse (Success _) ->
-            ( model, pushUrl sharedState.navKey (reverseRoute LoginRoute), NoUpdate )
+            ( model
+            , pushUrl sharedState.navKey (reverseRoute LoginRoute)
+            , ShowToast <|
+                Components.Toasty.Success "Success"
+                    "A mail with a password-reset-link was sent."
+            )
 
         RequestResetResponse (Failure err) ->
             let
@@ -79,7 +84,10 @@ update sharedState msg model =
             ( newModel, newCmd, NoUpdate )
 
         RequestResetResponse response ->
-            ( model, Cmd.none, NoUpdate )
+            ( model
+            , Cmd.none
+            , NoUpdate
+            )
 
         ToastyMsg subMsg ->
             let
@@ -132,7 +140,6 @@ view sharedState model =
                     , TC.pa4
                     , TC.black_40
                     ]
-                , onSubmit RequestReset
                 ]
                 [ fieldset
                     [ classes
