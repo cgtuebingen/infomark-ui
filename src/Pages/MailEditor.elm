@@ -51,6 +51,7 @@ type alias Model =
     , message : String
     , subject : String
     , toasties : Toasty.Stack Components.Toasty.Toast
+    , isSending : Bool
     }
 
 
@@ -60,6 +61,7 @@ initModelFromMode mode =
     , message = ""
     , subject = ""
     , toasties = Toasty.initialState
+    , isSending = False
     }
 
 
@@ -127,7 +129,7 @@ update sharedState msg model =
                     )
 
                 Group courseId groupId group ->
-                    ( model
+                    ( { model | isSending = True }
                     , sendGroupMailPost courseId
                         groupId
                         (modelToMail model)
@@ -136,7 +138,7 @@ update sharedState msg model =
                     )
 
                 Course courseId course ->
-                    ( model
+                    ( { model | isSending = True }
                     , sendCourseMailPost courseId
                         (modelToMail model)
                         SendMessageResponse
@@ -292,16 +294,29 @@ view sharedState model =
                         SetField
                     , let
                         isButtonActive =
-                            [ model.message, model.subject ]
-                                |> List.foldl (\a b -> not (String.isEmpty a) && b) True
+                            not
+                                (String.isEmpty model.message
+                                    && String.isEmpty
+                                        model.subject
+                                )
+
+                        buttonMessage =
+                            if isButtonActive then
+                                "Send"
+
+                            else if model.isSending then
+                                "Sending Please Wait!"
+
+                            else
+                                "You need to write subject and message"
                       in
                       CE.rRowButton <|
                         CE.PbbButton <|
                             if isButtonActive then
-                                CE.PbbActive "Send" SendMessage
+                                CE.PbbActive buttonMessage SendMessage
 
                             else
-                                CE.PbbDisabled "You need to write subject and message"
+                                CE.PbbDisabled buttonMessage
                     )
             in
             [ case model.mode of
