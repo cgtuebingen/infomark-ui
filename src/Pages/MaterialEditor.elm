@@ -420,7 +420,7 @@ update sharedState msg model =
             ( setField model field value, Cmd.none, NoUpdate )
 
         Pick ->
-            ( model, Select.files [ "application/zip" ] GotFiles, NoUpdate )
+            ( model, Select.files [ "application/zip", "application/pdf" ] GotFiles, NoUpdate )
 
         DragEnter ->
             ( { model | hover = True }, Cmd.none, NoUpdate )
@@ -546,6 +546,9 @@ updateHandleSend sharedState model response =
 
                                 Http.BadStatus 403 ->
                                     "You are not allowed to do this!"
+
+                                Http.BadStatus 500 ->
+                                    "Server not happy. Wrong file type? Must be .zip or .pdf"
 
                                 Http.BadBody message ->
                                     "Bad return: " ++ message
