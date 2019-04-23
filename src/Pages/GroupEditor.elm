@@ -260,6 +260,7 @@ view sharedState model =
                             { label = "Description"
                             , placeholder = "Details about place and time of group meetings"
                             , value = model.description
+                            , rows = 1
                             }
                             Description
                             model.errors

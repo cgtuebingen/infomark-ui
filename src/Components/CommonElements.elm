@@ -123,7 +123,7 @@ timeInputElement inputConfig field errors msg =
     ]
 
 
-textAreaElement : { label : String, placeholder : String, value : String } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
+textAreaElement : { label : String, placeholder : String, value : String, rows : Int } -> field -> List ( field, String ) -> (field -> String -> msg) -> List (Html msg)
 textAreaElement inputConfig field errors msg =
     [ inputLabel inputConfig.label
     , textarea
@@ -132,6 +132,7 @@ textAreaElement inputConfig field errors msg =
          , placeholder inputConfig.placeholder
          , onInput <| msg field
          , value inputConfig.value
+         , rows inputConfig.rows
          ]
             ++ Styles.textAreaReset
         )

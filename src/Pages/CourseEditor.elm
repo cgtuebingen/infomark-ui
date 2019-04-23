@@ -383,6 +383,7 @@ viewForm sharedState model =
                     { label = "Beschreibung"
                     , placeholder = "Beschreibung"
                     , value = model.description
+                    , rows = 1
                     }
                     Description
                     model.errors

@@ -276,6 +276,7 @@ view sharedState model =
                         { label = "Subject"
                         , placeholder = "[Infomark] Subject of message"
                         , value = model.subject
+                        , rows = 1
                         }
                         Subject
                         []
@@ -284,6 +285,7 @@ view sharedState model =
                         { label = "Message"
                         , placeholder = "Your Message"
                         , value = model.message
+                        , rows = 20
                         }
                         Message
                         []
