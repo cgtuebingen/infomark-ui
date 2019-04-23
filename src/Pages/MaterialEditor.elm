@@ -243,6 +243,7 @@ fillModelFromRequest sharedState model material =
         , lectureAtDate = Just lectureDate
         , lecturePosix = Just material.lecture_at
         , utcOffsetPos = utcOffsetPos
+        , requiredRole = material.required_role
     }
 
 
