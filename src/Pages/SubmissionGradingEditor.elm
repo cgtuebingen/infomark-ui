@@ -383,13 +383,6 @@ viewTask sharedState model task grade feedback =
 
                         ( _, _ ) ->
                             let
-                                testDoneButtonState =
-                                    if String.isEmpty feedback then
-                                        CE.PbbDisabled "You need to write Feedback"
-
-                                    else
-                                        CE.PbbActive "Benoten" (SendGrade grade.id)
-
                                 submissionAvailable =
                                     (grade.file_url /= Just "")
                                         && (grade.file_url /= Nothing)
@@ -399,13 +392,24 @@ viewTask sharedState model task grade feedback =
                                         == Finished
                                         && grade.public_execution_state
                                         == Finished
+
+                                testDoneButtonState =
+                                    if String.isEmpty feedback then
+                                        CE.PbbDisabled "You need to write Feedback"
+
+                                    else if
+                                        not testFinished
+                                            && submissionAvailable
+                                    then
+                                        CE.PbbActive "Benoten (Achtung: Test nicht vollständig)"
+                                            (SendGrade grade.id)
+
+                                    else
+                                        CE.PbbActive "Benoten" (SendGrade grade.id)
                             in
                             CE.PbbButton <|
                                 if not submissionAvailable then
                                     testDoneButtonState
-
-                                else if not testFinished && submissionAvailable then
-                                    CE.PbbDisabled "The test results are not completed!"
 
                                 else
                                     testDoneButtonState
