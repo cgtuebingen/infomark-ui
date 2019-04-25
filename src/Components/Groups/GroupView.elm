@@ -106,6 +106,11 @@ view sharedState model =
                                             , span [ Styles.textStyle ] [ text group.description ]
                                             ]
                                         ]
+                                , CE.rRow <|
+                                    [ h3 [ Styles.labelStyle ] [ text "Students" ]
+                                    , span [ Styles.textStyle ]
+                                        [ text "Here will be a overview over your students soon." ]
+                                    ]
                                 , CE.rRowButton <| CE.PbbButton <| CE.PbbActive "Send E-Mail To Group" <| NavigateTo <| MailToGroupRoute model.courseId group.id
                                 ]
                         )

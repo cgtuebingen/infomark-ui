@@ -64,7 +64,7 @@ view sharedState model =
 
             [ singleGroup ] ->
                 [ ( "Download All"
-                  , DownloadAll model.courseId singleGroup.id model.task.id
+                  , DownloadAll model.courseId model.task.id singleGroup.id
                   , Styles.buttonGreyStyle
                   )
                 , ( "Benoten"

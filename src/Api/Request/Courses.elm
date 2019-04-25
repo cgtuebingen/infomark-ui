@@ -5,6 +5,7 @@ module Api.Request.Courses exposing
     , courseGradeMissing
     , courseGradePut
     , courseGradesGetPerTaskAndGroup
+    , courseGroupOverviewGet
     , courseGroupsGet
     , courseGroupsPost
     , courseMaterialsGet
@@ -36,6 +37,7 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
+import Api.Data.GroupOverview as GroupOverview exposing (GroupOverview)
 import Api.Data.Material as Material exposing (Material)
 import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
 import Api.Data.MissingTask as MissingTask exposing (MissingTask)
@@ -60,6 +62,7 @@ import Api.Endpoint
         , coursePoints
         , courseSheets
         , courses
+        , groupOverview
         , submissions
         , unwrap
         )
@@ -202,6 +205,14 @@ courseGroupsGet id msg =
         msg
     <|
         Decode.list Group.decoder
+
+
+courseGroupOverviewGet : Int -> (WebData (List GroupOverview) -> msg) -> Cmd msg
+courseGroupOverviewGet course_id msg =
+    get (unwrap <| groupOverview course_id)
+        msg
+    <|
+        Decode.list GroupOverview.decoder
 
 
 courseGroupsPost : Int -> Group -> (WebData Group -> msg) -> Cmd msg

@@ -23,6 +23,7 @@ module Api.Endpoint exposing
     , grade
     , group
     , groupEmail
+    , groupOverview
     , groupSubmissionFile
     , groupsEnrollment
     , material
@@ -160,6 +161,11 @@ groupEmail courseId groupId =
         , "emails"
         ]
         []
+
+
+groupOverview : Int -> Endpoint
+groupOverview course_id =
+    url [ "courses", String.fromInt course_id, "grades", "overview" ] []
 
 
 courseSheets : Int -> Endpoint
