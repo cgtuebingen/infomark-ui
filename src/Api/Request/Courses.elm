@@ -5,7 +5,7 @@ module Api.Request.Courses exposing
     , courseGradeMissing
     , courseGradePut
     , courseGradesGetPerTaskAndGroup
-    , courseGroupOverviewGet
+    , courseGroupSummaryPerGroup
     , courseGroupsGet
     , courseGroupsPost
     , courseMaterialsGet
@@ -37,7 +37,7 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Grade as Grade exposing (Grade)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
-import Api.Data.GroupOverview as GroupOverview exposing (GroupOverview)
+import Api.Data.GroupSummary as GroupSummary exposing (GroupSummary)
 import Api.Data.Material as Material exposing (Material)
 import Api.Data.MissingGrade as MissingGrade exposing (MissingGrade)
 import Api.Data.MissingTask as MissingTask exposing (MissingTask)
@@ -62,7 +62,7 @@ import Api.Endpoint
         , coursePoints
         , courseSheets
         , courses
-        , groupOverview
+        , groupSummary
         , submissions
         , unwrap
         )
@@ -207,12 +207,21 @@ courseGroupsGet id msg =
         Decode.list Group.decoder
 
 
-courseGroupOverviewGet : Int -> (WebData (List GroupOverview) -> msg) -> Cmd msg
-courseGroupOverviewGet course_id msg =
-    get (unwrap <| groupOverview course_id)
+courseGroupSummaryGet : Int -> List QueryParameter -> (WebData GroupSummary -> msg) -> Cmd msg
+courseGroupSummaryGet course_id params msg =
+    get (unwrap <| groupSummary course_id params)
         msg
     <|
-        Decode.list GroupOverview.decoder
+        GroupSummary.decoder
+
+
+courseGroupSummaryPerGroup : Int -> Int -> (WebData GroupSummary -> msg) -> Cmd msg
+courseGroupSummaryPerGroup courseId groupId msg =
+    let
+        params =
+            [ Url.Builder.int "group_id" groupId ]
+    in
+    courseGroupSummaryGet courseId params msg
 
 
 courseGroupsPost : Int -> Group -> (WebData Group -> msg) -> Cmd msg

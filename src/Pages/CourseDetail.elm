@@ -36,7 +36,7 @@ import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
-import Api.Data.GroupOverview as GroupOverview exposing (GroupOverview)
+import Api.Data.GroupSummary as GroupSummary exposing (GroupSummary)
 import Api.Data.Material as Material exposing (Material, MaterialType(..))
 import Api.Data.PointOverview as PointOverview exposing (PointOverview)
 import Api.Data.Sheet as Sheet exposing (Sheet)
@@ -97,7 +97,7 @@ type Msg
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
     | OwnGroupsResponse (WebData (List Group)) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
     | GroupsDisplayResponse (WebData (List Group)) -- Query all groups
-    | GroupsOverviewResponse (WebData (List GroupOverview)) -- Query all groups
+    | GroupsSummaryResponse (WebData GroupSummary) -- Query all groups
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
     | PointOverviewResponse (WebData (List PointOverview))
@@ -125,7 +125,7 @@ type alias Model =
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
     , ownGroupsRequest : WebData (List Group)
-    , ownGroupOverview : WebData (List GroupOverview)
+    , summaries : List GroupSummary
     , groupsRequest : WebData (List Group)
     , groupModel : Maybe GroupModel
     , searchUserForGroupRequest : WebData UserEnrollment
@@ -159,8 +159,8 @@ init id =
       , searchUserForEnrollmentRequest = NotAsked
       , enrollmentChangedRequest = NotAsked
       , ownGroupsRequest = NotAsked
-      , ownGroupOverview = NotAsked
       , groupsRequest = NotAsked
+      , summaries = []
       , groupModel = Nothing
       , searchUserForGroupRequest = NotAsked
       , searchEnrollmentInput = ""
@@ -191,13 +191,11 @@ determineInitialRoleRequests model role =
             ( { model
                 | enrollmentsRequest = Loading
                 , ownGroupsRequest = Loading
-                , ownGroupOverview = Loading
               }
             , Cmd.batch
                 [ CoursesRequests.coursesEnrollmentGetTeam model.courseId EnrollmentsResponse
                 , CoursesRequests.courseOwnGroupGet model.courseId OwnGroupsResponse
                 , CoursesRequests.courseGroupsGet model.courseId GroupsDisplayResponse
-                , CoursesRequests.courseGroupOverviewGet model.courseId GroupsOverviewResponse
                 ]
             )
 
@@ -286,8 +284,23 @@ update sharedState msg model =
         GroupsDisplayResponse response ->
             updateGroupDisplay sharedState { model | groupsRequest = response }
 
-        GroupsOverviewResponse response ->
-            updateGroupDisplay sharedState { model | ownGroupOverview = response }
+        GroupsSummaryResponse response ->
+            case response of
+                Success summary ->
+                    let
+                        newSummaries =
+                            List.append model.summaries [ summary ]
+                    in
+                    ( { model | summaries = newSummaries }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+
+                Failure _ ->
+                    ( model, Cmd.none, NoUpdate )
+
+                _ ->
+                    ( model, Cmd.none, NoUpdate )
 
         GroupMsg subMsg ->
             let
@@ -337,8 +350,8 @@ update sharedState msg model =
 
 updateGroupDisplay : SharedState -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
 updateGroupDisplay sharedState model =
-    case ( model.ownGroupsRequest, model.courseRole, model.ownGroupOverview ) of
-        ( Failure err, Just Student, _ ) ->
+    case ( model.ownGroupsRequest, model.courseRole ) of
+        ( Failure err, Just Student ) ->
             handleLogoutErrors model
                 sharedState
                 (\e ->
@@ -370,7 +383,7 @@ updateGroupDisplay sharedState model =
                 )
                 err
 
-        ( Success ownGroups, _, _ ) ->
+        ( Success ownGroups, _ ) ->
             case ( model.groupsRequest, model.courseRole ) of
                 ( _, Just Student ) ->
                     let
@@ -379,7 +392,11 @@ updateGroupDisplay sharedState model =
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init model.courseId ownGroups [] Student
+                                GroupView.init model.courseId
+                                    ownGroups
+                                    []
+                                    Student
+                                    model.summaries
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
@@ -395,23 +412,34 @@ updateGroupDisplay sharedState model =
                                 DetailModel
                                 (Cmd.map DetailMsg)
                             <|
-                                GroupView.init model.courseId ownGroups allGroups Tutor
+                                GroupView.init model.courseId
+                                    ownGroups
+                                    allGroups
+                                    Tutor
+                                    model.summaries
                     in
                     ( { model
                         | groupModel = Just <| Tuple.first groupInit
                       }
-                    , Cmd.map GroupMsg <| Tuple.second groupInit
+                    , Cmd.batch
+                        ([ Cmd.map GroupMsg <| Tuple.second groupInit ]
+                            ++ List.map
+                                -- Request group overview for all groups
+                                (\g ->
+                                    CoursesRequests.courseGroupSummaryPerGroup
+                                        model.courseId
+                                        g.id
+                                        GroupsSummaryResponse
+                                )
+                                allGroups
+                        )
                     , NoUpdate
                     )
 
                 ( _, _ ) ->
                     ( model, Cmd.none, NoUpdate )
 
-        ( _, Just Tutor, Success overview ) ->
-            -- TODO show overview
-            ( model, Cmd.none, NoUpdate )
-
-        ( _, Just Admin, _ ) ->
+        ( _, Just Admin ) ->
             case model.groupsRequest of
                 Success groups ->
                     let
@@ -432,7 +460,7 @@ updateGroupDisplay sharedState model =
                 _ ->
                     ( model, Cmd.none, NoUpdate )
 
-        ( _, _, _ ) ->
+        ( _, _ ) ->
             ( model, Cmd.none, NoUpdate )
 
 

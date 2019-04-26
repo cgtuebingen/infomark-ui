@@ -15,6 +15,7 @@ module Components.Groups.GroupView exposing
 
 import Api.Data.CourseRole exposing (CourseRole(..))
 import Api.Data.Group exposing (Group)
+import Api.Data.GroupSummary exposing (GroupSummary)
 import Api.Data.User exposing (User)
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements as CE
@@ -33,16 +34,18 @@ type alias Model =
     , role : CourseRole
     , allGroups : List Group
     , courseId : Int
+    , summaries : List GroupSummary
     }
 
 
-init : Int -> List Group -> List Group -> CourseRole -> ( Model, Cmd Msg )
-init courseId ownGroups allGroups role =
+init : Int -> List Group -> List Group -> CourseRole -> List GroupSummary -> ( Model, Cmd Msg )
+init courseId ownGroups allGroups role summaries =
     ( { ownGroups = ownGroups
       , role = role
       , group = List.head ownGroups
       , allGroups = allGroups
       , courseId = courseId
+      , summaries = summaries
       }
     , Cmd.none
     )
