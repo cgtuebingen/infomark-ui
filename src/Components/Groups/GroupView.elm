@@ -20,6 +20,7 @@ import Api.Data.User exposing (User)
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements as CE
 import Components.UserAvatarEmailView as UserView
+import Dict exposing (Dict)
 import Html exposing (..)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -34,11 +35,11 @@ type alias Model =
     , role : CourseRole
     , allGroups : List Group
     , courseId : Int
-    , summaries : List GroupSummary
+    , summaries : Dict Int GroupSummary
     }
 
 
-init : Int -> List Group -> List Group -> CourseRole -> List GroupSummary -> ( Model, Cmd Msg )
+init : Int -> List Group -> List Group -> CourseRole -> Dict Int GroupSummary -> ( Model, Cmd Msg )
 init courseId ownGroups allGroups role summaries =
     ( { ownGroups = ownGroups
       , role = role
@@ -109,12 +110,61 @@ view sharedState model =
                                             , span [ Styles.textStyle ] [ text group.description ]
                                             ]
                                         ]
-                                , CE.rRow <|
-                                    [ h3 [ Styles.labelStyle ] [ text "Students" ]
-                                    , span [ Styles.textStyle ]
-                                        [ text "Here will be a overview over your students soon." ]
-                                    ]
-                                , CE.rRowButton <| CE.PbbButton <| CE.PbbActive "Send E-Mail To Group" <| NavigateTo <| MailToGroupRoute model.courseId group.id
+                                , CE.rContainer <|
+                                    let
+                                        maybeSummary =
+                                            Dict.get group.id model.summaries
+                                    in
+                                    case maybeSummary of
+                                        Nothing ->
+                                            [ h3 [ Styles.labelStyle ]
+                                                [ text
+                                                    "Your Students"
+                                                ]
+                                            , span [ Styles.textStyle ]
+                                                [ text
+                                                    ("No overview availiable in"
+                                                        ++ " group "
+                                                        ++ String.fromInt group.id
+                                                        ++ " -  Number of Summaries availiable: "
+                                                        ++ String.fromInt
+                                                            (List.length
+                                                                (Dict.keys
+                                                                    model.summaries
+                                                                )
+                                                            )
+                                                    )
+                                                ]
+                                            ]
+
+                                        Just summary ->
+                                            let
+                                                sheets =
+                                                    summary.sheets
+
+                                                achivements =
+                                                    summary.achievements
+                                            in
+                                            [ table []
+                                                [ caption [ Styles.labelStyle ]
+                                                    [ text "Your Students" ]
+                                                , tr [ Styles.textStyle ]
+                                                    ([ th [] [ text "Student" ] ]
+                                                        ++ List.map
+                                                            (\sheet ->
+                                                                th
+                                                                    []
+                                                                    [ text sheet.name ]
+                                                            )
+                                                            sheets
+                                                    )
+                                                ]
+                                            ]
+                                , CE.rRowButton <|
+                                    CE.PbbButton <|
+                                        CE.PbbActive "Send E-Mail To Group" <|
+                                            NavigateTo <|
+                                                MailToGroupRoute model.courseId group.id
                                 ]
                         )
                 )

@@ -68,6 +68,7 @@ import Components.CommonElements
 import Components.Groups.AdminView as GroupAdminView
 import Components.Groups.BiddingView as BiddingView
 import Components.Groups.GroupView as GroupView
+import Components.Toasty
 import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
 import File.Download as Download
@@ -83,6 +84,7 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
+import Toasty
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (flip, handleLogoutErrors, perform, tupleMapThree)
@@ -97,7 +99,7 @@ type Msg
     | EnrollmentChangedResponse (WebData ()) -- Set the enrollment state for the searched user -- TODO set correct return
     | OwnGroupsResponse (WebData (List Group)) -- Show the assigned group for students. For tutors per default their group (can be changed). Not visible for admins
     | GroupsDisplayResponse (WebData (List Group)) -- Query all groups
-    | GroupsSummaryResponse (WebData GroupSummary) -- Query all groups
+    | GroupsSummaryResponse Int (WebData GroupSummary) -- Query all groups
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
     | PointOverviewResponse (WebData (List PointOverview))
@@ -125,7 +127,7 @@ type alias Model =
     , searchUserForEnrollmentRequest : WebData (List UserEnrollment)
     , enrollmentChangedRequest : WebData ()
     , ownGroupsRequest : WebData (List Group)
-    , summaries : List GroupSummary
+    , summaries : Dict Int GroupSummary
     , groupsRequest : WebData (List Group)
     , groupModel : Maybe GroupModel
     , searchUserForGroupRequest : WebData UserEnrollment
@@ -160,7 +162,7 @@ init id =
       , enrollmentChangedRequest = NotAsked
       , ownGroupsRequest = NotAsked
       , groupsRequest = NotAsked
-      , summaries = []
+      , summaries = Dict.empty
       , groupModel = Nothing
       , searchUserForGroupRequest = NotAsked
       , searchEnrollmentInput = ""
@@ -284,23 +286,77 @@ update sharedState msg model =
         GroupsDisplayResponse response ->
             updateGroupDisplay sharedState { model | groupsRequest = response }
 
-        GroupsSummaryResponse response ->
+        GroupsSummaryResponse groupId response ->
             case response of
                 Success summary ->
                     let
                         newSummaries =
-                            List.append model.summaries [ summary ]
+                            Dict.insert groupId summary model.summaries
+
+                        allGroups =
+                            case model.groupsRequest of
+                                Success groups ->
+                                    groups
+
+                                _ ->
+                                    []
+
+                        ownGroups =
+                            case model.ownGroupsRequest of
+                                Success groups ->
+                                    groups
+
+                                _ ->
+                                    []
+
+                        groupInit =
+                            Tuple.mapBoth
+                                DetailModel
+                                (Cmd.map DetailMsg)
+                            <|
+                                GroupView.init model.courseId
+                                    ownGroups
+                                    allGroups
+                                    Tutor
+                                    newSummaries
                     in
-                    ( { model | summaries = newSummaries }
+                    ( { model
+                        | groupModel = Just <| Tuple.first groupInit
+                        , summaries = newSummaries
+                      }
                     , Cmd.none
                     , NoUpdate
                     )
 
-                Failure _ ->
-                    ( model, Cmd.none, NoUpdate )
+                Failure err ->
+                    let
+                        errorMsg =
+                            case err of
+                                Http.BadUrl url ->
+                                    "BadUrl: " ++ url
+
+                                Http.Timeout ->
+                                    "Timeout"
+
+                                Http.NetworkError ->
+                                    "Networerror"
+
+                                Http.BadStatus status ->
+                                    "BadStatus: " ++ String.fromInt status
+
+                                Http.BadBody dbg ->
+                                    "BadBody: " ++ dbg
+                    in
+                    ( model
+                    , Cmd.none
+                    , ShowToast <| Components.Toasty.Error "Error" errorMsg
+                    )
 
                 _ ->
-                    ( model, Cmd.none, NoUpdate )
+                    ( model
+                    , Cmd.none
+                    , ShowToast <| Components.Toasty.Error "Error" "Summary response failed somehow"
+                    )
 
         GroupMsg subMsg ->
             let
@@ -429,7 +485,7 @@ updateGroupDisplay sharedState model =
                                     CoursesRequests.courseGroupSummaryPerGroup
                                         model.courseId
                                         g.id
-                                        GroupsSummaryResponse
+                                        (GroupsSummaryResponse g.id)
                                 )
                                 allGroups
                         )

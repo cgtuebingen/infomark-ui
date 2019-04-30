@@ -21,15 +21,15 @@ type alias UserInfo =
     }
 
 
-type alias Achivement =
-    { user_info : List UserInfo
+type alias Achievement =
+    { user_info : UserInfo
     , points : List Int
     }
 
 
 type alias GroupSummary =
     { sheets : List Sheet
-    , achievements : List Achivement
+    , achievements : List Achievement
     }
 
 
@@ -46,13 +46,13 @@ userInfoDecoder =
         |> required "id" Decode.int
         |> required "first_name" Decode.string
         |> required "last_name" Decode.string
-        |> optional "file_url" (Decode.nullable Decode.string) Nothing
+        |> optional "student_number" (Decode.nullable Decode.string) Nothing
 
 
-achivementDecoder : Decoder Achivement
-achivementDecoder =
-    Decode.succeed Achivement
-        |> required "user_info" (Decode.list userInfoDecoder)
+achievementDecoder : Decoder Achievement
+achievementDecoder =
+    Decode.succeed Achievement
+        |> required "user_info" userInfoDecoder
         |> required "points" (Decode.list Decode.int)
 
 
@@ -60,4 +60,4 @@ decoder : Decoder GroupSummary
 decoder =
     Decode.succeed GroupSummary
         |> required "sheets" (Decode.list sheetDecoder)
-        |> required "achivements" (Decode.list achivementDecoder)
+        |> required "achievements" (Decode.list achievementDecoder)
