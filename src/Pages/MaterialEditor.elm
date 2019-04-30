@@ -108,28 +108,37 @@ type alias Model =
     }
 
 
-initModel : ( Model, Cmd Msg )
-initModel =
+initModel : SharedState -> ( Model, Cmd Msg )
+initModel sharedState =
     let
-        ( publishedDatePicker, publishedDatePickerFx ) =
-            DatePicker.init
+        publishedDatePicker =
+            DatePicker.initFromDate <| Date.fromPosix (Maybe.withDefault Time.utc sharedState.timezone) (Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime)
 
-        ( lectureDatePicker, lectureDatePickerFx ) =
-            DatePicker.init
+        lectureDatePicker =
+            DatePicker.initFromDate <| Date.fromPosix (Maybe.withDefault Time.utc sharedState.timezone) (Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime)
+
+        pickerTime =
+            DTU.pickerTimeFromPosix (Maybe.withDefault Time.utc sharedState.timezone) (Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime)
+
+        pickerDate =
+            Date.fromPosix (Maybe.withDefault Time.utc sharedState.timezone) (Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime)
+
+        currentTime =
+            Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
     in
     ( { course_id = 0
       , id = 0
       , name = ""
-      , publishedTimePicker = TimePicker.init Nothing
+      , publishedTimePicker = TimePicker.init <| Just pickerTime
       , publishedDatePicker = publishedDatePicker
-      , publishedAtDate = Nothing
-      , publishedAtTime = Nothing
-      , publishedPosix = Nothing
-      , lectureTimePicker = TimePicker.init Nothing
+      , publishedAtDate = Just pickerDate
+      , publishedAtTime = Just pickerTime
+      , publishedPosix = Just currentTime
+      , lectureTimePicker = TimePicker.init <| Just pickerTime
       , lectureDatePicker = lectureDatePicker
-      , lectureAtDate = Nothing
-      , lectureAtTime = Nothing
-      , lecturePosix = Nothing
+      , lectureAtDate = Just pickerDate
+      , lectureAtTime = Just pickerTime
+      , lecturePosix = Just currentTime
       , utcOffsetPos = DTU.utcZeroOffsetIndex
       , materialResponse = NotAsked
       , createMaterial = True
@@ -142,28 +151,24 @@ initModel =
       , toasties = Toasty.initialState
       , deleteMaterialDialogState = False
       }
-    , Cmd.batch
-        [ Cmd.map PublishedDatePickerMsg publishedDatePickerFx
-        , Cmd.map LectureDatePickerMsg lectureDatePickerFx
-        , perform GetRealOffset
-        ]
+    , perform GetRealOffset
     )
 
 
-initCreate : Int -> ( Model, Cmd Msg )
-initCreate courseId =
+initCreate : Int -> SharedState -> ( Model, Cmd Msg )
+initCreate courseId sharedModel =
     let
         ( model, cmd ) =
-            initModel
+            initModel sharedModel
     in
     ( { model | course_id = courseId }, cmd )
 
 
-initEdit : Int -> Int -> ( Model, Cmd Msg )
-initEdit courseId id =
+initEdit : Int -> Int -> SharedState -> ( Model, Cmd Msg )
+initEdit courseId id sharedState =
     let
         ( model, cmd ) =
-            initModel
+            initModel sharedState
     in
     ( { model
         | createMaterial = False

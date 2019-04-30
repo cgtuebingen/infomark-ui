@@ -354,10 +354,10 @@ navigateTo route sharedState model =
             SheetEditor.initEdit courseId id |> initWith SheetEditorModel SheetEditorMsg model NoUpdate
 
         CreateMaterialRoute courseId ->
-            MaterialEditor.initCreate courseId |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
+            MaterialEditor.initCreate courseId sharedState |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
 
         EditMaterialRoute courseId id ->
-            MaterialEditor.initEdit courseId id |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
+            MaterialEditor.initEdit courseId id sharedState |> initWith MaterialEditorModel MaterialEditorMsg model NoUpdate
 
         SheetDetailRoute courseId id ->
             SheetDetail.init courseId id |> initWith SheetDetailModel SheetDetailMsg model NoUpdate
