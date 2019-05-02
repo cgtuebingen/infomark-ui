@@ -155,13 +155,13 @@ view sharedState model =
                                                 sheets =
                                                     summary.sheets
 
-                                                achivements =
+                                                achievements =
                                                     summary.achievements
                                             in
                                             [ table []
-                                                [ caption [ Styles.labelStyle ]
+                                                ([ caption [ Styles.labelStyle ]
                                                     [ text "Your Students" ]
-                                                , tr [ Styles.textStyle ]
+                                                 , tr [ Styles.textStyle ]
                                                     ([ th [] [ text "Student" ] ]
                                                         ++ List.map
                                                             (\sheet ->
@@ -171,7 +171,32 @@ view sharedState model =
                                                             )
                                                             sheets
                                                     )
-                                                ]
+                                                 ]
+                                                    ++ List.map
+                                                        (\achievement ->
+                                                            tr [ Styles.textStyle ]
+                                                                ([ td []
+                                                                    [ text
+                                                                        (achievement.user_info.first_name
+                                                                            ++ " "
+                                                                            ++ achievement.user_info.last_name
+                                                                        )
+                                                                    ]
+                                                                 ]
+                                                                    ++ List.map
+                                                                        (\point ->
+                                                                            td []
+                                                                                [ text
+                                                                                    (String.fromInt
+                                                                                        point
+                                                                                    )
+                                                                                ]
+                                                                        )
+                                                                        achievement.points
+                                                                )
+                                                        )
+                                                        achievements
+                                                )
                                             , viewStudentTable model summary
                                             ]
                                 , CE.rRowButton <|
