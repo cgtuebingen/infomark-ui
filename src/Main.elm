@@ -6,6 +6,7 @@ import Decoders
 import Html exposing (..)
 import Http
 import Json.Decode as Decode
+import Material
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Router as Router
 import SharedState exposing (SharedState, SharedStateUpdate(..))
@@ -33,6 +34,7 @@ type alias Model =
     { appState : AppState
     , navKey : Browser.Navigation.Key
     , url : Url
+    , mdc : Material.Model Msg
     }
 
 
@@ -58,6 +60,7 @@ type Msg
     | RouterMsg Router.Msg
     | AdjustTimeZone Zone
     | PersistanceUpdate (Maybe PersistantState.State)
+    | Mdc (Material.Msg Msg)
 
 
 init : Flags -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
@@ -69,6 +72,7 @@ init flags url navKey =
                 (PersistantState.decode flags.storage)
       , url = url
       , navKey = navKey
+      , mdc = Material.defaultModel
       }
     , Cmd.batch
         [ Http.get
@@ -76,6 +80,7 @@ init flags url navKey =
             , expect = Http.expectJson (RemoteData.fromResult >> HandleTranslationsResponse) Decoders.decodeTranslations
             }
         , Task.perform AdjustTimeZone Time.here
+        , Material.init Mdc
         ]
     )
 
@@ -114,6 +119,9 @@ update msg model =
 
         PersistanceUpdate state ->
             updateRouter model <| Router.PersistanceUpdate state
+
+        Mdc msg_ ->
+            Material.update Mdc msg_ model
 
 
 updateTime : Model -> Posix -> ( Model, Cmd Msg )
@@ -237,6 +245,7 @@ subscriptions model =
         , Sub.map SpinnerMsg Spinner.subscription
         , PersistantState.storageToState PersistanceUpdate
         , Http.track "file_upload" UploadProgressMsg
+        , Material.subscriptions Mdc model
         ]
 
 

@@ -22,6 +22,9 @@ import Components.CommonElements as CE
 import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
 import Html exposing (..)
+import Material
+import Material.List as Lists
+import Material.Options as Options exposing (css, styled, when)
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
@@ -36,6 +39,7 @@ type alias Model =
     , allGroups : List Group
     , courseId : Int
     , summaries : Dict Int GroupSummary
+    , mdc : Material.Model Msg
     }
 
 
@@ -47,6 +51,7 @@ init courseId ownGroups allGroups role summaries =
       , allGroups = allGroups
       , courseId = courseId
       , summaries = summaries
+      , mdc = Material.defaultModel
       }
     , Cmd.none
     )
@@ -55,6 +60,7 @@ init courseId ownGroups allGroups role summaries =
 type Msg
     = NavigateTo Route
     | OverwriteGroup Group
+    | Mdc (Material.Msg Msg)
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -65,6 +71,13 @@ update sharedState msg model =
 
         OverwriteGroup group ->
             ( { model | group = Just <| group }, Cmd.none, NoUpdate )
+
+        Mdc msg_ ->
+            let
+                ( newModel, newCommand ) =
+                    Material.update Mdc msg_ model
+            in
+            ( newModel, newCommand, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
@@ -159,6 +172,7 @@ view sharedState model =
                                                             sheets
                                                     )
                                                 ]
+                                            , viewStudentTable model summary
                                             ]
                                 , CE.rRowButton <|
                                     CE.PbbButton <|
@@ -168,6 +182,40 @@ view sharedState model =
                                 ]
                         )
                 )
+
+
+viewStudentTable : Model -> GroupSummary -> Html Msg
+viewStudentTable model summary =
+    let
+        achivements =
+            summary.achievements
+    in
+    Lists.ul Mdc
+        "tutor-student-overview"
+        model.mdc
+        (Lists.twoLine
+            :: [ css "max-width" "300px"
+               , css "border" "1px solid rgba(0,0,0,.1)"
+               ]
+        )
+        (List.map
+            (\achivement ->
+                Lists.li []
+                    [ Lists.text []
+                        [ Lists.primaryText []
+                            [ text
+                                (achivement.user_info.first_name
+                                    ++ " "
+                                    ++ achivement.user_info.last_name
+                                )
+                            ]
+                        , Lists.secondaryText []
+                            [ text "emal@todo.de" ]
+                        ]
+                    ]
+            )
+            achivements
+        )
 
 
 viewGroupMembers : SharedState -> List User -> Html Msg
