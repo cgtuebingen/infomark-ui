@@ -152,3 +152,151 @@
 .small-border {
 	border-width: 1pt;
 }
+
+table,th,td {
+    border: none
+}
+
+table {
+    width: 100%;
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0
+}
+
+table.striped tr {
+    border-bottom: none
+}
+
+table.striped>tbody>tr:nth-child(odd) {
+    background-color: rgba(242,242,242,0.5)
+}
+
+table.striped>tbody>tr>td {
+    border-radius: 0
+}
+
+table.highlight>tbody>tr {
+    -webkit-transition: background-color .25s ease;
+    transition: background-color .25s ease
+}
+
+table.highlight>tbody>tr:hover {
+    background-color: rgba(242,242,242,0.5)
+}
+
+table.centered thead tr th,table.centered tbody tr td {
+    text-align: center
+}
+
+tr {
+    border-bottom: 1px solid rgba(0,0,0,0.12)
+}
+
+td,th {
+    padding: 15px 5px;
+    display: table-cell;
+    text-align: left;
+    vertical-align: middle;
+    border-radius: 2px
+}
+
+@media only screen and (max-width: 992px) {
+    table.responsive-table {
+        width:100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        display: block;
+        position: relative
+    }
+
+    table.responsive-table td:empty:before {
+        content: '\00a0'
+    }
+
+    table.responsive-table th,table.responsive-table td {
+        margin: 0;
+        vertical-align: top
+    }
+
+    table.responsive-table th {
+        text-align: left
+    }
+
+    table.responsive-table thead {
+        display: block;
+        float: left
+    }
+
+    table.responsive-table thead tr {
+        display: block;
+        padding: 0 10px 0 0
+    }
+
+    table.responsive-table thead tr th::before {
+        content: "\00a0"
+    }
+
+    table.responsive-table tbody {
+        display: block;
+        width: auto;
+        position: relative;
+        overflow-x: auto;
+        white-space: nowrap
+    }
+
+    table.responsive-table tbody tr {
+        display: inline-block;
+        vertical-align: top
+    }
+
+    table.responsive-table th {
+        display: block;
+        text-align: right
+    }
+
+    table.responsive-table td {
+        display: block;
+        min-height: 1.25em;
+        text-align: left
+    }
+
+    table.responsive-table tr {
+        border-bottom: none;
+        padding: 0 10px
+    }
+
+    table.responsive-table thead {
+        border: 0;
+        border-right: 1px solid rgba(0,0,0,0.12)
+    }
+}
+
+small {
+    font-size: 75%
+}
+
+
+th.student-overview-head-vertical {
+  /* Something you can count on */
+  height: 8rem;
+  white-space: nowrap;
+}
+
+th.student-overview-head-horizontal {
+  vertical-align : bottom;
+}
+
+th.student-overview-head-vertical > div {
+  transform: 
+    /* Magic Numbers */
+    /*translate(25px, 51px)*/
+    translate(-15px, 31px)
+    /* 45 is really 360 - 45 */
+    rotate(270deg);
+  width: 2rem;
+}
+
+th.student-overview-head-vertical > div > span {
+  padding: 5px 10px;
+}
