@@ -18,6 +18,7 @@ type alias UserInfo =
     , first_name : String
     , last_name : String
     , studentNumber : Maybe String -- not seen by tutors
+    , email : String
     }
 
 
@@ -47,6 +48,7 @@ userInfoDecoder =
         |> required "first_name" Decode.string
         |> required "last_name" Decode.string
         |> optional "student_number" (Decode.nullable Decode.string) Nothing
+        |> required "email" Decode.string
 
 
 achievementDecoder : Decoder Achievement

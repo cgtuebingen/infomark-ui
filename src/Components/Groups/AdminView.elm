@@ -38,6 +38,10 @@ import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Material
+import Material.IconButton as IconButton
+import Material.List as Lists
+import Material.Options as Options exposing (css, styled, when)
 import Maybe.Extra as ME
 import RemoteData exposing (RemoteData(..), WebData)
 import Routing.Helpers exposing (Route(..), reverseRoute)
@@ -59,6 +63,7 @@ type Msg
     | EditGroup Int Int
     | CreateGroup Int
     | WriteEmailToUser Int --Currently not used
+    | Mdc (Material.Msg Msg)
 
 
 
@@ -78,6 +83,7 @@ type alias Model =
     , enrollmentRequests : Dict Int (WebData (List UserEnrollment))
     , groups : Dict Int ( Group, List UserEnrollment )
     , userVisibleForGroup : Maybe Int
+    , mdc : Material.Model Msg
     }
 
 
@@ -90,6 +96,7 @@ init courseId groups =
             , enrollmentRequests = Dict.empty
             , groups = Dict.empty
             , userVisibleForGroup = Nothing
+            , mdc = Material.defaultModel
             }
     in
     ( model
@@ -156,6 +163,13 @@ update sharedState msg model =
         WriteEmailToUser userId ->
             ( model, Cmd.none, NoUpdate )
 
+        Mdc msg_ ->
+            let
+                ( newModel, newCommand ) =
+                    Material.update Mdc msg_ model
+            in
+            ( newModel, newCommand, NoUpdate )
+
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -180,6 +194,7 @@ view sharedState model =
                         [ ( "Create", CreateGroup model.course_id, Styles.buttonGreenStyle )
                         ]
                     ]
+               , trailingIconList model "list-exercise-groups"
                ]
             ++ [ rRowButton <|
                     PbbButton <|
@@ -194,7 +209,8 @@ showGroup sharedState model group allGroups participants =
         [ rRowHeaderActionButtons ("Group - " ++ group.tutor.firstname ++ " " ++ group.tutor.lastname)
             Styles.listHeadingStyle
             [ ( "Edit", EditGroup model.course_id group.id, Styles.buttonGreyStyle )
-            , ( "Users", ToggleUsers group.id, Styles.buttonGreyStyle )
+
+            --     , ( "Users", ToggleUsers group.id, Styles.buttonGreyStyle )
             , ( "Mail", SendMailToGroup group.courseId group.id, Styles.buttonGreyStyle )
             ]
         ]
@@ -306,3 +322,18 @@ performUserEnrollmentRequestForGroups model groupIds =
     groupIds
         |> List.map (\id -> GroupRequests.groupsEnrollmentGetAll model.course_id id (GetEnrollmentResponse id))
         |> Cmd.batch
+
+
+trailingIconList : Model -> Material.Index -> Html Msg
+trailingIconList model index =
+    Lists.ul Mdc
+        index
+        model.mdc
+        [ Lists.avatarList ]
+        (List.repeat 3 <|
+            Lists.li []
+                [ IconButton.view Mdc "edit-group-button" model.mdc [ IconButton.icon { on = "edit", off = "edit" } ] []
+                , text "Line item"
+                , Lists.metaIcon [] "email"
+                ]
+        )

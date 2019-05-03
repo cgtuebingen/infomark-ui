@@ -22,9 +22,14 @@ import Components.CommonElements as CE
 import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import Material
-import Material.List as Lists
-import Material.Options as Options exposing (css, styled, when)
+import Material.Options as Options exposing (cs, css, styled, when)
+import Material.TextField as TextField
+import Material.TextField.CharacterCounter as TextField
+import Material.TextField.HelperLine as TextField
+import Material.TextField.HelperText as TextField
+import Material.Typography as Typography
 import Routing.Helpers exposing (Route(..), reverseRoute)
 import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes)
@@ -40,6 +45,7 @@ type alias Model =
     , courseId : Int
     , summaries : Dict Int GroupSummary
     , mdc : Material.Model Msg
+    , studentFilter : String
     }
 
 
@@ -52,6 +58,7 @@ init courseId ownGroups allGroups role summaries =
       , courseId = courseId
       , summaries = summaries
       , mdc = Material.defaultModel
+      , studentFilter = ""
       }
     , Cmd.none
     )
@@ -61,6 +68,7 @@ type Msg
     = NavigateTo Route
     | OverwriteGroup Group
     | Mdc (Material.Msg Msg)
+    | UpdateStudentFilter String
 
 
 update : SharedState -> Msg -> Model -> ( Model, Cmd Msg, SharedStateUpdate )
@@ -78,6 +86,9 @@ update sharedState msg model =
                     Material.update Mdc msg_ model
             in
             ( newModel, newCommand, NoUpdate )
+
+        UpdateStudentFilter filter ->
+            ( { model | studentFilter = filter }, Cmd.none, NoUpdate )
 
 
 view : SharedState -> Model -> Html Msg
@@ -151,54 +162,7 @@ view sharedState model =
                                             ]
 
                                         Just summary ->
-                                            let
-                                                sheets =
-                                                    summary.sheets
-
-                                                achievements =
-                                                    summary.achievements
-                                            in
-                                            [ table []
-                                                ([ caption [ Styles.labelStyle ]
-                                                    [ text "Your Students" ]
-                                                 , tr [ Styles.textStyle ]
-                                                    ([ th [] [ text "Student" ] ]
-                                                        ++ List.map
-                                                            (\sheet ->
-                                                                th
-                                                                    []
-                                                                    [ text sheet.name ]
-                                                            )
-                                                            sheets
-                                                    )
-                                                 ]
-                                                    ++ List.map
-                                                        (\achievement ->
-                                                            tr [ Styles.textStyle ]
-                                                                ([ td []
-                                                                    [ text
-                                                                        (achievement.user_info.first_name
-                                                                            ++ " "
-                                                                            ++ achievement.user_info.last_name
-                                                                        )
-                                                                    ]
-                                                                 ]
-                                                                    ++ List.map
-                                                                        (\point ->
-                                                                            td []
-                                                                                [ text
-                                                                                    (String.fromInt
-                                                                                        point
-                                                                                    )
-                                                                                ]
-                                                                        )
-                                                                        achievement.points
-                                                                )
-                                                        )
-                                                        achievements
-                                                )
-                                            , viewStudentTable model summary
-                                            ]
+                                            viewStudentSummary model summary
                                 , CE.rRowButton <|
                                     CE.PbbButton <|
                                         CE.PbbActive "Send E-Mail To Group" <|
@@ -209,37 +173,143 @@ view sharedState model =
                 )
 
 
-viewStudentTable : Model -> GroupSummary -> Html Msg
-viewStudentTable model summary =
+viewStudentSummary : Model -> GroupSummary -> List (Html Msg)
+viewStudentSummary model summary =
     let
-        achivements =
+        sheets =
+            summary.sheets
+
+        achievements =
             summary.achievements
-    in
-    Lists.ul Mdc
-        "tutor-student-overview"
-        model.mdc
-        (Lists.twoLine
-            :: [ css "max-width" "300px"
-               , css "border" "1px solid rgba(0,0,0,.1)"
-               ]
-        )
-        (List.map
-            (\achivement ->
-                Lists.li []
-                    [ Lists.text []
-                        [ Lists.primaryText []
-                            [ text
-                                (achivement.user_info.first_name
-                                    ++ " "
-                                    ++ achivement.user_info.last_name
-                                )
-                            ]
-                        , Lists.secondaryText []
-                            [ text "emal@todo.de" ]
-                        ]
+
+        achievements_sorted =
+            List.sortWith
+                (\a b ->
+                    compare
+                        a.user_info.last_name
+                        b.user_info.last_name
+                )
+                achievements
+
+        achievements_filtered =
+            List.filter
+                (\a ->
+                    String.contains
+                        (String.toUpper
+                            model.studentFilter
+                        )
+                        (String.toUpper
+                            a.user_info.first_name
+                        )
+                        || String.contains
+                            (String.toUpper
+                                model.studentFilter
+                            )
+                            (String.toUpper
+                                a.user_info.last_name
+                            )
+                )
+                achievements_sorted
+
+        textField index options =
+            [ TextField.view Mdc
+                index
+                model.mdc
+                (TextField.label
+                    "Find Name"
+                    :: options
+                )
+                []
+            , TextField.helperLine []
+                [ TextField.helperText
+                    [ TextField.persistent ]
+                    [ text
+                        "Filter list by name - e.g. 'Alice'"
                     ]
+                ]
+            ]
+    in
+    [ h2
+        []
+        [ text "Your Students" ]
+    , textFieldRow []
+        [ textFieldContainer []
+            (textField
+                "text-field-student-overview-filter"
+                [ Options.onChange
+                    UpdateStudentFilter
+                , Options.onInput
+                    UpdateStudentFilter
+                ]
             )
-            achivements
+        ]
+    , table [ class "striped", class "overview-table" ]
+        [ thead []
+            [ tr [ Styles.textStyle ]
+                ([ th [ class "student-overview-head-horizontal" ]
+                    [ div [] [ span [] [ text "Student" ] ] ]
+                 ]
+                    ++ List.map
+                        (\sheet ->
+                            th
+                                [ class "student-overview-head-vertical" ]
+                                [ div []
+                                    [ span [] [ text (String.left 8 sheet.name) ] ]
+                                ]
+                        )
+                        sheets
+                )
+            ]
+        , tbody []
+            (List.map
+                (\achievement ->
+                    tr [ Styles.textStyle ]
+                        ([ td []
+                            [ text
+                                (achievement.user_info.first_name
+                                    ++ " "
+                                    ++ achievement.user_info.last_name
+                                )
+                            , br [] [ text "" ]
+                            , small [] [ text achievement.user_info.email ]
+                            ]
+                         ]
+                            ++ List.map
+                                (\point ->
+                                    td []
+                                        [ text
+                                            (String.fromInt
+                                                point
+                                            )
+                                        ]
+                                )
+                                achievement.points
+                        )
+                )
+                achievements_filtered
+            )
+        ]
+    ]
+
+
+textFieldContainer : List (Options.Property c m) -> List (Html m) -> Html m
+textFieldContainer options =
+    styled Html.div
+        (cs "text-field-container"
+            :: css "min-width" "200px"
+            :: options
+        )
+
+
+textFieldRow : List (Options.Property c m) -> List (Html m) -> Html m
+textFieldRow options =
+    styled Html.div
+        (cs "text-field-row"
+            :: css "display" "flex"
+            :: css "align-items" "flex-start"
+            :: css "justify-content" "space-between"
+            :: css "flex-wrap" "wrap"
+            :: options
         )
 
 
