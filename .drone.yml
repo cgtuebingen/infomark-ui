@@ -7,6 +7,11 @@ platform:
   arch: amd64
 
 steps:
+- name: submodules
+  image: docker:git
+  commands:
+  - git submodule update --init --recursive
+
 - name: restore-cache
   pull: default
   image: drillster/drone-volume-cache
@@ -68,7 +73,8 @@ volumes:
   host:
     path: /tmp/cache
 
-# ---
-# kind: signature
-# hmac: f89382f27cd2d9cb412622fc536e1d62f94832683339e3cb49d1ce9b321821a7
+---
+kind: signature
+hmac: 4d93ecd3582faf54576b3be8484c2f7f09629f3323b8ea01a00590773975f931
+
 ...
