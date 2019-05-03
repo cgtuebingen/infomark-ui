@@ -1,3 +1,5 @@
+
+
 .dark-red {
     color: #A51E37
 }
@@ -288,7 +290,7 @@ th.student-overview-head-horizontal {
 }
 
 th.student-overview-head-vertical > div {
-  transform: 
+  transform:
     /* Magic Numbers */
     /*translate(25px, 51px)*/
     translate(-15px, 31px)
@@ -299,4 +301,9 @@ th.student-overview-head-vertical > div {
 
 th.student-overview-head-vertical > div > span {
   padding: 5px 10px;
+}
+
+
+h1{
+    font-weight: normal;
 }

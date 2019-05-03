@@ -69,7 +69,7 @@ view sharedState model maybeMsg =
                 [ TC.br_100
                 , TC.ba
                 , TC.b__black_10
-                , TC.shadow_5_ns
+                --, TC.shadow_5_ns
                 , TC.h3_ns
                 , TC.h2
                 , TC.w3_ns

@@ -122,7 +122,7 @@ buttonStyle =
     , TC.no_underline
     , TC.bg_animate
     , TC.dib
-    , TC.b
+    --, TC.b
     , TC.items_center
     , TC.pa3
     , TC.ba
@@ -177,7 +177,7 @@ buttonGreyStyle =
     classes <|
         buttonStyle
             ++ [ TC.dark_gray
-               , TC.b__dark_gray
+               --, TC.b__dark_gray
                , TC.hover_bg_dark_gray
                , TC.hover_white
                ]
@@ -206,7 +206,7 @@ buttonFailureStyle =
 
 
 pillStyle =
-    classes [ TC.br_pill, TC.ph3, TC.pv3 ]
+    classes [ TC.br4, TC.ph3, TC.pv3 ]
 
 
 inputStyle =
@@ -243,9 +243,9 @@ lineInputStyle =
 headerStyle =
     classes
         [ TC.f1
-        , TC.fw8
+        --, TC.fw8
         , TC.black
-        , TC.b
+        --, TC.b
         ]
 
 
