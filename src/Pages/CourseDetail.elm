@@ -70,7 +70,6 @@ import Components.Groups.BiddingView as BiddingView
 import Components.Groups.GroupView as GroupView
 import Components.Toasty
 import Components.UserAvatarEmailView as UserView
-import Debug exposing (log)
 import Dict exposing (Dict)
 import File.Download as Download
 import Html exposing (..)
@@ -485,10 +484,7 @@ updateGroupDisplay sharedState model =
                                 (\g ->
                                     CoursesRequests.courseGroupSummaryPerGroup
                                         model.courseId
-                                        (log
-                                            "requesting summary group"
-                                            g.id
-                                        )
+                                        g.id
                                         (GroupsSummaryResponse g.id)
                                 )
                                 ownGroups
