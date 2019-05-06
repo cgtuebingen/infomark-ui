@@ -295,9 +295,10 @@ view sharedState model =
                     , let
                         isButtonActive =
                             not
-                                (String.isEmpty model.message
-                                    && String.isEmpty
-                                        model.subject
+                                ((String.isEmpty model.message
+                                    || String.isEmpty model.subject
+                                 )
+                                    && not model.isSending
                                 )
 
                         buttonMessage =
