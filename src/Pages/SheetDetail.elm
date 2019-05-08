@@ -508,10 +508,15 @@ sumTasksPoints model =
 
 viewTasks : SharedState -> Model -> Html Msg
 viewTasks sharedState model =
+    let
+        sorted_tasks =
+            List.sortWith compareTaskModel (Dict.values model.taskDict)
+    in
     case model.sheetDetailResponse of
         Success detail ->
             div [ classes [ TC.mh3, TC.pa1 ] ]
-                (Dict.values model.taskDict
+                (sorted_tasks
+                    --Dict.values model.taskDict
                     |> List.map
                         (\taskModelType ->
                             case taskModelType of
@@ -545,3 +550,19 @@ checkIfSheetStillActive : SharedState -> Time.Posix -> Bool
 checkIfSheetStillActive sharedState deadlineTime =
     Time.posixToMillis deadlineTime
         < (Maybe.withDefault 0 <| Maybe.map Time.posixToMillis sharedState.currentTime)
+
+
+compareTaskModel : TaskModel -> TaskModel -> Order
+compareTaskModel modelA modelB =
+    case ( modelA, modelB ) of
+        ( AdminTaskModel a, AdminTaskModel b ) ->
+            compare a.name b.name
+
+        ( StudentTaskModel a, StudentTaskModel b ) ->
+            compare a.task.name b.task.name
+
+        ( TutorTaskModel a, TutorTaskModel b ) ->
+            compare a.task.name b.task.name
+
+        ( _, _ ) ->
+            EQ
