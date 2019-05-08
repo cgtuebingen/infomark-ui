@@ -321,10 +321,31 @@ view sharedState model deadlineReached =
                             , TC.mb1
                             ]
                         ]
-                        [ text <|
-                            ("Upload a Zip-file that contains all package "
-                                ++ "directories from the 'src' folder of your Eclipse project."
-                            )
+                        [ text "For "
+                        , span [ classes [ TC.fw6 ] ] [ text "programming exercises:" ]
+                        , text " Upload a "
+                        , span [ classes [ TC.fw6 ] ] [ text "Zip-file" ]
+                        , text " that contains all "
+                        , span [ classes [ TC.fw6 ] ] [ text "package directories" ]
+                        , text " from the "
+                        , span [ classes [ TC.fw6 ] ] [ text "'src/'" ]
+                        , text " folder of your Eclipse project."
+                        ]
+                    , h5
+                        [ classes
+                            [ TC.normal
+                            , TC.black_80
+                            , TC.mt0
+                            , TC.mb1
+                            ]
+                        ]
+                        [ text "For "
+                        , span [ classes [ TC.fw6 ] ] [ text "text exercises:" ]
+                        , text " Upload a "
+                        , span [ classes [ TC.fw6 ] ] [ text "Zip-file" ]
+                        , text " that contains a plain "
+                        , span [ classes [ TC.fw6 ] ] [ text ".txt-file" ]
+                        , text " with your answers."
                         ]
                     , fileUploader model.hover model.submission DragEnter DragLeave Pick GotFiles
                     ]
