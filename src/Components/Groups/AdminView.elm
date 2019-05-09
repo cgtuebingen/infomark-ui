@@ -33,6 +33,7 @@ import Components.CommonElements
         , rRow
         , rRowButton
         , rRowHeaderActionButtons
+        , twoButtonList
         )
 import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
@@ -329,66 +330,19 @@ trailingIconList model index =
 
 showGroups : Model -> List Group -> List (Html Msg)
 showGroups model allGroups =
-    [ ul
-        [ classes
-            [ TC.ma0
-            , TC.pv2
-            , TC.ph0
-            , TC.w_100
-            , TC.f5
-            , TC.black_80
-            ]
-        ]
+    [ twoButtonList
         (List.map
             (\group ->
                 let
                     tutor =
                         group.tutor
                 in
-                li
-                    [ classes
-                        [ TC.hover_bg_near_white
-                        , TC.h3_ns
-                        , TC.flex
-                        , TC.relative
-                        , TC.items_center
-                        , TC.justify_start
-                        , TC.pv0
-                        , TC.ph3
-                        ]
-                    , onClick (EditGroup model.course_id group.id)
-                    ]
-                    [ i
-                        [ class "material-icons"
-                        , classes
-                            [ TC.mr4
-                            , TC.ml0
-                            , TC.pa2
-                            , TC.black_40
-                            , TC.hover_bg_near_black
-                            , TC.br_100
-                            , TC.hover_near_white
-                            , TC.pointer
-                            ]
-                        ]
-                        [ text "edit" ]
-                    , text (tutor.firstname ++ " " ++ tutor.lastname)
-                    , i
-                        [ class "material-icons"
-                        , classes
-                            [ TC.pointer
-                            , TC.ml_auto
-                            , TC.mr0
-                            , TC.pa2
-                            , TC.black_40
-                            , TC.hover_bg_near_black
-                            , TC.br_100
-                            , TC.hover_near_white
-                            ]
-                        , onClick (SendMailToGroup model.course_id group.id)
-                        ]
-                        [ text "email" ]
-                    ]
+                { button1_icon = "edit"
+                , button1_msg = EditGroup model.course_id group.id
+                , button2_icon = "mail"
+                , button2_msg = SendMailToGroup model.course_id group.id
+                , label = tutor.firstname ++ " " ++ tutor.lastname
+                }
             )
             allGroups
         )

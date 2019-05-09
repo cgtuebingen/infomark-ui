@@ -31,6 +31,7 @@ module Components.CommonElements exposing
     , sliderInputElement
     , textAreaElement
     , timeInputElement
+    , twoButtonList
     , viewFormErrors
     , widePage
     )
@@ -266,6 +267,7 @@ rRowHeaderActionButtons label headerStyle actions =
             , TC.justify_between
             , TC.flex_wrap
             , TC.items_center
+
             --, TC.bb
             , "small-border"
             ]
@@ -585,3 +587,75 @@ hijackOn event decoder =
 hijack : msg -> ( msg, Bool )
 hijack msg =
     ( msg, True )
+
+
+twoButtonList :
+    List
+        { button1_icon : String
+        , button1_msg : msg
+        , button2_icon :
+            String
+        , button2_msg : msg
+        , label : String
+        }
+    -> Html msg
+twoButtonList listElements =
+    ul
+        [ classes
+            [ TC.ma0
+            , TC.pv2
+            , TC.ph0
+            , TC.w_100
+            , TC.f5
+            , TC.black_80
+            ]
+        ]
+        (List.map
+            (\elt ->
+                li
+                    [ classes
+                        [ TC.hover_bg_near_white
+                        , TC.h3_ns
+                        , TC.flex
+                        , TC.relative
+                        , TC.items_center
+                        , TC.justify_start
+                        , TC.pv0
+                        , TC.ph2
+                        ]
+                    ]
+                    [ i
+                        [ class "material-icons"
+                        , classes
+                            [ TC.mr2
+                            , TC.ml0
+                            , TC.pa2
+                            , TC.black_40
+                            , TC.hover_bg_near_black
+                            , TC.br_100
+                            , TC.hover_near_white
+                            , TC.pointer
+                            ]
+                        , onClick elt.button1_msg
+                        ]
+                        [ text elt.button1_icon ]
+                    , text elt.label
+                    , i
+                        [ class "material-icons"
+                        , classes
+                            [ TC.pointer
+                            , TC.ml_auto
+                            , TC.mr0
+                            , TC.pa2
+                            , TC.black_40
+                            , TC.hover_bg_near_black
+                            , TC.br_100
+                            , TC.hover_near_white
+                            ]
+                        , onClick elt.button2_msg
+                        ]
+                        [ text elt.button2_icon ]
+                    ]
+            )
+            listElements
+        )
