@@ -38,6 +38,7 @@ import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Material
 import Material.IconButton as IconButton
 import Material.List as Lists
@@ -182,20 +183,7 @@ view sharedState model =
             List.map Tuple.first allGroupsWithUsers
     in
     rContainer <|
-        (allGroupsWithUsers
-            |> List.map
-                (\gu ->
-                    showGroup sharedState model (Tuple.first gu) allGroups (Tuple.second gu)
-                )
-        )
-            ++ [ div [ classes [ TC.ph4 ] ] <|
-                    [ rRowHeaderActionButtons "Create group"
-                        Styles.listHeadingStyle
-                        [ ( "Create", CreateGroup model.course_id, Styles.buttonGreenStyle )
-                        ]
-                    ]
-               , trailingIconList model "list-exercise-groups"
-               ]
+        showGroups model allGroups
             ++ [ rRowButton <|
                     PbbButton <|
                         PbbActive "Send E-Mail To Course" <|
@@ -337,3 +325,71 @@ trailingIconList model index =
                 , Lists.metaIcon [] "email"
                 ]
         )
+
+
+showGroups : Model -> List Group -> List (Html Msg)
+showGroups model allGroups =
+    [ ul
+        [ classes
+            [ TC.ma0
+            , TC.pv2
+            , TC.ph0
+            , TC.w_100
+            , TC.f5
+            , TC.black_80
+            ]
+        ]
+        (List.map
+            (\group ->
+                let
+                    tutor =
+                        group.tutor
+                in
+                li
+                    [ classes
+                        [ TC.hover_bg_near_white
+                        , TC.h3_ns
+                        , TC.flex
+                        , TC.relative
+                        , TC.items_center
+                        , TC.justify_start
+                        , TC.pv0
+                        , TC.ph3
+                        ]
+                    , onClick (EditGroup model.course_id group.id)
+                    ]
+                    [ i
+                        [ class "material-icons"
+                        , classes
+                            [ TC.mr4
+                            , TC.ml0
+                            , TC.pa2
+                            , TC.black_40
+                            , TC.hover_bg_near_black
+                            , TC.br_100
+                            , TC.hover_near_white
+                            , TC.pointer
+                            ]
+                        ]
+                        [ text "edit" ]
+                    , text (tutor.firstname ++ " " ++ tutor.lastname)
+                    , i
+                        [ class "material-icons"
+                        , classes
+                            [ TC.pointer
+                            , TC.ml_auto
+                            , TC.mr0
+                            , TC.pa2
+                            , TC.black_40
+                            , TC.hover_bg_near_black
+                            , TC.br_100
+                            , TC.hover_near_white
+                            ]
+                        , onClick (SendMailToGroup model.course_id group.id)
+                        ]
+                        [ text "email" ]
+                    ]
+            )
+            allGroups
+        )
+    ]
