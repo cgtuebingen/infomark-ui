@@ -192,58 +192,6 @@ view sharedState model =
                ]
 
 
-showGroup : SharedState -> Model -> Group -> List Group -> List UserEnrollment -> Html Msg
-showGroup sharedState model group allGroups participants =
-    div [ classes [ TC.ph4 ] ] <|
-        [ rRowHeaderActionButtons ("Group - " ++ group.tutor.firstname ++ " " ++ group.tutor.lastname)
-            Styles.listHeadingStyle
-            [ ( "Edit", EditGroup model.course_id group.id, Styles.buttonGreyStyle )
-
-            --     , ( "Users", ToggleUsers group.id, Styles.buttonGreyStyle )
-            , ( "Mail", SendMailToGroup group.courseId group.id, Styles.buttonGreyStyle )
-            ]
-        ]
-            ++ (if model.userVisibleForGroup == Just group.id then
-                    [ showUserList sharedState group allGroups participants
-                    ]
-
-                else
-                    []
-               )
-
-
-showUserList : SharedState -> Group -> List Group -> List UserEnrollment -> Html Msg
-showUserList sharedState currentGroup allGroups users =
-    rContainer <|
-        (users
-            |> List.sortBy (\u -> u.user.lastname)
-            |> List.map
-                (\user ->
-                    showUser sharedState currentGroup allGroups user
-                )
-        )
-
-
-showUser : SharedState -> Group -> List Group -> UserEnrollment -> Html Msg
-showUser sharedState currentGroup allGroups userEnrollment =
-    div [ classes [ TC.flex, TC.flex_wrap, TC.items_center, TC.pa3, TC.ph5_l ] ]
-        [ UserView.view sharedState (Tuple.first <| UserView.initFromUser userEnrollment.user) Nothing
-            |> Html.map WriteEmailToUser
-        , div [ classes [ TC.ml4_l, TC.ml0, TC.mt0_l, TC.mt2, TC.flex ] ]
-            [ multiButton <|
-                (allGroups
-                    |> List.map
-                        (\g ->
-                            ( g.tutor.firstname ++ " " ++ g.tutor.lastname
-                            , g.id == currentGroup.id
-                            , ReassignUser userEnrollment.user currentGroup g
-                            )
-                        )
-                )
-            ]
-        ]
-
-
 updateReasignUserResponse : Model -> List Int -> WebData () -> ( Model, Cmd Msg, SharedStateUpdate )
 updateReasignUserResponse model groupChangedIds response =
     case response of
@@ -311,21 +259,6 @@ performUserEnrollmentRequestForGroups model groupIds =
     groupIds
         |> List.map (\id -> GroupRequests.groupsEnrollmentGetAll model.course_id id (GetEnrollmentResponse id))
         |> Cmd.batch
-
-
-trailingIconList : Model -> Material.Index -> Html Msg
-trailingIconList model index =
-    Lists.ul Mdc
-        index
-        model.mdc
-        [ Lists.avatarList ]
-        (List.repeat 3 <|
-            Lists.li []
-                [ IconButton.view Mdc "edit-group-button" model.mdc [ IconButton.icon { on = "edit", off = "edit" } ] []
-                , text "Line item"
-                , Lists.metaIcon [] "email"
-                ]
-        )
 
 
 showGroups : Model -> List Group -> List (Html Msg)
