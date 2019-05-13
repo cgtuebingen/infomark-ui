@@ -58,7 +58,7 @@ hover_b__red =
 
 textAreaReset : List (Html.Attribute msg)
 textAreaReset =
-    [ style "resize" "none"
+    [ style "resize" "vertical"
 
     -- , style "border" "none"
     , style "outline" "none"
@@ -122,6 +122,7 @@ buttonStyle =
     , TC.no_underline
     , TC.bg_animate
     , TC.dib
+
     --, TC.b
     , TC.items_center
     , TC.pa3
@@ -177,6 +178,7 @@ buttonGreyStyle =
     classes <|
         buttonStyle
             ++ [ TC.dark_gray
+
                --, TC.b__dark_gray
                , TC.hover_bg_dark_gray
                , TC.hover_white
@@ -243,8 +245,10 @@ lineInputStyle =
 headerStyle =
     classes
         [ TC.f1
+
         --, TC.fw8
         , TC.black
+
         --, TC.b
         ]
 

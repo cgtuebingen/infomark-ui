@@ -342,7 +342,7 @@ viewTask sharedState model task grade feedback =
                             { label = "Feedback"
                             , placeholder = "Write some nice feedback for your student."
                             , value = feedback
-                            , rows = 1
+                            , rows = 2
                             }
                             (Feedback grade.id)
                             []
