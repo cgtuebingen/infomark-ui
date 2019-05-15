@@ -887,12 +887,15 @@ viewSheets sharedState model =
                         --    )
                         |> List.append
                             [ if model.courseRole == Just Admin then
-                                rRowHeaderActionButtons "New sheet"
-                                    Styles.listHeadingStyle
-                                    [ ( "Create"
-                                      , NavigateTo <| CreateSheetRoute model.courseId
-                                      , Styles.buttonGreenStyle
-                                      )
+                                nButtonList
+                                    [ { button1_icon = "add_circle"
+                                      , button1_msg =
+                                            NavigateTo <|
+                                                CreateSheetRoute
+                                                    model.courseId
+                                      , label = "Create New"
+                                      , right_buttons = []
+                                      }
                                     ]
 
                               else
