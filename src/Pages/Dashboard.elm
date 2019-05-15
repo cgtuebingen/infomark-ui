@@ -227,24 +227,29 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                     Just (TaskTodo missingTasks) ->
                         let
                             missingTasksFiltered =
-                                missingTasks
-                                    |> List.filter
-                                        (\mt ->
-                                            case Dict.get mt.sheet_id model.sheetDict of
-                                                Just sheet ->
-                                                    Time.posixToMillis
-                                                        (Maybe.withDefault
-                                                            (Time.millisToPosix
-                                                                0
-                                                            )
-                                                            sharedState.currentTime
-                                                        )
-                                                        < Time.posixToMillis
-                                                            sheet.due_at
+                                case fusedEnrollment.role of
+                                    Student ->
+                                        missingTasks
+                                            |> List.filter
+                                                (\mt ->
+                                                    case Dict.get mt.sheet_id model.sheetDict of
+                                                        Just sheet ->
+                                                            Time.posixToMillis
+                                                                (Maybe.withDefault
+                                                                    (Time.millisToPosix
+                                                                        0
+                                                                    )
+                                                                    sharedState.currentTime
+                                                                )
+                                                                < Time.posixToMillis
+                                                                    sheet.due_at
 
-                                                Nothing ->
-                                                    False
-                                        )
+                                                        Nothing ->
+                                                            False
+                                                )
+
+                                    _ ->
+                                        missingTasks
 
                             firstDueDate =
                                 missingTasksFiltered
