@@ -510,8 +510,10 @@ viewRenderCourse sharedState course enrollment =
                         []
                    )
     in
-    article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100, TC.w_50_m, TC.w_third_ns ] ]
-        [ header [ classes [ TC.measure ] ]
+    article [ classes [ TC.cf, TC.fl, TC.ph3, TC.pv5, TC.w_100 ] ]
+        --, TC.w_50_m, TC.w_third_ns ] ]
+        [ header [ classes [] ]
+            -- TC.measure ] ]
             [ div [ classes [ TC.flex, TC.w_100, TC.justify_between, TC.items_center ] ] <|
                 [ h1 [ Styles.listHeadingStyle ] [ text course.name ] -- Bold header
                 ]
@@ -533,7 +535,8 @@ viewRenderCourse sharedState course enrollment =
                 (dateElement "Beginn " <| DF.fullDateFormatter sharedState course.begins_at)
                     ++ (dateElement "Ende " <| DF.fullDateFormatter sharedState course.ends_at)
             ]
-        , div [ classes [ TC.measure ] ] <|
+        , div [ classes [] ] <|
+            --TC.measure ] ] <|
             [ MD.toHtml [ Styles.textStyle ] <| course.description -- Normal paragraph
             ]
                 ++ buttonsHtml
