@@ -27,13 +27,13 @@ import Components.CommonElements
         , PbbState(..)
         , inputElement
         , multiButton
+        , nButtonList
         , r1Column
         , r2Column
         , rContainer
         , rRow
         , rRowButton
         , rRowHeaderActionButtons
-        , twoButtonList
         )
 import Components.UserAvatarEmailView as UserView
 import Dict exposing (Dict)
@@ -65,7 +65,6 @@ type Msg
     | EditGroup Int Int
     | CreateGroup Int
     | WriteEmailToUser Int --Currently not used
-    | Mdc (Material.Msg Msg)
 
 
 
@@ -165,13 +164,6 @@ update sharedState msg model =
         WriteEmailToUser userId ->
             ( model, Cmd.none, NoUpdate )
 
-        Mdc msg_ ->
-            let
-                ( newModel, newCommand ) =
-                    Material.update Mdc msg_ model
-            in
-            ( newModel, newCommand, NoUpdate )
-
 
 view : SharedState -> Model -> Html Msg
 view sharedState model =
@@ -263,7 +255,7 @@ performUserEnrollmentRequestForGroups model groupIds =
 
 showGroups : Model -> List Group -> List (Html Msg)
 showGroups model allGroups =
-    [ twoButtonList
+    [ nButtonList
         (List.map
             (\group ->
                 let
@@ -272,8 +264,11 @@ showGroups model allGroups =
                 in
                 { button1_icon = "edit"
                 , button1_msg = EditGroup model.course_id group.id
-                , button2_icon = "mail"
-                , button2_msg = SendMailToGroup model.course_id group.id
+                , right_buttons =
+                    [ { button_icon = "mail"
+                      , button_msg = SendMailToGroup model.course_id group.id
+                      }
+                    ]
                 , label = tutor.firstname ++ " " ++ tutor.lastname
                 }
             )

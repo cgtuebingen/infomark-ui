@@ -9,7 +9,9 @@ module Components.CommonElements exposing
     , inputElement
     , inputLabel
     , multiButton
+    , nButtonList
     , normalPage
+    , oneButtonList
     , pageContainer
     , progressBarButton
     , r1Column
@@ -31,7 +33,6 @@ module Components.CommonElements exposing
     , sliderInputElement
     , textAreaElement
     , timeInputElement
-    , twoButtonList
     , viewFormErrors
     , widePage
     )
@@ -589,17 +590,8 @@ hijack msg =
     ( msg, True )
 
 
-twoButtonList :
-    List
-        { button1_icon : String
-        , button1_msg : msg
-        , button2_icon :
-            String
-        , button2_msg : msg
-        , label : String
-        }
-    -> Html msg
-twoButtonList listElements =
+oneButtonList : List { button_icon : String, button_msg : msg, label : String } -> Html msg
+oneButtonList listElements =
     ul
         [ classes
             [ TC.ma0
@@ -624,7 +616,70 @@ twoButtonList listElements =
                         , TC.ph2
                         ]
                     ]
-                    [ i
+                    [ span
+                        [ classes
+                            [ TC.mr2
+                            , TC.ml0
+                            , TC.pa2
+                            , TC.br_100
+                            ]
+                        ]
+                        [ text elt.label ]
+                    , i
+                        [ class "material-icons"
+                        , classes
+                            [ TC.mr0
+                            , TC.ml_auto
+                            , TC.pa2
+                            , TC.black_40
+                            , TC.hover_bg_near_black
+                            , TC.br_100
+                            , TC.hover_near_white
+                            , TC.pointer
+                            ]
+                        , onClick elt.button_msg
+                        ]
+                        [ text elt.button_icon ]
+                    ]
+            )
+            listElements
+        )
+
+
+nButtonList :
+    List
+        { button1_icon : String
+        , button1_msg : msg
+        , right_buttons : List { button_icon : String, button_msg : msg }
+        , label : String
+        }
+    -> Html msg
+nButtonList listElements =
+    ul
+        [ classes
+            [ TC.ma0
+            , TC.pv2
+            , TC.ph0
+            , TC.w_100
+            , TC.f5
+            , TC.black_80
+            ]
+        ]
+        (List.map
+            (\elt ->
+                li
+                    [ classes
+                        [ TC.hover_bg_near_white
+                        , TC.h3_ns
+                        , TC.flex
+                        , TC.relative
+                        , TC.items_center
+                        , TC.justify_start
+                        , TC.pv0
+                        , TC.ph2
+                        ]
+                    ]
+                    ([ i
                         [ class "material-icons"
                         , classes
                             [ TC.mr2
@@ -639,23 +694,35 @@ twoButtonList listElements =
                         , onClick elt.button1_msg
                         ]
                         [ text elt.button1_icon ]
-                    , text elt.label
-                    , i
-                        [ class "material-icons"
-                        , classes
-                            [ TC.pointer
-                            , TC.ml_auto
-                            , TC.mr0
-                            , TC.pa2
-                            , TC.black_40
-                            , TC.hover_bg_near_black
-                            , TC.br_100
-                            , TC.hover_near_white
-                            ]
-                        , onClick elt.button2_msg
-                        ]
-                        [ text elt.button2_icon ]
-                    ]
+                     , text elt.label
+                     ]
+                        ++ List.indexedMap
+                            (\idx b ->
+                                i
+                                    [ class "material-icons"
+                                    , classes
+                                        ([ TC.pointer
+                                         , TC.mr0
+                                         , TC.ml3
+                                         , TC.pa2
+                                         , TC.black_40
+                                         , TC.hover_bg_near_black
+                                         , TC.br_100
+                                         , TC.hover_near_white
+                                         ]
+                                            ++ (if idx == 0 then
+                                                    [ TC.ml_auto ]
+
+                                                else
+                                                    []
+                                               )
+                                        )
+                                    , onClick b.button_msg
+                                    ]
+                                    [ text b.button_icon ]
+                            )
+                            elt.right_buttons
+                    )
             )
             listElements
         )

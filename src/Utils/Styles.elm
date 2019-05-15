@@ -244,7 +244,7 @@ lineInputStyle =
 
 headerStyle =
     classes
-        [ TC.f1
+        [ TC.f2
 
         --, TC.fw8
         , TC.black
@@ -255,8 +255,8 @@ headerStyle =
 
 sectionStyle =
     classes
-        [ TC.f2
-        , TC.fw6
+        [ TC.f4
+        , TC.fw2
         , TC.black
         , TC.b
         , TC.lh_title

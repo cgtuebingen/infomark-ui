@@ -226,8 +226,28 @@ viewCourseWithTodos sharedState model fusedEnrollment =
 
                     Just (TaskTodo missingTasks) ->
                         let
-                            firstDueDate =
+                            missingTasksFiltered =
                                 missingTasks
+                                    |> List.filter
+                                        (\mt ->
+                                            case Dict.get mt.sheet_id model.sheetDict of
+                                                Just sheet ->
+                                                    Time.posixToMillis
+                                                        (Maybe.withDefault
+                                                            (Time.millisToPosix
+                                                                0
+                                                            )
+                                                            sharedState.currentTime
+                                                        )
+                                                        < Time.posixToMillis
+                                                            sheet.due_at
+
+                                                Nothing ->
+                                                    False
+                                        )
+
+                            firstDueDate =
+                                missingTasksFiltered
                                     |> List.map (\mt -> mt.sheet_id)
                                     |> List.map (\sid -> Dict.get sid model.sheetDict)
                                     |> List.filterMap identity
@@ -237,7 +257,7 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                                     |> List.head
 
                             taskWithSheet =
-                                missingTasks
+                                missingTasksFiltered
                                     |> List.map (\mt -> ( mt, Dict.get mt.sheet_id model.sheetDict ))
                                     |> List.filterMap
                                         (\( mt, sheet ) ->
@@ -250,7 +270,7 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                                         )
                         in
                         (CE.rRowExtraSpacing <|
-                            [ span [ Styles.listHeadingStyle ]
+                            [ span [ Styles.labelStyle ]
                                 [ text <|
                                     "You have missing tasks to complete"
                                         ++ (case firstDueDate of
@@ -267,16 +287,25 @@ viewCourseWithTodos sharedState model fusedEnrollment =
                                 ]
                             ]
                         )
-                            :: (taskWithSheet
+                            :: [ taskWithSheet
                                     |> List.map
                                         (\( mt, sheet ) ->
-                                            CE.rRowHeaderActionButtons
-                                                (mt.task.name ++ "  from " ++ sheet.name ++ " due on " ++ dateAndTimeShort sheet.due_at)
-                                                Styles.listHeadingStyle
-                                                [ ( "Submit", NavigateTo <| SheetDetailRoute fusedEnrollment.course.id sheet.id, Styles.buttonGreenStyle )
-                                                ]
+                                            { button_icon = "forward"
+                                            , button_msg =
+                                                NavigateTo <|
+                                                    SheetDetailRoute
+                                                        fusedEnrollment.course.id
+                                                        sheet.id
+                                            , label =
+                                                mt.task.name
+                                                    ++ "  from "
+                                                    ++ sheet.name
+                                                    ++ " due on "
+                                                    ++ dateAndTimeShort sheet.due_at
+                                            }
                                         )
-                               )
+                                    |> CE.oneButtonList
+                               ]
 
                     Just (GradeTodo missingGrades) ->
                         let

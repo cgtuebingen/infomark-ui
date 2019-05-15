@@ -54,6 +54,7 @@ import Components.CommonElements
         , datesDisplayContainer
         , inputElement
         , multiButton
+        , nButtonList
         , normalPage
         , pageContainer
         , r2Column
@@ -806,10 +807,10 @@ viewSheets sharedState model =
     in
     rContainer <|
         [ rRowHeader "Sheets"
-        , div [ classes [ TC.ph4 ] ] <|
+        , div [ classes [] ] <|
             case model.sheetRequest of
                 Success sheets ->
-                    sheets
+                    [ sheets
                         |> List.sortBy (\sheet -> Time.posixToMillis sheet.due_at)
                         |> List.map
                             (\sheet ->
@@ -828,32 +829,63 @@ viewSheets sharedState model =
                                             Nothing ->
                                                 ( sheet.name, defaultStyle )
                                 in
-                                rRowHeaderActionButtons
-                                    (Tuple.first toDisplay)
-                                    (Tuple.second toDisplay)
-                                <|
-                                    ([ ( "Download"
-                                       , Download <| unwrap <| sheetFile model.courseId sheet.id
-                                       , Styles.buttonGreyStyle
-                                       )
-                                     , ( "Show"
-                                       , NavigateTo <| SheetDetailRoute model.courseId sheet.id
-                                       , Styles.buttonGreyStyle
-                                       )
-                                     ]
-                                        ++ (if model.courseRole == Just Admin then
-                                                [ ( "Edit"
-                                                  , NavigateTo <| EditSheetRoute model.courseId sheet.id
-                                                  , Styles.buttonGreyStyle
-                                                  )
-                                                ]
+                                { button1_icon = "get_app"
+                                , button1_msg =
+                                    Download <|
+                                        unwrap <|
+                                            sheetFile model.courseId
+                                                sheet.id
+                                , right_buttons =
+                                    (if model.courseRole == Just Admin then
+                                        [ { button_icon = "edit"
+                                          , button_msg =
+                                                NavigateTo <|
+                                                    EditSheetRoute model.courseId
+                                                        sheet.id
+                                          }
+                                        ]
 
-                                            else
-                                                []
-                                           )
+                                     else
+                                        []
                                     )
+                                        ++ [ { button_icon = "arrow_forward"
+                                             , button_msg =
+                                                NavigateTo <|
+                                                    SheetDetailRoute
+                                                        model.courseId
+                                                        sheet.id
+                                             }
+                                           ]
+                                , label = Tuple.first toDisplay
+                                }
                             )
-                        |> flip List.append
+                        |> nButtonList
+                    ]
+                        --        rRowHeaderActionButtons
+                        --            (Tuple.first toDisplay)
+                        --            (Tuple.second toDisplay)
+                        --        <|
+                        --            ([ ( "Download"
+                        --               , Download <| unwrap <| sheetFile model.courseId sheet.id
+                        --               , Styles.buttonGreyStyle
+                        --               )
+                        --             , ( "Show"
+                        --               , NavigateTo <| SheetDetailRoute model.courseId sheet.id
+                        --               , Styles.buttonGreyStyle
+                        --               )
+                        --             ]
+                        --                ++ (if model.courseRole == Just Admin then
+                        --                        [ ( "Edit"
+                        --                          , NavigateTo <| EditSheetRoute model.courseId sheet.id
+                        --                          , Styles.buttonGreyStyle
+                        --                          )
+                        --                        ]
+                        --                    else
+                        --                        []
+                        --                   )
+                        --            )
+                        --    )
+                        |> List.append
                             [ if model.courseRole == Just Admin then
                                 rRowHeaderActionButtons "New sheet"
                                     Styles.listHeadingStyle
@@ -885,40 +917,48 @@ viewMaterials sharedState model materialType =
     in
     rContainer <|
         [ rRowHeader materialTypeLabel
-        , div [ classes [ TC.ph4 ] ] <|
+        , div [ classes [] ] <|
             case model.materialRequest of
                 Success materials ->
-                    materials
+                    -- TODO stuff here
+                    [ materials
                         |> List.filter (\m -> m.material_type == materialType)
                         |> List.sortBy (\m -> Time.posixToMillis m.lecture_at)
                         |> List.map
                             (\m ->
-                                rRowHeaderActionButtons m.name Styles.listHeadingStyle <|
-                                    ([ ( "Download"
-                                       , Download <| Maybe.withDefault "" <| m.file_url
-                                       , Styles.buttonGreyStyle
-                                       )
-                                     ]
-                                        ++ (if model.courseRole == Just Admin then
-                                                [ ( "Edit"
-                                                  , NavigateTo <| EditMaterialRoute model.courseId m.id
-                                                  , Styles.buttonGreyStyle
-                                                  )
-                                                ]
+                                { button1_icon = "get_app"
+                                , button1_msg =
+                                    Download <|
+                                        Maybe.withDefault "" <|
+                                            m.file_url
+                                , right_buttons =
+                                    if model.courseRole == Just Admin then
+                                        [ { button_icon = "edit"
+                                          , button_msg =
+                                                NavigateTo <|
+                                                    EditMaterialRoute
+                                                        model.courseId
+                                                        m.id
+                                          }
+                                        ]
 
-                                            else
-                                                []
-                                           )
-                                    )
+                                    else
+                                        []
+                                , label = m.name
+                                }
                             )
-                        |> flip List.append
+                        |> nButtonList
+                    ]
+                        |> List.append
                             [ if model.courseRole == Just Admin then
-                                rRowHeaderActionButtons createNewLabel
-                                    Styles.listHeadingStyle
-                                    [ ( "Create"
-                                      , NavigateTo <| CreateMaterialRoute model.courseId
-                                      , Styles.buttonGreenStyle
-                                      )
+                                nButtonList
+                                    [ { button1_icon = "add_circle"
+                                      , button1_msg =
+                                            NavigateTo <|
+                                                CreateMaterialRoute model.courseId
+                                      , right_buttons = []
+                                      , label = "Create New"
+                                      }
                                     ]
 
                               else
