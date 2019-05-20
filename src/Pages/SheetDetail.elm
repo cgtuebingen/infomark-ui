@@ -229,7 +229,11 @@ update sharedState msg model =
             updateTask sharedState model id Cmd.none taskMsg
 
         GetOwnGroupsResponse response ->
-            ( { model | ownGroupsResponse = response }, Cmd.none, NoUpdate )
+            let
+                ( newModel, cmds ) =
+                    fillModelTaskDict { model | ownGroupsResponse = response }
+            in
+            ( newModel, cmds, NoUpdate )
 
         _ ->
             ( model, Cmd.none, NoUpdate )
