@@ -4,6 +4,7 @@ module Api.Request.Exam exposing
     , examEnrollmentGet
     , examEnrollmentPost
     , examEnrollmentPut
+    , examEnrollmentsStudentGet
     , examGet
     , examPost
     , examPut
@@ -14,14 +15,23 @@ import Api.Data.Exam
     exposing
         ( Exam
         , ExamEnrollment
+        , ExamEnrollments
         , Exams
         , enrollmentDecoder
         , enrollmentEncoder
+        , enrollmentsDecoder
         , examDecoder
         , examEncoder
         , examsDecoder
         )
-import Api.Endpoint exposing (courseExams, exam, examEnrollment, unwrap)
+import Api.Endpoint
+    exposing
+        ( courseExams
+        , exam
+        , examEnrollment
+        , examEnrollments
+        , unwrap
+        )
 import Api.Helper
     exposing
         ( deleteExpectNothing
@@ -81,6 +91,14 @@ examEnrollmentPost courseId examId msg =
 examEnrollmentDelete : Int -> Int -> (WebData () -> msg) -> Cmd msg
 examEnrollmentDelete courseId examId msg =
     deleteExpectNothing (unwrap <| examEnrollment courseId examId) msg
+
+
+examEnrollmentsStudentGet : (WebData ExamEnrollments -> msg) -> Cmd msg
+examEnrollmentsStudentGet msg =
+    get (unwrap <| examEnrollments)
+        msg
+    <|
+        enrollmentsDecoder
 
 
 examEnrollmentGet : Int -> Int -> (WebData ExamEnrollment -> msg) -> Cmd msg

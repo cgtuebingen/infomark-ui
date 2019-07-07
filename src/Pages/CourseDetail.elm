@@ -33,7 +33,7 @@ module Pages.CourseDetail exposing (Model, Msg(..), init, update, view)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
-import Api.Data.Exam exposing (Exam, ExamEnrollment, Exams)
+import Api.Data.Exam exposing (Exam, ExamEnrollment, ExamEnrollments, Exams)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
@@ -115,9 +115,6 @@ type Msg
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
     | PointOverviewResponse (WebData (List PointOverview))
-    | ExamsResponse (WebData Exams)
-    | ToggleExamEnrollmentResponse Int (WebData ())
-    | EnrollmentResponse (WebData ExamEnrollment)
     | ToggleEnrollToExam Int
     | GroupMsg GroupMsgTypes
     | SheetRequestResponse (WebData (List Sheet))
@@ -130,6 +127,9 @@ type Msg
     | WriteTo Int
     | Download String
     | WriteEmailMsg Int
+    | ExamEnrollmentResponse (WebData ExamEnrollments)
+    | ExamsResponse (WebData Exams)
+    | ToggleExamEnrollmentResponse Int (WebData ())
     | SetExamField Field String
     | ExamDateMsg Int DatePicker.Msg
     | ExamTimeMsg Int TimePicker.Msg
@@ -201,6 +201,7 @@ init id =
         , CoursesRequests.courseMaterialsGet id MaterialRequestResponse
         , CoursesRequests.coursePointsGet id PointOverviewResponse
         , ExamRequests.examsGet id ExamsResponse
+        , ExamRequests.examEnrollmentsStudentGet ExamEnrollmentResponse
         ]
     )
 
@@ -427,43 +428,56 @@ update sharedState msg model =
             )
 
         ExamsResponse response ->
-            let
-                exams =
-                    case response of
-                        Success ex ->
-                            ex
-
-                        _ ->
-                            model.exams
-
-                examIds =
-                    exams |> List.map (\ex -> ex.id)
-            in
-            ( { model | exams = exams }
-            , Cmd.batch
-                (examIds
-                    |> List.map
-                        (\exId ->
-                            ExamRequests.examEnrollmentGet model.courseId
-                                exId
-                                EnrollmentResponse
-                        )
-                )
-            , NoUpdate
-            )
-
-        EnrollmentResponse response ->
             case response of
-                Success enrollment ->
-                    let
-                        examEnrollment =
-                            Dict.insert enrollment.exam_id
-                                enrollment
-                                model.examEnrollments
-                    in
-                    ( { model | examEnrollments = model.examEnrollments }
+                Success exams ->
+                    ( { model | exams = exams }
                     , Cmd.none
                     , NoUpdate
+                    )
+
+                _ ->
+                    ( model, Cmd.none, NoUpdate )
+
+        ExamEnrollmentResponse response ->
+            case response of
+                Success enrollments ->
+                    let
+                        examEnrollments =
+                            Dict.fromList
+                                (List.map
+                                    (\en ->
+                                        ( en.exam_id, en )
+                                    )
+                                    enrollments
+                                )
+                    in
+                    ( { model | examEnrollments = examEnrollments }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+
+                Failure err ->
+                    let
+                        errorMsg =
+                            case err of
+                                Http.BadUrl url ->
+                                    "BadUrl: " ++ url
+
+                                Http.Timeout ->
+                                    "Timeout"
+
+                                Http.NetworkError ->
+                                    "Networerror"
+
+                                Http.BadStatus status ->
+                                    "BadStatus: " ++ String.fromInt status
+
+                                Http.BadBody dbg ->
+                                    "BadBody: " ++ dbg
+                    in
+                    ( model
+                    , Cmd.none
+                    , ShowToast <| Components.Toasty.Error "Error" errorMsg
                     )
 
                 _ ->
@@ -491,9 +505,34 @@ update sharedState msg model =
             case response of
                 Success _ ->
                     ( model
+                    , ExamRequests.examEnrollmentsStudentGet ExamEnrollmentResponse
+                    , ShowToast <|
+                        Components.Toasty.Success "Success"
+                            "Änderung gespeichert"
+                    )
+
+                Failure err ->
+                    let
+                        errorMsg =
+                            case err of
+                                Http.BadUrl url ->
+                                    "BadUrl: " ++ url
+
+                                Http.Timeout ->
+                                    "Timeout"
+
+                                Http.NetworkError ->
+                                    "Networerror"
+
+                                Http.BadStatus status ->
+                                    "BadStatus: " ++ String.fromInt status
+
+                                Http.BadBody dbg ->
+                                    "BadBody: " ++ dbg
+                    in
+                    ( model
                     , Cmd.none
-                      -- TODO load new enrollment from server
-                    , ShowToast <| Components.Toasty.Success "Success" "Changed Saved (TODO show)"
+                    , ShowToast <| Components.Toasty.Error "Error" errorMsg
                     )
 
                 _ ->
@@ -834,7 +873,10 @@ viewExamsStudents sharedState model =
             ]
 
     else
-        text "TODO enrolled show shit!"
+        div [ classes [ TC.w_100, "bg-light-gold", TC.pa4 ] ]
+            [ rRowHeader "Klausur Anmeldung"
+            , viewExamEnrollmentForm sharedState model
+            ]
 
 
 viewExamEnrollmentRequest : SharedState -> Model -> Html Msg
@@ -844,8 +886,7 @@ viewExamEnrollmentRequest sharedState model =
             [ text "Sie sind bisner "
             , span [ classes [ TC.b ] ] [ text "NICHT " ]
             , text "zur Klausur angemeldet! "
-            , text "Bitte teilen Sie uns mit ob Sie vorhaben an der Klausur teil "
-            , text "zu nehmen. Sie dürfen nur mitschreiben wenn Sie sich hier "
+            , text "Sie dürfen nur mitschreiben wenn Sie sich hier "
             , text "angemeldet haben!"
             ]
         , rRow

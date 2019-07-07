@@ -23,6 +23,7 @@ module Api.Endpoint exposing
     , courses
     , exam
     , examEnrollment
+    , examEnrollments
     , grade
     , group
     , groupEmail
@@ -352,6 +353,16 @@ examEnrollment courseId examId =
         , String.fromInt courseId
         , "exams"
         , String.fromInt examId
+        , "enrollments"
+        ]
+        []
+
+
+examEnrollments : Endpoint
+examEnrollments =
+    url
+        [ "account"
+        , "exams"
         , "enrollments"
         ]
         []

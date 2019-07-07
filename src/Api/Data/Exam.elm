@@ -1,9 +1,11 @@
 module Api.Data.Exam exposing
     ( Exam
     , ExamEnrollment
+    , ExamEnrollments
     , Exams
     , enrollmentDecoder
     , enrollmentEncoder
+    , enrollmentsDecoder
     , examDecoder
     , examEncoder
     , examsDecoder
@@ -36,6 +38,10 @@ type alias ExamEnrollment =
     , course_id : Int
     , exam_id : Int
     }
+
+
+type alias ExamEnrollments =
+    List ExamEnrollment
 
 
 examDecoder : Decoder Exam
@@ -72,6 +78,11 @@ enrollmentDecoder =
         |> required "user_id" Decode.int
         |> required "course_id" Decode.int
         |> required "exam_id" Decode.int
+
+
+enrollmentsDecoder : Decoder ExamEnrollments
+enrollmentsDecoder =
+    Decode.list enrollmentDecoder
 
 
 enrollmentEncoder : ExamEnrollment -> Encode.Value
