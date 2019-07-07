@@ -69,6 +69,7 @@ import Components.CommonElements
         , rRowHeaderActionButtons
         , searchElement
         , textAreaElement
+        , timeInputElement
         , widePage
         )
 import Components.Groups.AdminView as GroupAdminView
@@ -76,6 +77,8 @@ import Components.Groups.BiddingView as BiddingView
 import Components.Groups.GroupView as GroupView
 import Components.Toasty
 import Components.UserAvatarEmailView as UserView
+import Date
+import DatePicker exposing (DateEvent(..), defaultSettings)
 import Debug exposing (log, toString)
 import Dict exposing (Dict)
 import File.Download as Download
@@ -91,7 +94,9 @@ import SharedState exposing (SharedState, SharedStateUpdate(..))
 import Tachyons exposing (classes, tachyons)
 import Tachyons.Classes as TC
 import Time
+import TimePicker exposing (TimeEvent(..), TimePicker)
 import Toasty
+import Utils.DateAndTimeUtils as DTU
 import Utils.DateFormatter as DF
 import Utils.Styles as Styles
 import Utils.Utils exposing (flip, handleLogoutErrors, perform, tupleMapThree)
@@ -126,6 +131,10 @@ type Msg
     | Download String
     | WriteEmailMsg Int
     | SetExamField Field String
+    | ExamDateMsg Int DatePicker.Msg
+    | ExamTimeMsg Int TimePicker.Msg
+    | ExamUpdate Int
+    | ExamDelete Int
 
 
 type alias Model =
@@ -662,54 +671,154 @@ viewExamsAdmin sharedState model =
     normalPage <|
         [ rRowHeader "Klausuren"
         , rRow
-            (List.map
-                (\exam ->
-                    rContainer
-                        [ rRow
-                            (inputElement
-                                { label = "Bezeichnung"
-                                , placeholder = "Hauptklausur"
-                                , fieldType = "text"
-                                , value = exam.name
-                                }
-                                (ExamName exam.id)
-                                []
-                                SetExamField
-                            )
-                        , rRow
-                            (textAreaElement
-                                { label = "Bezeichnung"
-                                , placeholder = "Hörsaal N7, N8, 90 Minuten"
-                                , value = exam.description
-                                , rows = 4
-                                }
-                                (ExamDescription exam.id)
-                                []
-                                SetExamField
-                            )
-                        , rRow <|
-                            r2Column
-                                [ text "left" ]
-                                [ text "right" ]
-                        ]
-                 ---      (dateInputElement
-                 ---          { label = "Datum"
-                 ---          , value = date
-                 ---          , datePicker = datePicker
-                 ---          , settings = datePickerSettings sharedState
-                 ---          }
-                 ---      )
-                 ---      (dateInputElement
-                 ---          { label = "Uhrzeit"
-                 ---          , value = time
-                 ---          , datePicker = timePicker
-                 ---          , settings = timePickerSettings sharedState
-                 ---          }
-                 ---      )
-                )
-                model.exams
+            (model.exams
+                |> List.map
+                    (viewExamEditor
+                        sharedState
+                        model
+                    )
             )
         ]
+
+
+viewExamEditor : SharedState -> Model -> Exam -> Html Msg
+viewExamEditor sharedState model exam =
+    let
+        datePicker =
+            DatePicker.initFromDate <|
+                Date.fromPosix
+                    (Maybe.withDefault
+                        Time.utc
+                        sharedState.timezone
+                    )
+                    (Maybe.withDefault
+                        (Time.millisToPosix 0)
+                        (Just exam.exam_time)
+                    )
+
+        examDate =
+            Date.fromPosix
+                (Maybe.withDefault Time.utc
+                    sharedState.timezone
+                )
+                (Maybe.withDefault
+                    (Time.millisToPosix 0)
+                    (Just exam.exam_time)
+                )
+
+        examTime =
+            DTU.pickerTimeFromPosix
+                (Maybe.withDefault Time.utc sharedState.timezone)
+                exam.exam_time
+
+        timePicker =
+            TimePicker.init <| Just examTime
+    in
+    rContainer
+        [ rRow
+            (inputElement
+                { label = "Bezeichnung"
+                , placeholder = "Hauptklausur"
+                , fieldType = "text"
+                , value = exam.name
+                }
+                (ExamName exam.id)
+                []
+                SetExamField
+            )
+        , rRow
+            (textAreaElement
+                { label = "Bezeichnung"
+                , placeholder = "Hörsaal N7, N8, 90 Minuten"
+                , value = exam.description
+                , rows = 4
+                }
+                (ExamDescription exam.id)
+                []
+                SetExamField
+            )
+        , rRow <|
+            r2Column
+                (dateInputElement
+                    { label = "Datum"
+                    , datePicker = datePicker
+                    , settings = datePickerSettings sharedState
+                    , value = Just examDate
+                    }
+                    ExamDate
+                    []
+                    (ExamDateMsg exam.id)
+                )
+                (timeInputElement
+                    { label = "Uhrzeit"
+                    , placeholder = "Uhrzeit auswählen"
+                    , timePicker = timePicker
+                    , settings = timePickerSettings
+                    }
+                    ExamTime
+                    []
+                    (ExamTimeMsg exam.id)
+                )
+        , rRow
+            [ i
+                [ class "material-icons"
+                , classes
+                    [ TC.mr0
+                    , TC.ml_auto
+                    , TC.pa2
+                    , TC.black_40
+                    , TC.hover_bg_near_black
+                    , TC.br_100
+                    , TC.hover_near_white
+                    , TC.pointer
+                    ]
+                , onClick (ExamUpdate exam.id)
+                ]
+                [ text "cloud_upload" ]
+            , i
+                [ class "material-icons"
+                , classes
+                    [ TC.mr0
+                    , TC.ml_auto
+                    , TC.pa2
+                    , TC.black_40
+                    , TC.hover_bg_near_black
+                    , TC.br_100
+                    , TC.hover_near_white
+                    , TC.pointer
+                    ]
+                , onClick (ExamDelete exam.id)
+                ]
+                [ text "delete" ]
+            ]
+        ]
+
+
+datePickerSettings : SharedState -> DatePicker.Settings
+datePickerSettings sharedState =
+    let
+        curTime =
+            Maybe.withDefault (Time.millisToPosix 0) sharedState.currentTime
+    in
+    { defaultSettings
+        | inputAttributes =
+            [ Styles.lineInputStyle
+            , classes [ TC.w_100, TC.mb3 ]
+            ]
+
+        -- , dateFormatter = DF.dateToShortFormatString sharedState
+        , dayFormatter = DF.shortDayFormatter sharedState
+        , monthFormatter = DF.monthFormatter sharedState
+    }
+
+
+timePickerSettings : TimePicker.Settings
+timePickerSettings =
+    let
+        defaultSettings =
+            TimePicker.defaultSettings
+    in
+    { defaultSettings | showSeconds = False, minuteStep = 15, use24Hours = True }
 
 
 viewExamsStudents : SharedState -> Model -> Html Msg
