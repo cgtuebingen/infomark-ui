@@ -33,6 +33,7 @@ module Pages.CourseDetail exposing (Model, Msg(..), init, update, view)
 import Api.Data.AccountEnrollment as AccountEnrollment exposing (AccountEnrollment)
 import Api.Data.Course exposing (Course)
 import Api.Data.CourseRole as CourseRole exposing (CourseRole(..))
+import Api.Data.Exam exposing (Exam, ExamEnrollment, Exams)
 import Api.Data.Group as Group exposing (Group)
 import Api.Data.GroupBid as GroupBid exposing (GroupBid)
 import Api.Data.GroupEnrollmentChange as GroupEnrollmentChange exposing (GroupEnrollmentChange)
@@ -45,12 +46,15 @@ import Api.Data.UserEnrollment as UserEnrollment exposing (UserEnrollment)
 import Api.Endpoint exposing (sheetFile, unwrap)
 import Api.Request.Account as AccountRequests
 import Api.Request.Courses as CoursesRequests
+import Api.Request.Exam as ExamRequests
 import Api.Request.Groups as GroupsRequests
 import Api.Request.Material as MaterialRequests
 import Browser.Navigation exposing (pushUrl)
 import Components.CommonElements
     exposing
-        ( dateElement
+        ( checkBoxes
+        , dateElement
+        , dateInputElement
         , datesDisplayContainer
         , inputElement
         , multiButton
@@ -64,6 +68,7 @@ import Components.CommonElements
         , rRowHeader
         , rRowHeaderActionButtons
         , searchElement
+        , textAreaElement
         , widePage
         )
 import Components.Groups.AdminView as GroupAdminView
@@ -71,6 +76,7 @@ import Components.Groups.BiddingView as BiddingView
 import Components.Groups.GroupView as GroupView
 import Components.Toasty
 import Components.UserAvatarEmailView as UserView
+import Debug exposing (log, toString)
 import Dict exposing (Dict)
 import File.Download as Download
 import Html exposing (..)
@@ -104,6 +110,10 @@ type Msg
     | SearchUserForGroupResponse (WebData UserEnrollment) -- Search for a specific user to change the group (Only admins)
     | GroupChangedResponse (WebData GroupEnrollmentChange) -- Response for a group change initiated by an admin
     | PointOverviewResponse (WebData (List PointOverview))
+    | ExamsResponse (WebData Exams)
+    | ToggleExamEnrollmentResponse Int (WebData ())
+    | EnrollmentResponse (WebData ExamEnrollment)
+    | ToggleEnrollToExam Int
     | GroupMsg GroupMsgTypes
     | SheetRequestResponse (WebData (List Sheet))
     | MaterialRequestResponse (WebData (List Material))
@@ -115,10 +125,13 @@ type Msg
     | WriteTo Int
     | Download String
     | WriteEmailMsg Int
+    | SetExamField Field String
 
 
 type alias Model =
     { courseId : Int
+    , exams : List Exam
+    , examEnrollments : Dict Int ExamEnrollment
     , courseRole : Maybe CourseRole
     , courseRequest : WebData Course
     , sheetRequest : WebData (List Sheet)
@@ -153,6 +166,8 @@ type GroupModel
 init : Int -> ( Model, Cmd Msg )
 init id =
     ( { courseId = id
+      , exams = []
+      , examEnrollments = Dict.empty
       , courseRole = Nothing
       , courseRequest = Loading
       , sheetRequest = Loading
@@ -176,6 +191,7 @@ init id =
         , CoursesRequests.courseSheetsGet id SheetRequestResponse
         , CoursesRequests.courseMaterialsGet id MaterialRequestResponse
         , CoursesRequests.coursePointsGet id PointOverviewResponse
+        , ExamRequests.examsGet id ExamsResponse
         ]
     )
 
@@ -401,6 +417,86 @@ update sharedState msg model =
             , NoUpdate
             )
 
+        ExamsResponse response ->
+            let
+                exams =
+                    case response of
+                        Success ex ->
+                            ex
+
+                        _ ->
+                            model.exams
+
+                examIds =
+                    exams |> List.map (\ex -> ex.id)
+            in
+            ( { model | exams = exams }
+            , Cmd.batch
+                (examIds
+                    |> List.map
+                        (\exId ->
+                            ExamRequests.examEnrollmentGet model.courseId
+                                exId
+                                EnrollmentResponse
+                        )
+                )
+            , NoUpdate
+            )
+
+        EnrollmentResponse response ->
+            case response of
+                Success enrollment ->
+                    let
+                        examEnrollment =
+                            Dict.insert enrollment.exam_id
+                                enrollment
+                                model.examEnrollments
+                    in
+                    ( { model | examEnrollments = model.examEnrollments }
+                    , Cmd.none
+                    , NoUpdate
+                    )
+
+                _ ->
+                    ( model, Cmd.none, NoUpdate )
+
+        ToggleEnrollToExam exam_id ->
+            ( model
+            , if Dict.member exam_id model.examEnrollments then
+                ExamRequests.examEnrollmentDelete model.courseId
+                    exam_id
+                    (ToggleExamEnrollmentResponse
+                        exam_id
+                    )
+
+              else
+                ExamRequests.examEnrollmentPost model.courseId
+                    exam_id
+                    (ToggleExamEnrollmentResponse
+                        exam_id
+                    )
+            , NoUpdate
+            )
+
+        ToggleExamEnrollmentResponse exam_id response ->
+            case response of
+                Success _ ->
+                    ( model
+                    , Cmd.none
+                      -- TODO load new enrollment from server
+                    , ShowToast <| Components.Toasty.Success "Success" "Changed Saved (TODO show)"
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    , ShowToast <| Components.Toasty.Error "Error" "Could not save changes!"
+                    )
+
+        -- Update enrollments in model!
+        SetExamField field value ->
+            ( setField model field value, Cmd.none, NoUpdate )
+
         _ ->
             ( model, Cmd.none, NoUpdate )
 
@@ -531,6 +627,7 @@ view sharedState model =
         ( Success _, Just role ) ->
             pageContainer <|
                 [ widePage <| [ viewCourseInfo sharedState model ]
+                , viewExams sharedState model
                 , normalPage <|
                     [ viewSheets sharedState model
                     , viewMaterials sharedState model Slide
@@ -542,6 +639,137 @@ view sharedState model =
 
         ( _, _ ) ->
             div [] []
+
+
+viewExams : SharedState -> Model -> Html Msg
+viewExams sharedState model =
+    case model.courseRole of
+        Just Admin ->
+            viewExamsAdmin sharedState model
+
+        Just Tutor ->
+            text "TODO tutor view for exams."
+
+        Just Student ->
+            viewExamsStudents sharedState model
+
+        Nothing ->
+            text ""
+
+
+viewExamsAdmin : SharedState -> Model -> Html Msg
+viewExamsAdmin sharedState model =
+    normalPage <|
+        [ rRowHeader "Klausuren"
+        , rRow
+            (List.map
+                (\exam ->
+                    rContainer
+                        [ rRow
+                            (inputElement
+                                { label = "Bezeichnung"
+                                , placeholder = "Hauptklausur"
+                                , fieldType = "text"
+                                , value = exam.name
+                                }
+                                (ExamName exam.id)
+                                []
+                                SetExamField
+                            )
+                        , rRow
+                            (textAreaElement
+                                { label = "Bezeichnung"
+                                , placeholder = "Hörsaal N7, N8, 90 Minuten"
+                                , value = exam.description
+                                , rows = 4
+                                }
+                                (ExamDescription exam.id)
+                                []
+                                SetExamField
+                            )
+                        , rRow <|
+                            r2Column
+                                [ text "left" ]
+                                [ text "right" ]
+                        ]
+                 ---      (dateInputElement
+                 ---          { label = "Datum"
+                 ---          , value = date
+                 ---          , datePicker = datePicker
+                 ---          , settings = datePickerSettings sharedState
+                 ---          }
+                 ---      )
+                 ---      (dateInputElement
+                 ---          { label = "Uhrzeit"
+                 ---          , value = time
+                 ---          , datePicker = timePicker
+                 ---          , settings = timePickerSettings sharedState
+                 ---          }
+                 ---      )
+                )
+                model.exams
+            )
+        ]
+
+
+viewExamsStudents : SharedState -> Model -> Html Msg
+viewExamsStudents sharedState model =
+    if List.isEmpty model.exams then
+        text ""
+
+    else if Dict.isEmpty model.examEnrollments then
+        div [ classes [ TC.w_100, "bg-light-gold", TC.pa4 ] ]
+            [ rRowHeader "Klausur Anmeldung"
+            , viewExamEnrollmentRequest sharedState model
+            , viewExamEnrollmentForm sharedState model
+            ]
+
+    else
+        text "TODO enrolled show shit!"
+
+
+viewExamEnrollmentRequest : SharedState -> Model -> Html Msg
+viewExamEnrollmentRequest sharedState model =
+    div [ classes [ "bg-dark-red", TC.pa2, TC.white_90 ] ]
+        [ rRow
+            [ text "Sie sind bisner "
+            , span [ classes [ TC.b ] ] [ text "NICHT " ]
+            , text "zur Klausur angemeldet! "
+            , text "Bitte teilen Sie uns mit ob Sie vorhaben an der Klausur teil "
+            , text "zu nehmen. Sie dürfen nur mitschreiben wenn Sie sich hier "
+            , text "angemeldet haben!"
+            ]
+        , rRow
+            [ text "Falls es Ihnen nicht möglich ist nicht zur Hauptklausur zu "
+            , text "erscheinen melden Sie sich bitte zur Nachklausur an."
+            ]
+        ]
+
+
+viewExamEnrollmentForm : SharedState -> Model -> Html Msg
+viewExamEnrollmentForm sharedState model =
+    let
+        examsInfo =
+            List.map
+                (\e ->
+                    { label = e.name
+                    , description = e.description
+                    , isChecked = Dict.member e.id model.examEnrollments
+                    , message = ToggleEnrollToExam e.id
+                    }
+                )
+                model.exams
+    in
+    rRow
+        [ div [ classes [] ] <|
+            checkBoxes
+                (List.map
+                    (\info ->
+                        info
+                    )
+                    examsInfo
+                )
+        ]
 
 
 viewCourseInfo : SharedState -> Model -> Html Msg
@@ -1008,6 +1236,10 @@ determineRole course_id enrollments =
 type Field
     = EnrollmentSearchField
     | GroupSearchField
+    | ExamName Int
+    | ExamDescription Int
+    | ExamDate Int Time.Posix
+    | ExamTime Int Time.Posix
 
 
 setField : Model -> Field -> String -> Model
@@ -1018,3 +1250,37 @@ setField model field value =
 
         GroupSearchField ->
             { model | searchGroupInput = value }
+
+        ExamName examId ->
+            let
+                exams =
+                    List.map
+                        (\e ->
+                            if e.id == examId then
+                                { e | name = value }
+
+                            else
+                                e
+                        )
+                        model.exams
+            in
+            { model | exams = exams }
+
+        ExamDescription examId ->
+            let
+                exams =
+                    List.map
+                        (\e ->
+                            if e.id == examId then
+                                { e | description = value }
+
+                            else
+                                e
+                        )
+                        model.exams
+            in
+            { model | exams = exams }
+
+        _ ->
+            -- times are handled seperately
+            model

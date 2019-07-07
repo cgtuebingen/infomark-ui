@@ -3,6 +3,9 @@
 .dark-red {
     color: #A51E37
 }
+.bg-light-red {
+		background-color: #dc5461;
+}
 
 .b--dark-red {
     border-color: #A51E37
@@ -29,6 +32,9 @@
 
 .gold {
     color: #B4A069
+}
+.bg-light-gold {
+		background-color: #e8d298;
 }
 
 .b--gold {

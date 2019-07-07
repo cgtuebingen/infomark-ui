@@ -2,6 +2,7 @@ module Components.CommonElements exposing
     ( PbbButtonState(..)
     , PbbResultState(..)
     , PbbState(..)
+    , checkBoxes
     , dateElement
     , dateInputElement
     , datesDisplayContainer
@@ -43,7 +44,7 @@ import DatePicker
 import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, preventDefaultOn)
+import Html.Events exposing (on, onClick, onInput, preventDefaultOn, targetValue)
 import Html.Events.Extra exposing (onEnter)
 import Json.Decode as Decode exposing (Decoder)
 import Markdown as MD
@@ -68,6 +69,41 @@ inputElement inputConfig field errors msg =
         []
     , viewFormErrors field errors
     ]
+
+
+checkBoxes :
+    List
+        { label : String
+        , description : String
+        , isChecked : Bool
+        , message : msg
+        }
+    -> List (Html msg)
+checkBoxes configs =
+    List.map
+        (\config ->
+            div
+                [ classes
+                    [ TC.ma0
+                    , TC.pv2
+                    , TC.ph0
+                    , TC.w_100
+                    , TC.f5
+                    , TC.black_80
+                    ]
+                ]
+                [ input
+                    [ type_ "checkbox"
+                    , onClick config.message
+                    , checked config.isChecked
+                    , classes [ TC.ma1 ]
+                    ]
+                    []
+                , span [ classes [ TC.b ] ] [ text config.label ]
+                , rRow [ text config.description ]
+                ]
+        )
+        configs
 
 
 viewFormErrors : field -> List ( field, String ) -> Html msg
