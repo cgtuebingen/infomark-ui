@@ -6,6 +6,7 @@ module Utils.DateFormatter exposing
     , monthFormatter
     , shortDateFormatter
     , shortDayFormatter
+    , shortTimeFormatString
     , timeFormatter
     )
 
@@ -156,6 +157,26 @@ timeFormatter sharedState time =
                     )
     in
     hour ++ ":" ++ minute ++ ":" ++ second
+
+
+shortTimeFormatString : SharedState -> Posix -> String
+shortTimeFormatString sharedState time =
+    let
+        hour =
+            String.padLeft 2 '0' <|
+                String.fromInt
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toHour time
+                    )
+
+        minute =
+            String.padLeft 2 '0' <|
+                String.fromInt
+                    (Maybe.withDefault Time.utc sharedState.timezone
+                        |> flip Time.toMinute time
+                    )
+    in
+    hour ++ ":" ++ minute
 
 
 shortDateFormatter : SharedState -> Posix -> String

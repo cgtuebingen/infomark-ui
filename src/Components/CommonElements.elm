@@ -7,6 +7,7 @@ module Components.CommonElements exposing
     , dateInputElement
     , datesDisplayContainer
     , fileUploader
+    , iconButton
     , inputElement
     , inputLabel
     , multiButton
@@ -762,3 +763,22 @@ nButtonList listElements =
             )
             listElements
         )
+
+
+iconButton : String -> msg -> Html msg
+iconButton icon msg =
+    i
+        [ class "material-icons"
+        , classes
+            [ TC.mr0
+            , TC.ml_auto
+            , TC.pa2
+            , TC.black_40
+            , TC.hover_bg_near_black
+            , TC.br_100
+            , TC.hover_near_white
+            , TC.pointer
+            ]
+        , onClick msg
+        ]
+        [ text icon ]
