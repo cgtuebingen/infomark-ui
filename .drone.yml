@@ -67,7 +67,6 @@ steps:
   when:
     event: tag
 
-
 volumes:
 - name: 2f746d702f6361636865
   host:
@@ -75,6 +74,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 4d93ecd3582faf54576b3be8484c2f7f09629f3323b8ea01a00590773975f931
+hmac: 6865f3b7e98c6fd01d4ab1e13105e5758990a0d3ee8abacc391be61c7ce44b5b
 
 ...
