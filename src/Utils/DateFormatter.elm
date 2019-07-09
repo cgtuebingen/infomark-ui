@@ -81,7 +81,7 @@ monthFormatter sharedState month =
             t "month-aug"
 
         Time.Sep ->
-            t "month-sep"
+            t "month-sept"
 
         Time.Oct ->
             t "month-oct"
