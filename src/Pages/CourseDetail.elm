@@ -1371,7 +1371,8 @@ viewCourseInfo sharedState model =
                                         acquiredPerc =
                                             round <|
                                                 (toFloat <| Tuple.first pt)
-                                                    / (toFloat <| Tuple.second pt)
+                                                    / toFloat 302
+                                                    -- (toFloat <| Tuple.second pt)
                                                     * 100
                                       in
                                       if acquiredPerc < course.required_percentage then
@@ -1405,7 +1406,9 @@ viewCourseInfo sharedState model =
                                                 [ text <|
                                                     (String.fromInt <| acquired)
                                                         ++ "/"
-                                                        ++ (String.fromInt <| max)
+                                                        ++ "302"
+
+                                                -- (String.fromInt <| max)
                                                 ]
                                             ]
 
