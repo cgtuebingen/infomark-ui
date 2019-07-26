@@ -1279,7 +1279,7 @@ viewExamsStudents sharedState model =
     else if Dict.isEmpty model.examEnrollments then
         div [ classes [ TC.w_100, "bg-light-gold", TC.pa4 ] ]
             [ normalPage <|
-                [ rRowHeader "Klausur Anmeldung"
+                [ rRowHeader "Klausur"
                 , viewExamEnrollmentRequest sharedState model
                 , viewExamEnrollmentForm sharedState model
                 ]
@@ -1288,7 +1288,7 @@ viewExamsStudents sharedState model =
     else
         div [ classes [ TC.w_100, "bg-light-gold", TC.pa4 ] ]
             [ normalPage <|
-                [ rRowHeader "Klausur Anmeldung"
+                [ rRowHeader "Klausur"
                 , viewExamEnrollmentForm sharedState model
                 ]
             ]
@@ -1313,35 +1313,163 @@ viewExamEnrollmentRequest sharedState model =
         ]
 
 
+isExamOver : SharedState -> Exam -> Bool
+isExamOver sharedState exam =
+    Time.posixToMillis exam.exam_time
+        < (Maybe.withDefault 0 <|
+            Maybe.map Time.posixToMillis
+                sharedState.currentTime
+          )
+
+
+viewExamDetails : SharedState -> Exam -> Html Msg
+viewExamDetails sharedState exam =
+    rRow
+        [ span [ classes [ TC.b ] ]
+            [ text exam.name
+            ]
+        , text " am "
+        , span
+            [ classes [ TC.b ] ]
+            [ text (DF.shortDateFormatter sharedState exam.exam_time)
+            ]
+        ]
+
+
 viewExamEnrollmentForm : SharedState -> Model -> Html Msg
 viewExamEnrollmentForm sharedState model =
-    let
-        examsInfo =
-            List.map
-                (\( id, e ) ->
-                    { label =
-                        e.name
-                            ++ " "
-                            ++ DF.shortDateFormatter sharedState e.exam_time
-                            ++ " "
-                            ++ DF.shortTimeFormatString sharedState e.exam_time
-                    , description = e.description
-                    , isChecked = Dict.member id model.examEnrollments
-                    , message = ToggleEnrollToExam id
-                    }
-                )
-                (Dict.toList model.exams)
-    in
     rRow
-        [ div [ classes [] ] <|
-            checkBoxes
-                (List.map
-                    (\info ->
-                        info
-                    )
-                    examsInfo
+        (List.map
+            (\( id, e ) ->
+                if isExamOver sharedState e then
+                    case Dict.get id model.examEnrollments of
+                        Just enrollment ->
+                            case enrollment.status of
+                                0 ->
+                                    div []
+                                        [ viewExamDetails sharedState e
+                                        , rRow <|
+                                            [ text "Sie haben nicht an dieser Klausur teilgenommen."
+                                            ]
+                                        ]
+
+                                1 ->
+                                    div []
+                                        [ viewExamDetails sharedState e
+                                        , rRow <|
+                                            [ text "Sie haben mit der Note '"
+                                            , span
+                                                [ classes [ TC.b ] ]
+                                                [ text enrollment.mark
+                                                ]
+                                            , text "' bestanden. Eventuelle Boni sind bereits mit eingerechnet."
+                                            ]
+                                        , rRow <|
+                                            [ span [ classes [ TC.f7 ] ]
+                                                [ text "Die Angabe zur Note ist ohne Gewähr und nur zu Ihrer Information. Es gilt die ans Prüfungssekretariat gemeldete Note."
+                                                ]
+                                            ]
+                                        ]
+
+                                2 ->
+                                    div []
+                                        [ viewExamDetails sharedState e
+                                        , rRow <|
+                                            [ text "Sie sind mit der Note '"
+                                            , span
+                                                [ classes [ TC.b ] ]
+                                                [ text enrollment.mark
+                                                ]
+                                            , text "' durchgefallen."
+                                            , rRow <|
+                                                [ span [ classes [ TC.f7 ] ]
+                                                    [ text "Die Angabe zur Note ist ohne Gewähr und nur zu Ihrer Information. Es gilt die ans Prüfungssekretariat gemeldete Note."
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+
+                                _ ->
+                                    div []
+                                        [ viewExamDetails sharedState e
+                                        , text "Undefinierter Zustand."
+                                        ]
+
+                        Nothing ->
+                            text "Gelöscht aus gründen"
+
+                else
+                    let
+                        examInfo =
+                            { label =
+                                e.name
+                                    ++ " "
+                                    ++ DF.shortDateFormatter sharedState e.exam_time
+                                    ++ " "
+                                    ++ DF.shortTimeFormatString sharedState e.exam_time
+                            , description = e.description
+                            , isChecked = Dict.member id model.examEnrollments
+                            , message = ToggleEnrollToExam id
+                            }
+
+                        enrolledInfo =
+                            if Dict.member id model.examEnrollments then
+                                span [ classes [ TC.dark_green ] ]
+                                    [ text "Sie sind zu der Klausur angemeldet. "
+                                    , text "Entfernen Sie das Häkchen, wenn Sie nicht mitschreiben möchten"
+                                    ]
+
+                            else
+                                span [ classes [ TC.dark_red ] ]
+                                    [ text "Sie sind NICHT zu der Klausur angemeldet. "
+                                    , text "Setzten Sie das Häkchen, wenn Sie mitschreiben möchten."
+                                    ]
+                    in
+                    rRow
+                        [ div [ classes [] ] <|
+                            checkBoxes [ examInfo ]
+                                ++ [ enrolledInfo ]
+                        ]
+            )
+            (filterExamsForSuccess model.exams model.examEnrollments)
+        )
+
+
+filterExamsForSuccess : Dict Int Exam -> Dict Int ExamEnrollment -> List ( Int, Exam )
+filterExamsForSuccess exams enrollments =
+    let
+        containsSuccess =
+            Dict.foldl successFoldFunction False enrollments
+    in
+    if containsSuccess then
+        filterExam exams enrollments
+
+    else
+        Dict.toList exams
+
+
+successFoldFunction : Int -> ExamEnrollment -> Bool -> Bool
+successFoldFunction key exam acc =
+    acc || (exam.status == 1)
+
+
+filterExam : Dict Int Exam -> Dict Int ExamEnrollment -> List ( Int, Exam )
+filterExam exams enrollments =
+    let
+        examSuccess =
+            List.map2
+                (\( id, a ) ( id1, b ) ->
+                    if id == id1 && b.status == 1 then
+                        ( True, id, a )
+
+                    else
+                        ( False, id, a )
                 )
-        ]
+                (Dict.toList exams)
+                (Dict.toList enrollments)
+    in
+    List.map (\( use, id, exam ) -> ( id, exam ))
+        (List.filter (\( use, id, exam ) -> use) examSuccess)
 
 
 viewCourseInfo : SharedState -> Model -> Html Msg
