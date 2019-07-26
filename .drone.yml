@@ -26,17 +26,6 @@ steps:
   commands:
   - "echo \"none\""
 
-- name: rebuild-cache
-  pull: default
-  image: drillster/drone-volume-cache
-  settings:
-    mount:
-    - ./node_modules
-    rebuild: true
-  volumes:
-  - name: 2f746d702f6361636865
-    path: /cache
-
 - name: create_release
   pull: default
   image: patwie/tar
