@@ -12,17 +12,6 @@ steps:
   commands:
   - git submodule update --init --recursive
 
-- name: restore-cache
-  pull: default
-  image: drillster/drone-volume-cache
-  settings:
-    mount:
-    - ./node_modules
-    restore: true
-  volumes:
-  - name: 2f746d702f6361636865
-    path: /cache
-
 - name: build
   pull: default
   image: patwie/elm-app
