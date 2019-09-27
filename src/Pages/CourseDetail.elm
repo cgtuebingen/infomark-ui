@@ -1456,17 +1456,25 @@ successFoldFunction key exam acc =
 filterExam : Dict Int Exam -> Dict Int ExamEnrollment -> List ( Int, Exam )
 filterExam exams enrollments =
     let
+        joinedExamAndEnrollment =
+            Dict.merge
+                (\_ _ acc -> acc)
+                (\key a b -> Dict.insert key ( a, b ))
+                (\_ _ acc -> acc)
+                exams
+                enrollments
+                Dict.empty
+
         examSuccess =
-            List.map2
-                (\( id, a ) ( id1, b ) ->
-                    if id == id1 && b.status == 1 then
-                        ( True, id, a )
+            List.map
+                (\( id, ( exam, enrollment ) ) ->
+                    if enrollment.status == 1 then
+                        ( True, id, exam )
 
                     else
-                        ( False, id, a )
+                        ( False, id, exam )
                 )
-                (Dict.toList exams)
-                (Dict.toList enrollments)
+                (Dict.toList joinedExamAndEnrollment)
     in
     List.map (\( use, id, exam ) -> ( id, exam ))
         (List.filter (\( use, id, exam ) -> use) examSuccess)
